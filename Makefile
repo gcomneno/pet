@@ -6,6 +6,8 @@ PYTHONPATH := src
 test:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_pet.py
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_invalid_pet.py
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_metrics.py
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_cli_metrics.py	
 
 invalid:
 	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_invalid_pet.py

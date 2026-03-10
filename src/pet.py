@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import sys
+
 from typing import Any, List, Tuple, Union
+
 
 PETExp = Union[None, "PET"]
 PETNode = Tuple[int, PETExp]
@@ -104,6 +106,54 @@ def decode(tree: PET) -> int:
     return result
 
 
+def _node_count(tree: PET) -> int:
+    total = 0
+    for _, exp_repr in tree:
+        total += 1
+        if exp_repr is not None:
+            total += _node_count(exp_repr)
+    return total
+
+
+def node_count(tree: PET) -> int:
+    """Return the total number of nodes in a valid PET."""
+    validate(tree)
+    return _node_count(tree)
+
+
+def _leaf_count(tree: PET) -> int:
+    total = 0
+    for _, exp_repr in tree:
+        if exp_repr is None:
+            total += 1
+        else:
+            total += _leaf_count(exp_repr)
+    return total
+
+
+def leaf_count(tree: PET) -> int:
+    """Return the total number of terminal nodes in a valid PET."""
+    validate(tree)
+    return _leaf_count(tree)
+
+
+def _height(tree: PET) -> int:
+    child_heights = [
+        _height(exp_repr)
+        for _, exp_repr in tree
+        if exp_repr is not None
+    ]
+    if not child_heights:
+        return 1
+    return 1 + max(child_heights)
+
+
+def height(tree: PET) -> int:
+    """Return the recursive height of a valid PET."""
+    validate(tree)
+    return _height(tree)
+
+
 def render(tree: PET, indent: int = 0) -> str:
     """Render a PET in a readable multiline format with proper commas."""
     pad = " " * indent
@@ -189,6 +239,7 @@ def print_usage() -> None:
     print("Usage:")
     print("  python3 pet.py NUMBER")
     print("  python3 pet.py --json NUMBER")
+    print("  python3 pet.py --metrics NUMBER")
     print("  python3 pet.py --decode FILE.json")
     print("  python3 pet.py --render FILE.json")
     print("  python3 pet.py --validate FILE.json")
@@ -209,6 +260,15 @@ def main(argv: list[str]) -> int:
             n = int(argv[2])
             tree = encode(n)
             print(to_json(tree))
+            return 0
+
+        if len(argv) == 3 and argv[1] == "--metrics":
+            n = int(argv[2])
+            tree = encode(n)
+            print(f"N = {n}")
+            print(f"node_count = {node_count(tree)}")
+            print(f"leaf_count = {leaf_count(tree)}")
+            print(f"height = {height(tree)}")
             return 0
 
         if len(argv) == 3 and argv[1] == "--decode":
