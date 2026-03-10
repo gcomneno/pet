@@ -1,18 +1,15 @@
-.PHONY: test demo validate clean
-
 PYTHON := python3
+PYTHONPATH := src
+
+.PHONY: test demo invalid
 
 test:
-	$(PYTHON) test_pet.py
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_pet.py
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_invalid_pet.py
+
+invalid:
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) tests/test_invalid_pet.py
 
 demo:
-	$(PYTHON) pet.py 136
-	@echo
-	$(PYTHON) pet.py --json 27398
-
-validate:
-	$(PYTHON) pet.py --validate pet136.json
-
-clean:
-	rm -f *.pyc
-	rm -rf __pycache__
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) src/pet.py 72
+	PYTHONPATH=$(PYTHONPATH) $(PYTHON) src/pet.py --json 72
