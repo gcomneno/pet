@@ -6,13 +6,11 @@ import sys
 
 def test_cli_metrics_json():
     result = subprocess.run(
-        [sys.executable, "src/pet.py", "--metrics-json", "256"],
+        [sys.executable, "src/pet.py", "metrics", "--json", "256"],
         capture_output=True,
         text=True,
         check=True,
     )
-
-    data = json.loads(result.stdout)
 
     expected = {
         "node_count": 3,
@@ -23,9 +21,4 @@ def test_cli_metrics_json():
         "recursive_mass": 2,
     }
 
-    assert data == expected, f"unexpected JSON output: {data!r}"
-
-
-if __name__ == "__main__":
-    test_cli_metrics_json()
-    print("OK")
+    assert json.loads(result.stdout) == expected

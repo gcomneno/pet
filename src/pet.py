@@ -291,71 +291,83 @@ def load_json_file(path: str) -> PET:
     return from_jsonable(data)
 
 
-def print_usage() -> None:
-    print("Usage:")
-    print("  python3 pet.py NUMBER")
-    print("  python3 pet.py --json NUMBER")
-    print("  python3 pet.py --decode FILE.json")
-    print("  python3 pet.py --render FILE.json")
-    print("  python3 pet.py --validate FILE.json")
-    print("  python3 pet.py --metrics NUMBER")
-    print("  python3 pet.py --metrics-json NUMBER")
-
 def main(argv: list[str]) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="pet",
+        description="PET — Prime Exponent Tree encoder/decoder",
+    )
+
+    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
+
+    # encode (default)
+    p_encode = subparsers.add_parser("encode", help="encode N into PET and print JSON")
+    p_encode.add_argument("n", type=int, metavar="N")
+
+    # decode
+    p_decode = subparsers.add_parser("decode", help="decode a PET JSON file back to N")
+    p_decode.add_argument("file", metavar="FILE.json")
+
+    # render
+    p_render = subparsers.add_parser("render", help="render a PET JSON file as tree")
+    p_render.add_argument("file", metavar="FILE.json")
+
+    # validate
+    p_validate = subparsers.add_parser("validate", help="validate a PET JSON file")
+    p_validate.add_argument("file", metavar="FILE.json")
+
+    # metrics
+    p_metrics = subparsers.add_parser("metrics", help="print structural metrics for N")
+    p_metrics.add_argument("n", type=int, metavar="N")
+    p_metrics.add_argument("--json", action="store_true", help="output as JSON")
+
+    args = parser.parse_args(argv[1:])
+
     try:
-        if len(argv) == 2:
-            n = int(argv[1])
-            tree = encode(n)
+        if args.command == "encode":
+            tree = encode(args.n)
             back = decode(tree)
-            print(f"N = {n}")
+            print(f"N = {args.n}")
             print(to_json(tree))
             print(f"decoded = {back}")
-            return 0
 
-        if len(argv) == 3 and argv[1] == "--json":
-            n = int(argv[2])
-            tree = encode(n)
-            print(to_json(tree))
-            return 0
-
-        if len(argv) == 3 and argv[1] == "--metrics":
-            n = int(argv[2])
-            tree = encode(n)
-            metrics = metrics_dict(tree)
-            print(f"N = {n}")
-            for key, value in metrics.items():
-                print(f"{key} = {value}")
-            return 0
-
-        if len(argv) == 3 and argv[1] == "--metrics-json":
-            n = int(argv[2])
-            tree = encode(n)
-            print(json.dumps(metrics_dict(tree), indent=2, ensure_ascii=False))
-            return 0
-
-        if len(argv) == 3 and argv[1] == "--decode":
-            tree = load_json_file(argv[2])
+        elif args.command == "decode":
+            tree = load_json_file(args.file)
             print(decode(tree))
-            return 0
 
-        if len(argv) == 3 and argv[1] == "--render":
-            tree = load_json_file(argv[2])
+        elif args.command == "render":
+            tree = load_json_file(args.file)
             print(render(tree))
-            return 0
 
-        if len(argv) == 3 and argv[1] == "--validate":
-            tree = load_json_file(argv[2])
+        elif args.command == "validate":
+            tree = load_json_file(args.file)
             validate(tree)
             print("OK")
-            return 0
 
-        print_usage()
-        return 1
+        elif args.command == "metrics":
+            tree = encode(args.n)
+            if args.json:
+                print(json.dumps(metrics_dict(tree), indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                for key, value in metrics_dict(tree).items():
+                    print(f"{key} = {value}")
+
+        else:
+            parser.print_help()
+            return 1
+
+        return 0
 
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 
 
-if __name__ == "__main__":
+def cli() -> None:
     raise SystemExit(main(sys.argv))
+
+
+if __name__ == "__main__":
+    cli()

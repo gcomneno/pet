@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pet"
+version = "0.1.0"
+description = "PET — Prime Exponent Tree: canonical recursive representation of integers"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+pet = "pet:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
