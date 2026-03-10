@@ -166,6 +166,25 @@ def _max_branching(tree: PET) -> int:
     return max(current, max(child_values))
 
 
+def _branch_profile(tree: PET, depth: int, counts: list[int]) -> None:
+    if depth == len(counts):
+        counts.append(0)
+
+    counts[depth] += len(tree)
+
+    for _, exp_repr in tree:
+        if exp_repr is not None:
+            _branch_profile(exp_repr, depth + 1, counts)
+
+
+def branch_profile(tree: PET) -> list[int]:
+    """Return the number of nodes at each recursive PET level."""
+    validate(tree)
+    counts: list[int] = []
+    _branch_profile(tree, 0, counts)
+    return counts
+
+
 def max_branching(tree: PET) -> int:
     """Return the maximum number of nodes at any single PET level."""
     validate(tree)
@@ -288,6 +307,7 @@ def main(argv: list[str]) -> int:
             print(f"leaf_count = {leaf_count(tree)}")
             print(f"height = {height(tree)}")
             print(f"max_branching = {max_branching(tree)}")
+            print(f"branch_profile = {branch_profile(tree)}")
             return 0
 
         if len(argv) == 3 and argv[1] == "--decode":
