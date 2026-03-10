@@ -6,15 +6,16 @@ from pet import (
     leaf_count,
     max_branching,
     node_count,
+    recursive_mass,
 )
 
 
 def test_metrics_on_known_examples():
     cases = [
-        (2, 1, 1, 1, 1, [1]),
-        (4, 2, 1, 2, 1, [1, 1]),
-        (12, 3, 2, 2, 2, [2, 1]),
-        (256, 3, 1, 3, 1, [1, 1, 1]),
+        (2, 1, 1, 1, 1, [1], 0),
+        (4, 2, 1, 2, 1, [1, 1], 1),
+        (12, 3, 2, 2, 2, [2, 1], 1),
+        (256, 3, 1, 3, 1, [1, 1, 1], 2),
     ]
 
     for (
@@ -24,6 +25,7 @@ def test_metrics_on_known_examples():
         expected_height,
         expected_branching,
         expected_profile,
+        expected_mass,
     ) in cases:
         tree = encode(n)
         assert node_count(tree) == expected_nodes, f"node_count failed for {n}"
@@ -31,6 +33,7 @@ def test_metrics_on_known_examples():
         assert height(tree) == expected_height, f"height failed for {n}"
         assert max_branching(tree) == expected_branching, f"max_branching failed for {n}"
         assert branch_profile(tree) == expected_profile, f"branch_profile failed for {n}"
+        assert recursive_mass(tree) == expected_mass, f"recursive_mass failed for {n}"
 
 
 if __name__ == "__main__":

@@ -191,6 +191,12 @@ def max_branching(tree: PET) -> int:
     return _max_branching(tree)
 
 
+def recursive_mass(tree: PET) -> int:
+    """Return the number of nodes that belong to recursive exponent subtrees."""
+    validate(tree)
+    return node_count(tree) - len(tree)
+
+
 def render(tree: PET, indent: int = 0) -> str:
     """Render a PET in a readable multiline format with proper commas."""
     pad = " " * indent
@@ -308,6 +314,7 @@ def main(argv: list[str]) -> int:
             print(f"height = {height(tree)}")
             print(f"max_branching = {max_branching(tree)}")
             print(f"branch_profile = {branch_profile(tree)}")
+            print(f"recursive_mass = {recursive_mass(tree)}")            
             return 0
 
         if len(argv) == 3 and argv[1] == "--decode":

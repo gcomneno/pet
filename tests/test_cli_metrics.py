@@ -19,6 +19,7 @@ def test_cli_metrics():
         "height = 3",
         "max_branching = 1",
         "branch_profile = [1, 1, 1]",
+        "recursive_mass = 2",
     ]
 
     output_lines = result.stdout.strip().splitlines()
