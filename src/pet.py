@@ -154,6 +154,24 @@ def height(tree: PET) -> int:
     return _height(tree)
 
 
+def _max_branching(tree: PET) -> int:
+    current = len(tree)
+    child_values = [
+        _max_branching(exp_repr)
+        for _, exp_repr in tree
+        if exp_repr is not None
+    ]
+    if not child_values:
+        return current
+    return max(current, max(child_values))
+
+
+def max_branching(tree: PET) -> int:
+    """Return the maximum number of nodes at any single PET level."""
+    validate(tree)
+    return _max_branching(tree)
+
+
 def render(tree: PET, indent: int = 0) -> str:
     """Render a PET in a readable multiline format with proper commas."""
     pad = " " * indent
@@ -269,6 +287,7 @@ def main(argv: list[str]) -> int:
             print(f"node_count = {node_count(tree)}")
             print(f"leaf_count = {leaf_count(tree)}")
             print(f"height = {height(tree)}")
+            print(f"max_branching = {max_branching(tree)}")
             return 0
 
         if len(argv) == 3 and argv[1] == "--decode":

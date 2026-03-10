@@ -17,6 +17,7 @@ def test_cli_metrics():
         "node_count = 3",
         "leaf_count = 1",
         "height = 3",
+        "max_branching = 1",
     ]
 
     output_lines = result.stdout.strip().splitlines()
