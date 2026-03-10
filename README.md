@@ -51,5 +51,6 @@ La rappresentazione deve essere unica.
 
 - `README.md` — panoramica del progetto
 - `SPEC.md` — specifica formale
+- `VISION.md` — visione "filosofica"
 - `pet.py` — implementazione iniziale
 - `examples/` — esempi
