@@ -197,6 +197,19 @@ def recursive_mass(tree: PET) -> int:
     return node_count(tree) - len(tree)
 
 
+def metrics_dict(tree: PET) -> dict[str, Any]:
+    """Return the base structural metrics for a valid PET."""
+    validate(tree)
+    return {
+        "node_count": node_count(tree),
+        "leaf_count": leaf_count(tree),
+        "height": height(tree),
+        "max_branching": max_branching(tree),
+        "branch_profile": branch_profile(tree),
+        "recursive_mass": recursive_mass(tree),
+    }
+
+
 def render(tree: PET, indent: int = 0) -> str:
     """Render a PET in a readable multiline format with proper commas."""
     pad = " " * indent
@@ -282,11 +295,11 @@ def print_usage() -> None:
     print("Usage:")
     print("  python3 pet.py NUMBER")
     print("  python3 pet.py --json NUMBER")
-    print("  python3 pet.py --metrics NUMBER")
     print("  python3 pet.py --decode FILE.json")
     print("  python3 pet.py --render FILE.json")
     print("  python3 pet.py --validate FILE.json")
-
+    print("  python3 pet.py --metrics NUMBER")
+    print("  python3 pet.py --metrics-json NUMBER")
 
 def main(argv: list[str]) -> int:
     try:
@@ -308,13 +321,16 @@ def main(argv: list[str]) -> int:
         if len(argv) == 3 and argv[1] == "--metrics":
             n = int(argv[2])
             tree = encode(n)
+            metrics = metrics_dict(tree)
             print(f"N = {n}")
-            print(f"node_count = {node_count(tree)}")
-            print(f"leaf_count = {leaf_count(tree)}")
-            print(f"height = {height(tree)}")
-            print(f"max_branching = {max_branching(tree)}")
-            print(f"branch_profile = {branch_profile(tree)}")
-            print(f"recursive_mass = {recursive_mass(tree)}")            
+            for key, value in metrics.items():
+                print(f"{key} = {value}")
+            return 0
+
+        if len(argv) == 3 and argv[1] == "--metrics-json":
+            n = int(argv[2])
+            tree = encode(n)
+            print(json.dumps(metrics_dict(tree), indent=2, ensure_ascii=False))
             return 0
 
         if len(argv) == 3 and argv[1] == "--decode":

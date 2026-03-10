@@ -51,6 +51,8 @@ python3 src/pet.py --json 136
 python3 src/pet.py --render pet136.json
 python3 src/pet.py --decode pet136.json
 python3 src/pet.py --validate pet136.json
+python3 src/pet.py --metrics 256
+python3 src/pet.py --metrics-json 256
 ```
 
 ## Formato JSON canonico

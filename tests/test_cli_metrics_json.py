@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+import json
+import subprocess
+import sys
+
+
+def test_cli_metrics_json():
+    result = subprocess.run(
+        [sys.executable, "src/pet.py", "--metrics-json", "256"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    data = json.loads(result.stdout)
+
+    expected = {
+        "node_count": 3,
+        "leaf_count": 1,
+        "height": 3,
+        "max_branching": 1,
+        "branch_profile": [1, 1, 1],
+        "recursive_mass": 2,
+    }
+
+    assert data == expected, f"unexpected JSON output: {data!r}"
+
+
+if __name__ == "__main__":
+    test_cli_metrics_json()
+    print("OK")
