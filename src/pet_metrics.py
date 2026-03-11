@@ -44,3 +44,10 @@ def extended_metrics(tree: "PET") -> dict:
     base["verticality_ratio"] = verticality_ratio(tree)
     base["structural_asymmetry"] = structural_asymmetry(tree)
     return base
+
+
+def is_linear(tree: "PET") -> bool:
+    """Return True if the PET is a pure linear chain (max_branching == 1)."""
+    from pet import max_branching, validate
+    validate(tree)
+    return max_branching(tree) == 1
