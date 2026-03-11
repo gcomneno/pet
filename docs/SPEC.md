@@ -150,3 +150,39 @@ Esempi: `64 = 2^6` (esponente `6=2·3`), `576 = 2^6·3^2`, `729 = 3^6`.
 
 Questi invarianti emergono dalla struttura ricorsiva di PET e non hanno
 un corrispondente diretto nella fattorizzazione prima classica.
+
+## Metriche analitiche (pet_metrics)
+
+Le seguenti metriche sono definite in `src/pet_metrics.py` e operano su PET canonici validi.
+
+### Metriche scalari
+
+- `verticality_ratio(tree)` — rapporto `height / node_count`. Vale `1.0` per catene pure, tende a `0` per alberi piatti.
+- `structural_asymmetry(tree)` — deviazione standard del `branch_profile`. Vale `0.0` per alberi uniformi per livello.
+- `recursive_mass(tree)` — numero di nodi appartenenti a sottoalberi esponenziali (già in PET-Base).
+- `leaf_ratio(tree)` — rapporto `leaf_count / node_count` come `Fraction` esatta. Appartiene a un insieme sparso e discreto di valori razionali.
+
+### Classificatori booleani
+
+- `is_linear(tree)` — `True` se il PET è una catena pura (`max_branching == 1`).
+- `is_level_uniform(tree)` — `True` se tutti i livelli hanno lo stesso numero di nodi.
+- `is_squarefree(tree)` — `True` se `recursive_mass == 0` (tutti gli esponenti sono `1`).
+- `is_expanding(tree)` — `True` se l'ultimo livello ha più nodi del primo (proprietà rara).
+
+### Classificatore morfologico
+
+`profile_shape(tree)` restituisce una stringa che descrive la forma del profilo:
+- `'point'` — albero di altezza 1 (numero squarefree o primo)
+- `'linear'` — catena pura, tutti i livelli con un solo nodo
+- `'normal'` — forma tipica, profilo non crescente
+- `'expanding'` — ultimo livello più largo del primo (raro: ~12 casi su 10000)
+- `'bell'` — picco interno al profilo, né al primo né all'ultimo livello (rarissimo: ~6 casi su 100000)
+
+### Osservazioni sui valori di leaf_ratio
+
+Il rapporto `leaf_count / node_count` appartiene a un insieme sparso e discreto.
+Famiglie identificate fino a N = 500000:
+
+- `1/k` — catene di altezza `k` (profilo `[1,1,...,1]`)
+- `k/(k+1)` — profilo `[k,1]`, converge a `1`
+- `k/(2k+1)` — profilo `[k,k,1]`, converge a `1/2`
