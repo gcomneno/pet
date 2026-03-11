@@ -304,6 +304,7 @@ def main(argv: list[str]) -> int:
     # encode (default)
     p_encode = subparsers.add_parser("encode", help="encode N into PET and print JSON")
     p_encode.add_argument("n", type=int, metavar="N")
+    p_encode.add_argument("--json", action="store_true", help="output only JSON")
 
     # decode
     p_decode = subparsers.add_parser("decode", help="decode a PET JSON file back to N")
@@ -327,11 +328,14 @@ def main(argv: list[str]) -> int:
     try:
         if args.command == "encode":
             tree = encode(args.n)
-            back = decode(tree)
-            print(f"N = {args.n}")
-            print(to_json(tree))
-            print(f"decoded = {back}")
-
+            if args.json:
+                print(to_json(tree))
+            else:
+                back = decode(tree)
+                print(f"N = {args.n}")
+                print(to_json(tree))
+                print(f"decoded = {back}")
+                
         elif args.command == "decode":
             tree = load_json_file(args.file)
             print(decode(tree))

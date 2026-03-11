@@ -82,9 +82,9 @@ pip install -e .
 
 ```bash
 pet encode 72
-pet encode 72 --json        # solo JSON, senza roundtrip
+pet encode --json 72
 pet metrics 256
-pet metrics 256 --json
+pet metrics --json 256
 pet render FILE.json
 pet decode FILE.json
 pet validate FILE.json
