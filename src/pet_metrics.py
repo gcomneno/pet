@@ -51,3 +51,15 @@ def is_linear(tree: "PET") -> bool:
     from pet import max_branching, validate
     validate(tree)
     return max_branching(tree) == 1
+
+
+def is_level_uniform(tree: "PET") -> bool:
+    """Return True if every level of the PET has the same number of nodes.
+
+    This is equivalent to structural_asymmetry == 0.0.
+    Note: is_linear is the special case where max_branching == 1.
+    """
+    from pet import branch_profile, validate
+    validate(tree)
+    profile = branch_profile(tree)
+    return len(set(profile)) == 1

@@ -7,7 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pet import encode
-from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear
+from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform
 
 
 @pytest.mark.parametrize("n, expected_vr, expected_sa", [
@@ -47,3 +47,19 @@ def test_extended_metrics_contains_all_keys():
 def test_is_linear(n, expected):
     tree = encode(n)
     assert is_linear(tree) == expected, f"is_linear failed for {n}"
+
+
+@pytest.mark.parametrize("n, expected", [
+    (2,   True),   # [1]
+    (4,   True),   # [1, 1]
+    (16,  True),   # [1, 1, 1]
+    (36,  True),   # [2, 2]
+    (72,  True),   # [2, 2]
+    (256, True),   # [1, 1, 1]
+    (12,  False),  # [2, 1]
+    (48,  False),  # [2, 1, 1]
+    (360, False),  # [3, 2]
+])
+def test_is_level_uniform(n, expected):
+    tree = encode(n)
+    assert is_level_uniform(tree) == expected, f"is_level_uniform failed for {n}"
