@@ -97,11 +97,19 @@ def distance(a, b) -> int:
     return _tree_distance(a, b)
 
 
+def _shape_key(s):
+    """Chiave di ordinamento ricorsiva: converte None in () a tutti i livelli."""
+    if s is None:
+        return ()
+    return tuple(_shape_key(c) for c in s)
+
+
 def _shape(tree) -> tuple:
     """Return the structural shape of a PET, ignoring prime values."""
     if tree is None:
-        return None
-    return tuple(sorted((_shape(exp) for _, exp in tree), key=lambda x: x or ()))
+        return None # type: ignore
+    return tuple(sorted((_shape(exp) for _, exp in tree), key=_shape_key))
+
 
 def _shape_node_count(shape) -> int:
     if shape is None:
@@ -118,8 +126,8 @@ def _structural_distance(shape_a, shape_b) -> int:
         return _shape_node_count(shape_a)
 
     # match children greedily by sorted order
-    children_a = sorted(shape_a, key=lambda x: x or ())
-    children_b = sorted(shape_b, key=lambda x: x or ())
+    children_a = sorted(shape_a, key=_shape_key)
+    children_b = sorted(shape_b, key=_shape_key)    
 
     dist = 0
     i, j = 0, 0

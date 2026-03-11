@@ -407,3 +407,117 @@ Esistono coppie con `dh=0` e `dn=0` ma `distance>0` o `structural_distance>0`:
 
 `distance` e `structural_distance` sono quindi metriche genuinamente nuove —
 non riducibili a combinazioni di metriche scalari preesistenti come `height` e `node_count`.
+
+## Clustering delle famiglie aritmetiche con PET-Algebra
+
+Le distanze `distance` e `structural_distance` sono state applicate a quattro famiglie
+aritmetiche classiche per misurare il potere discriminante di PET-Algebra.
+L'analisi è in due fasi: famiglie sovrapposte (come definite classicamente) e famiglie
+disgiunte (ogni elemento assegnato alla famiglia più specifica).
+
+### Famiglie analizzate
+
+- **Primorials**: 2, 6, 30, 210, 2310, 30030, 510510
+- **Hamming** (5-smooth): elementi con fattori solo in {2,3,5}, fino a 256
+- **HighlyComposite**: numeri con più divisori di qualsiasi intero precedente, fino a 720720
+- **Perfect**: 6, 28, 496, 8128
+
+### Famiglie disgiunte
+
+Per l'analisi pulita ogni elemento è assegnato alla famiglia più specifica che lo contiene,
+con priorità: Perfect > Primorials > Hamming > HighlyComposite.
+
+Elementi rimossi per disgiunzione:
+
+| Famiglia | orig | kept | removed |
+|---|---|---|---|
+| Perfect | 4 | 4 | — |
+| Primorials | 7 | 6 | 6 |
+| Hamming | 30 | 28 | 2, 6 |
+| HighlyComposite | 37 | 26 | 2, 4, 6, 12, 24, 36, 48, 60, 120, 180, 240 |
+
+### Risultati intra-famiglia
+
+| Famiglia | dist diam | dist mean | sdist diam | sdist mean |
+|---|---|---|---|---|
+| Perfect | 4.00 | 3.50 | 2.00 | 1.33 |
+| Primorials | 6.00 | 2.67 | 6.00 | 2.67 |
+| Hamming | 7.00 | 3.60 | 6.00 | 2.49 |
+| HighlyComposite | 7.00 | 3.78 | 9.00 | 3.33 |
+
+Osservazioni:
+
+- **Perfect**: le due metriche divergono nettamente (dist diam=4, sdist diam=2). I numeri
+  perfetti hanno strutture morfologicamente simili — forma 2^(p-1)·(2^p-1) — ma usano
+  primi diversi. `structural_distance` cattura questa somiglianza, `distance` no.
+- **Primorials**: le due metriche coincidono esattamente. I primorials sono squarefree,
+  quindi i loro PET sono piatti — non c'è struttura ricorsiva da distinguere. Le due
+  metriche collassano sulla stessa cosa: contare le differenze tra insiemi di primi.
+- **HighlyComposite**: `sdist diam=9` è il più alto del dataset. La famiglia è
+  strutturalmente eterogenea — contiene sia alberi piatti che alberi profondi.
+
+### Outlier strutturale: 720720
+
+720720 = 2⁴·3²·5·7·11·13 è l'elemento più isolato morfologicamente dell'intero dataset
+HC (sdist min=4.00, mean=6.40 rispetto agli altri HC).
+
+```
+PET(720720):
+  node_count=9, leaf_count=6, height=3
+  max_branching=6, branch_profile=[6,2,1], recursive_mass=3
+```
+
+Combina la massima larghezza radice (6 rami) con la massima profondità (height=3)
+tra tutti gli HC. Nessun altro elemento HC ha questa combinazione.
+
+### Risultati inter-famiglia (famiglie disgiunte)
+
+#### distance
+
+| Famiglia A | Famiglia B | min | mean | max |
+|---|---|---|---|---|
+| Perfect | Primorials | 1.00 | 4.83 | 9.00 |
+| Perfect | Hamming | 1.00 | 3.75 | 8.00 |
+| Perfect | HighlyComposite | **3.00** | 6.15 | 10.00 |
+| Primorials | Hamming | 1.00 | 4.31 | 8.00 |
+| Primorials | HighlyComposite | 1.00 | 4.40 | 8.00 |
+| Hamming | HighlyComposite | 1.00 | 5.59 | 9.00 |
+
+#### structural_distance
+
+| Famiglia A | Famiglia B | min | mean | max |
+|---|---|---|---|---|
+| Perfect | Primorials | 1.00 | 3.67 | 7.00 |
+| Perfect | Hamming | 0.00 | 2.31 | 5.00 |
+| Perfect | HighlyComposite | **2.00** | 5.81 | 9.00 |
+| Primorials | Hamming | 1.00 | 4.21 | 8.00 |
+| Primorials | HighlyComposite | 1.00 | 4.28 | 8.00 |
+| Hamming | HighlyComposite | 0.00 | 6.26 | 10.00 |
+
+### Separabilità
+
+Nessuna coppia di famiglie risulta separata nel senso metrico forte
+(`gap_inter_min > max_intra_diam`). Il gap migliore è Perfect vs HighlyComposite
+con `distance` (gap=3.00, max_intra=7.00).
+
+La non-separazione riflette il fatto che queste famiglie si sovrappongono
+strutturalmente. PET le distingue **in media** (le mean inter sono sistematicamente
+più alte delle mean intra) ma non ai bordi.
+
+### Coppia più distinguibile
+
+**Perfect vs HighlyComposite** è la coppia meglio separata da PET:
+- `distance` gap=3.00 — i numeri perfetti e gli HC esclusivi condividono pochissimi primi
+- `structural_distance` gap=2.00 — sono anche morfologicamente distanti
+
+Ha senso strutturalmente: i numeri perfetti hanno forma rigida 2^(p-1)·(2^p-1),
+gli HC grandi sono alberi larghi e complessi senza schema fisso.
+
+### Conclusione
+
+PET-Algebra non separa nettamente le quattro famiglie nel senso metrico forte,
+ma cattura differenze reali e misurabili. Il potere discriminante è presente
+**in media** ma non abbastanza concentrato da produrre separazione netta ai bordi.
+
+Gli strumenti di analisi sono in `tools/cluster_families.py` (famiglie originali)
+e `tools/cluster_families_disjoint.py` (famiglie disgiunte).
