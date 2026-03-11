@@ -312,6 +312,21 @@ Per ogni intero `n` squarefree:
 
 L'autoinnesto di un PET squarefree produce `n^n`.
 
+### Teorema 3 — graft ricorsivo (caso generale)
+
+Per ogni `n >= 2` e `k >= 2`:
+
+> `decode(graft(PET(n), PET(k))) = prod(p_i ^ f(e_i, k))`
+
+dove `f(e, k) = k` se `e = 1`, altrimenti `f(e, k) = decode(graft(PET(e), PET(k)))`.
+
+In altre parole: `graft(PET(n), PET(k))` eleva ricorsivamente ogni esponente
+nella fattorizzazione di `n` alla potenza `k`.
+
+I Teoremi 1 e 2 sono casi speciali:
+- quando `n` è squarefree, tutti gli esponenti sono `1` → `f(1,k) = k` → `decode = n^k`
+- quando `k = n` squarefree → `decode = n^n`
+
 ### Nota
 
 Per `n` non squarefree il risultato di `graft` è sempre un intero valido, ma la corrispondenza con `n^k` o `n^n` non vale in generale.
