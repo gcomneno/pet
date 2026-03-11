@@ -390,3 +390,20 @@ Entrambe le distanze soddisfano le proprietà di una metrica:
 `dist >= sdist` nella quasi totalità dei casi. Le eccezioni si verificano quando un PET è **sottostruttura ricorsiva** dell'altro — al primo livello (un PET ha più primi) o in profondità (un esponente è esteso ricorsivamente).
 
 In questi casi `dist` è piccola (condividono quasi tutti i primi) ma `sdist` è grande (le forme sono molto diverse).
+
+### Indipendenza dalle metriche scalari
+
+Sia `dh(a,b) = |height(a) - height(b)|` e `dn(a,b) = |node_count(a) - node_count(b)|`.
+
+Esistono coppie con `dh=0` e `dn=0` ma `distance>0` o `structural_distance>0`:
+
+| A | B | dist | sdist | dh | dn |
+|---|---|---|---|---|---|
+| 2 | 3 | 2 | 0 | 0 | 0 |
+| 4 | 9 | 4 | 0 | 0 | 0 |
+| 12 | 18 | 2 | 0 | 0 | 0 |
+| 36 | 60 | 4 | 4 | 0 | 0 |
+| 36 | 72 | 2 | 0 | 0 | 0 |
+
+`distance` e `structural_distance` sono quindi metriche genuinamente nuove —
+non riducibili a combinazioni di metriche scalari preesistenti come `height` e `node_count`.
