@@ -263,3 +263,34 @@ Nessuna firma PET comune identificata.
 PET separa nettamente solo i Primorials — ma questo coincide con la proprietà squarefree già nota. Per le altre famiglie, PET descrive la morfologia ma non offre discriminazione aggiuntiva rispetto alla fattorizzazione classica.
 
 Il valore di PET resta negli invarianti strutturali scoperti e nella rappresentazione ricorsiva canonica. PET-Algebra potrebbe essere il livello dove emerge potere classificatorio genuinamente nuovo.
+
+## PET-Algebra
+
+PET-Algebra studia le operazioni strutturali sui PET canonici.
+Tutte le operazioni producono PET canonici che rappresentano interi.
+Il codice vive in `src/pet_algebra.py`.
+
+### Operazione: graft
+
+`graft(tree, scion)` sostituisce ogni foglia (`None`) di `tree` con `scion`.
+
+Ogni nodo di `tree` il cui esponente è `None` (esponente = 1) riceve `scion` come nuovo sottoalbero esponenziale.
+
+**Esempio:**
+```
+PET(6)  = [(2,•),(3,•)]
+PET(2)  = [(2,•)]
+graft(PET(6), PET(2)) = [(2,[(2,•)]),(3,[(2,•)])] = PET(36)
+```
+
+### Teorema del graft su squarefree
+
+Per ogni intero `n` squarefree e ogni intero `k >= 2`:
+
+> `decode(graft(PET(n), PET(k))) = n^k`
+
+Innestare `PET(k)` su un PET squarefree equivale a elevare `n` alla potenza `k`.
+
+Questo è il primo risultato algebrico di PET: un'operazione strutturale sugli alberi che corrisponde a un'operazione aritmetica precisa.
+
+**Nota:** per `n` non squarefree il risultato è un intero valido ma la corrispondenza con `n^k` non vale in generale.
