@@ -63,3 +63,16 @@ def is_level_uniform(tree: "PET") -> bool:
     validate(tree)
     profile = branch_profile(tree)
     return len(set(profile)) == 1
+
+
+def is_expanding(tree: "PET") -> bool:
+    """Return True if the last level of the PET has more nodes than the first.
+
+    This is a rare structural property — it occurs when at least one
+    exponent subtree branches at the second level (i.e. the exponent
+    itself has two or more distinct prime factors).
+    """
+    from pet import branch_profile, validate
+    validate(tree)
+    profile = branch_profile(tree)
+    return len(profile) >= 2 and profile[-1] > profile[0]
