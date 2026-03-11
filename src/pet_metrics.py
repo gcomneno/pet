@@ -88,3 +88,18 @@ def is_squarefree(tree: "PET") -> bool:
     from pet import recursive_mass, validate
     validate(tree)
     return recursive_mass(tree) == 0
+
+
+def leaf_ratio(tree: "PET"):
+    """Return the ratio leaf_count / node_count as an exact Fraction.
+
+    This ratio is always rational and belongs to a sparse discrete set.
+    Known families:
+    - 1/k  for chains of height k (profile [1,1,...,1])
+    - k/(k+1)  for flat trees with one recursive node (profile [k,1])
+    - k/(2k+1)  for two-level uniform trees (profile [k,k,1])
+    """
+    from fractions import Fraction
+    from pet import leaf_count, node_count, validate
+    validate(tree)
+    return Fraction(leaf_count(tree), node_count(tree))
