@@ -84,3 +84,38 @@ Dato `N >= 2`:
   (2, [(3, •)]),
   (3, [(2, •)])
 ]
+
+## Invarianti strutturali
+
+Gli invarianti seguenti sono proprietà della **forma dell'albero PET**, non del valore numerico.
+Sono stati verificati empiricamente fino a N = 10000.
+
+### Invariante 1 — Linearità
+
+Le seguenti condizioni sono equivalenti:
+
+- `is_linear(tree)` è vero
+- `max_branching(tree) == 1`
+- `leaf_count(tree) == 1`
+
+Un PET lineare è una catena pura: ogni livello ha esattamente un nodo.
+
+Esempi: `2, 3, 4, 8, 16, 32, 81, 256` — ma non `64 = 2^(2·3)`.
+
+### Invariante 2 — Uniformità per livello
+
+Le seguenti condizioni sono equivalenti:
+
+- `is_level_uniform(tree)` è vero
+- `structural_asymmetry(tree) == 0.0`
+- tutti i valori di `branch_profile(tree)` sono uguali
+
+Un PET uniforme ha lo stesso numero di nodi a ogni livello.
+`is_linear` è il caso speciale con `max_branching == 1`.
+
+Esempi uniformi non lineari: `36 = 2^2·3^2` con profilo `[2,2]`, `72 = 2^3·3^2` con profilo `[2,2]`.
+
+### Nota
+
+Questi invarianti emergono dalla struttura ricorsiva di PET e non hanno
+un corrispondente diretto nella fattorizzazione prima classica.
