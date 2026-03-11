@@ -377,3 +377,16 @@ Le due metriche sono complementari — nessuna sussume l'altra:
 
 `distance` cattura la somiglianza aritmetica (quali primi condividono),
 `structural_distance` cattura la somiglianza morfologica (che forma hanno).
+
+### Proprietà metriche
+
+Entrambe le distanze soddisfano le proprietà di una metrica:
+- `d(a,a) = 0`
+- `d(a,b) = d(b,a)` — simmetria
+- `d(a,c) <= d(a,b) + d(b,c)` — disuguaglianza triangolare
+
+### Relazione tra le due distanze
+
+`dist >= sdist` nella quasi totalità dei casi. Le eccezioni si verificano quando un PET è **sottostruttura ricorsiva** dell'altro — al primo livello (un PET ha più primi) o in profondità (un esponente è esteso ricorsivamente).
+
+In questi casi `dist` è piccola (condividono quasi tutti i primi) ma `sdist` è grande (le forme sono molto diverse).
