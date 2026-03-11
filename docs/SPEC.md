@@ -115,6 +115,37 @@ Un PET uniforme ha lo stesso numero di nodi a ogni livello.
 
 Esempi uniformi non lineari: `36 = 2^2·3^2` con profilo `[2,2]`, `72 = 2^3·3^2` con profilo `[2,2]`.
 
+### Invariante 3 — Squarefreeness
+
+Le seguenti condizioni sono equivalenti:
+
+- `is_squarefree(tree)` è vero
+- `recursive_mass(tree) == 0`
+- tutti i nodi sono al livello radice (nessun sottoalbero esponenziale)
+
+Un PET squarefree è un albero piatto: tutti gli esponenti della fattorizzazione sono `1`.
+
+Esempi: `2, 3, 6, 30, 42` — ma non `4 = 2^2`, `12 = 2^2·3`.
+
+### Invariante 4 — Espansione
+
+Le seguenti condizioni sono equivalenti:
+
+- `is_expanding(tree)` è vero
+- `branch_profile(tree)[-1] > branch_profile(tree)[0]`
+- almeno un esponente nella fattorizzazione è composto con due o più fattori primi distinti
+
+Un PET espandente si allarga scendendo — proprietà rara (12 casi su 10000).
+
+Esempi: `64 = 2^6` (esponente `6=2·3`), `576 = 2^6·3^2`, `729 = 3^6`.
+
+### Relazioni tra invarianti
+
+- `is_linear` implica `is_level_uniform` (ma non viceversa)
+- `is_squarefree` e `is_linear` sono indipendenti (es. `6` è squarefree ma non lineare; `4` è lineare ma non squarefree)
+- `is_expanding` è incompatibile con `is_linear` (un albero espandente non può essere una catena)
+- `is_squarefree` è incompatibile con `is_expanding` (se tutti gli esponenti sono `1`, nessun sottoalbero può ramificarsi)
+
 ### Nota
 
 Questi invarianti emergono dalla struttura ricorsiva di PET e non hanno
