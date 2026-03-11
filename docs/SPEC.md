@@ -186,3 +186,46 @@ Famiglie identificate fino a N = 500000:
 - `1/k` — catene di altezza `k` (profilo `[1,1,...,1]`)
 - `k/(k+1)` — profilo `[k,1]`, converge a `1`
 - `k/(2k+1)` — profilo `[k,k,1]`, converge a `1/2`
+
+## Famiglie di leaf_ratio
+
+Il rapporto `leaf_count / node_count` appartiene a un insieme sparso e discreto di frazioni razionali.
+Le famiglie identificate seguono la forma generale `k / (p·k + 1)` dove `p >= 0`.
+
+### Famiglie accessibili (primi esempi raggiungibili)
+
+| p | formula | esempi di ratio | primo esempio | profilo tipico |
+|---|---|---|---|---|
+| 0 | `k/1` = `1` | `1` | N=2 | `[k]` |
+| 1 | `k/(k+1)` | `1/2, 2/3, 3/4, ...` | N=4 | `[k, 1]` |
+| 2 | `k/(2k+1)` | `1/3, 2/5, 3/7, ...` | N=16 | `[k, k, 1]` |
+| 3 | `k/(3k+1)` | `1/4, 2/7, ...` | N=65536 | `[k, k, k, 1]` |
+
+### Famiglie inaccessibili (primi esempi astronomici)
+
+Per `p >= 4`, le famiglie `k/(pk+1)` esistono teoricamente ma i loro primi esempi
+richiedono numeri della forma `2^(2^(2^...))` con profondità crescente —
+irraggiungibili per esplorazione diretta.
+
+Il primo esempio per `p=3, k=1` è già `N = 65536 = 2^16`.
+Il primo esempio per `p=4, k=1` richiederebbe `2^(2^(2^(2^(2^2)))) = 2^(2^65536)`,
+un numero con decine di migliaia di cifre.
+
+### Famiglie ibride
+
+Oltre alla serie principale, esistono ratio che non seguono la forma `k/(pk+1)`:
+
+| ratio | profilo | primo esempio |
+|---|---|---|
+| `3/8` | `[3, 3, 2]` | N=32400 |
+| `5/9` | `[5, 3, 1]` | N=277200 |
+| `4/7` | `[4, 2, 1]` | N=5040 |
+| `3/5` | `[3, 2]` | N=180 |
+| `5/8` | `[5, 2, 1]` | N=55440 |
+| `5/7` | `[5, 2]` | N=13860 |
+
+Questi ratio emergono da strutture miste in cui i livelli non sono uniformi.
+La loro classificazione completa è ancora aperta.
+
+### Nota
+La scarsità dei ratio accessibili è una conseguenza diretta della struttura ricorsiva di PET: ogni nuovo livello di profondità richiede esponenti che sono a loro volta numeri strutturalmente complessi, il cui primo esempio cresce in modo superesponenziale.
