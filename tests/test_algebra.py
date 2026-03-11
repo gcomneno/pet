@@ -71,3 +71,25 @@ def test_graft_self_squarefree():
     for n in squarefree:
         result = graft(encode(n), encode(n))
         assert decode(result) == n ** n, f"failed for n={n}"
+
+
+def graft_formula(n: int, k: int) -> int:
+    """Recursive formula for decode(graft(PET(n), PET(k)))."""
+    factors = prime_factorization(n)
+    result = 1
+    for p, e in factors:
+        new_e = k if e == 1 else graft_formula(e, k)
+        result *= p ** new_e
+    return result
+
+
+def test_graft_recursive_formula():
+    """graft(PET(n), PET(k)) follows the recursive formula for all n."""
+    cases = [
+        (4, 2), (8, 2), (9, 2), (12, 2), (16, 2),
+        (24, 2), (27, 2), (36, 3), (48, 2), (72, 3),
+    ]
+    for n, k in cases:
+        actual = decode(graft(encode(n), encode(k)))
+        expected = graft_formula(n, k)
+        assert actual == expected, f"failed for n={n}, k={k}"
