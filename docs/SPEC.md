@@ -346,3 +346,34 @@ I Teoremi 1 e 2 sono casi speciali:
 
 Per `n` non squarefree il risultato di `graft` è sempre un intero valido, ma la corrispondenza con `n^k` o `n^n` non vale in generale.
 La struttura algebrica per i non-squarefree è ancora aperta.
+
+### Operazione: distance
+
+`distance(a, b)` misura la distanza strutturale tra due PET in termini di **coincidenza di primi**.
+
+- primi presenti in un solo albero contribuiscono con il loro intero node count
+- primi presenti in entrambi contribuiscono con la distanza ricorsiva tra i sottoalberi esponenziali
+- due foglie (`None`) hanno distanza `0`
+- `distance(a, a) = 0` per ogni PET
+
+### Operazione: structural_distance
+
+`structural_distance(a, b)` misura la distanza tra due PET ignorando i valori dei primi — confronta solo la **forma** dell'albero.
+
+- due PET hanno `structural_distance = 0` se e solo se sono isomorfi come alberi ordinati
+- `PET(4) = [(2,[(2,•)])]` e `PET(9) = [(3,[(2,•)])]` hanno `structural_distance = 0`
+
+### Relazione tra le due distanze
+
+Le due metriche sono complementari — nessuna sussume l'altra:
+
+| caso | distance | structural_distance |
+|---|---|---|
+| PET(2) vs PET(3) | 2 | 0 |
+| PET(4) vs PET(9) | 4 | 0 |
+| PET(12) vs PET(18) | 2 | 0 |
+| PET(2) vs PET(30) | 2 | 2 |
+| PET(4) vs PET(12) | 1 | 3 |
+
+`distance` cattura la somiglianza aritmetica (quali primi condividono),
+`structural_distance` cattura la somiglianza morfologica (che forma hanno).
