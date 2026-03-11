@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pet import PET
+
+
+def verticality_ratio(tree: "PET") -> float:
+    """Return the ratio height / node_count.
+
+    Ranges from 1.0 (perfectly linear chain) down toward 0.0
+    (wide, flat tree with many nodes at the same level).
+    """
+    from pet import height, node_count, validate
+    validate(tree)
+    return height(tree) / node_count(tree)
+
+
+def structural_asymmetry(tree: "PET") -> float:
+    """Return the standard deviation of the branch profile.
+
+    A value of 0.0 means the tree has the same number of nodes
+    at every level (perfectly uniform). Higher values indicate
+    irregular, asymmetric branching across levels.
+    """
+    from pet import branch_profile, validate
+    validate(tree)
+
+    profile = branch_profile(tree)
+    n = len(profile)
+    if n <= 1:
+        return 0.0
+
+    mean = sum(profile) / n
+    variance = sum((x - mean) ** 2 for x in profile) / n
+    return variance ** 0.5
+
+
+def extended_metrics(tree: "PET") -> dict:
+    """Return all base metrics plus verticality_ratio and structural_asymmetry."""
+    from pet import metrics_dict
+    base = metrics_dict(tree)
+    base["verticality_ratio"] = verticality_ratio(tree)
+    base["structural_asymmetry"] = structural_asymmetry(tree)
+    return base
