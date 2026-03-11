@@ -229,3 +229,37 @@ La loro classificazione completa è ancora aperta.
 
 ### Nota
 La scarsità dei ratio accessibili è una conseguenza diretta della struttura ricorsiva di PET: ogni nuovo livello di profondità richiede esponenti che sono a loro volta numeri strutturalmente complessi, il cui primo esempio cresce in modo superesponenziale.
+
+## Confronto con famiglie aritmetiche note
+
+Le metriche PET sono state calcolate su quattro famiglie aritmetiche classiche per valutare il potere discriminante di PET rispetto alla teoria dei numeri tradizionale.
+
+### Primorials (2, 6, 30, 210, 2310, ...)
+
+Firma PET perfettamente uniforme:
+- `shape = point` per tutti
+- `height = 1`, `asym = 0.0`, `ratio = 1`
+
+Questo riflette il fatto che i primorials sono squarefree per costruzione (prodotto di primi distinti con esponente 1).
+PET li identifica istantaneamente, ma questo è equivalente al già noto criterio squarefree.
+
+### Numeri di Hamming (5-smooth)
+
+Nessuna firma PET coerente — mescola `point`, `linear`, `normal`.
+PET non li separa come famiglia distinta.
+
+### Numeri altamente composti
+
+Quasi tutti `shape = normal`, con `asym` e `ratio` crescenti all'aumentare di N.
+PET cattura la complessità strutturale crescente ma non li discrimina nettamente.
+
+### Numeri perfetti
+
+Troppo pochi per concludere (solo 4 noti e calcolabili).
+Nessuna firma PET comune identificata.
+
+### Conclusione
+
+PET separa nettamente solo i Primorials — ma questo coincide con la proprietà squarefree già nota. Per le altre famiglie, PET descrive la morfologia ma non offre discriminazione aggiuntiva rispetto alla fattorizzazione classica.
+
+Il valore di PET resta negli invarianti strutturali scoperti e nella rappresentazione ricorsiva canonica. PET-Algebra potrebbe essere il livello dove emerge potere classificatorio genuinamente nuovo.
