@@ -312,6 +312,21 @@ Per ogni intero `n` squarefree:
 
 L'autoinnesto di un PET squarefree produce `n^n`.
 
+### Corollario del Teorema 2 — graft iterato
+
+Definiamo il graft iterato `g^k(n)` come:
+- `g^0(n) = n`
+- `g^k(n) = graft(g^(k-1)(n), PET(n))`
+
+Per ogni `n` squarefree:
+
+> `decode(g^k(n)) = n^(n^(n^...))` — torre di potenze di altezza `k+1`
+
+Esempi per `n=2`:
+- `g^0(2) = 2`
+- `g^1(2) = 4 = 2^2`
+- `g^2(2) = 16 = 2^(2^2)`
+
 ### Teorema 3 — graft ricorsivo (caso generale)
 
 Per ogni `n >= 2` e `k >= 2`:
