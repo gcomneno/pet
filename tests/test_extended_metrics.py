@@ -7,7 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pet import encode
-from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding
+from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding, is_squarefree
 
 
 @pytest.mark.parametrize("n, expected_vr, expected_sa", [
@@ -79,3 +79,18 @@ def test_is_level_uniform(n, expected):
 def test_is_expanding(n, expected):
     tree = encode(n)
     assert is_expanding(tree) == expected, f"is_expanding failed for {n}"
+
+
+@pytest.mark.parametrize("n, expected", [
+    (2,   True),   # primo
+    (6,   True),   # 2*3
+    (30,  True),   # 2*3*5
+    (42,  True),   # 2*3*7
+    (4,   False),  # 2^2
+    (12,  False),  # 2^2 * 3
+    (72,  False),  # 2^3 * 3^2
+    (360, False),  # 2^3 * 3^2 * 5
+])
+def test_is_squarefree(n, expected):
+    tree = encode(n)
+    assert is_squarefree(tree) == expected, f"is_squarefree failed for {n}"

@@ -76,3 +76,15 @@ def is_expanding(tree: "PET") -> bool:
     validate(tree)
     profile = branch_profile(tree)
     return len(profile) >= 2 and profile[-1] > profile[0]
+
+
+def is_squarefree(tree: "PET") -> bool:
+    """Return True if the PET has recursive_mass == 0.
+
+    Equivalent to: all exponents in the factorization are 1,
+    i.e. the number is squarefree.
+    All nodes in the tree are at depth 0 (root level only).
+    """
+    from pet import recursive_mass, validate
+    validate(tree)
+    return recursive_mass(tree) == 0
