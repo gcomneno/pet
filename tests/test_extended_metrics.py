@@ -7,7 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pet import encode
-from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio
+from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
 from fractions import Fraction
 
 
@@ -111,3 +111,21 @@ def test_is_squarefree(n, expected):
 def test_leaf_ratio(n, expected):
     tree = encode(n)
     assert leaf_ratio(tree) == expected, f"leaf_ratio failed for {n}"
+
+
+@pytest.mark.parametrize("n, expected", [
+    (2,    'point'),     # singolo nodo
+    (30,   'point'),     # squarefree a 3 fattori, height=1
+    (16,   'linear'),    # [1,1,1]
+    (256,  'linear'),    # [1,1,1]
+    (12,   'normal'),    # [2,1]
+    (360,  'normal'),    # [3,2]
+    (900,  'normal'),    # [3,3]
+    (64,   'expanding'), # [1,2]
+    (576,  'expanding'), # [2,3]
+    (4096, 'bell'),      # [1,2,1]
+    (5184, 'bell'),      # [2,3,1]
+])
+def test_profile_shape(n, expected):
+    tree = encode(n)
+    assert profile_shape(tree) == expected, f"profile_shape failed for {n}"

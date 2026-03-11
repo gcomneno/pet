@@ -103,3 +103,30 @@ def leaf_ratio(tree: "PET"):
     from pet import leaf_count, node_count, validate
     validate(tree)
     return Fraction(leaf_count(tree), node_count(tree))
+
+
+def profile_shape(tree: "PET") -> str:
+    """Classify the morphology of the branch profile.
+
+    Returns one of:
+    - 'point'      — single node (height 1)
+    - 'linear'     — all levels have exactly 1 node
+    - 'expanding'  — last level has more nodes than first
+    - 'bell'       — peak is at an internal level (not first or last)
+    - 'normal'     — none of the above (typical contracting shape)
+    """
+    from pet import branch_profile, validate
+    validate(tree)
+    profile = branch_profile(tree)
+
+    if len(profile) == 1:
+        return 'point'
+    if all(x == 1 for x in profile):
+        return 'linear'
+    if profile[-1] > profile[0]:
+        return 'expanding'
+    if len(profile) >= 3:
+        peak = max(range(len(profile)), key=lambda i: profile[i])
+        if 0 < peak < len(profile) - 1:
+            return 'bell'
+    return 'normal'
