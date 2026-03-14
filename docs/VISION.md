@@ -2,153 +2,171 @@
 
 ## Overview
 
-PET, **Prime Exponent Tree**, nasce come un modo canonico e ricorsivo per rappresentare gli interi positivi `N >= 2` attraverso la loro fattorizzazione prima e la struttura interna dei loro esponenti.
+PET, **Prime Exponent Tree**, is a canonical recursive representation of positive integers `N >= 2` based on prime factorization and the internal structure of exponents.
 
-L’idea centrale è semplice:
-- ogni intero si fattorizza in primi
-- ogni esponente viene a sua volta rappresentato con la stessa logica
-- il risultato è un albero canonico
-- la rappresentazione è esatta, invertibile e serializzabile
+The core idea is simple:
+- every integer factorizes into primes
+- each exponent is represented recursively using the same logic
+- the result is a canonical tree
+- the representation is invertible and lossless
 
-PET non vuole sostituire l’aritmetica classica.
-Vuole invece offrire una **nuova prospettiva strutturale** sugli interi.
+PET does not aim to replace classical arithmetic.
+Instead, it offers a **structural perspective** on integers.
 
 ---
 
-## Visione generale
+## General vision
 
-PET può essere visto come un progetto a **tre livelli distinti**:
+PET can be understood as a project with **three distinct layers**:
 1. **PET-Base**
 2. **PET-Metrics**
 3. **PET-Algebra**
 
-Questa separazione è importante per evitare confusione tra:
-- rappresentazione canonica
-- misurazione della struttura
-- operazioni nuove sugli alberi
+This separation is important to avoid confusion between:
+- canonical representation
+- structural measurement
+- experimental operations on trees
 
 ---
 
 ## 1. PET-Base
-PET-Base è il nucleo rigoroso del progetto.
 
-Qui PET è definito come:
-- forma normale canonica degli interi `N >= 2`
-- basata sulla fattorizzazione prima unica
-- ricorsiva sugli esponenti
-- invertibile tramite `decode`
-- validabile
-- serializzabile in JSON
+PET-Base is the rigorous core of the project.
 
-### Obiettivo
-Rispondere alla domanda:
-> Qual è la rappresentazione PET canonica di questo intero?
+At this level, PET is defined as a canonical recursive representation of integers `N >= 2`:
+- grounded in unique prime factorization
+- recursive on exponents
+- invertible via `decode`
+- validatable at the implementation level
+- serializable in canonical JSON form
 
-### Proprietà fondamentali
-- **canonicità**: un solo PET per ogni intero
-- **esattezza**: il PET rappresenta esattamente il numero
-- **invertibilità**: dal PET si ricostruisce l’intero
-- **serializzabilità**: il PET può essere salvato e scambiato come dato strutturato
+### Objective
 
-### Ruolo
-PET-Base è la grammatica fondamentale del progetto.
-È il livello che deve restare il più possibile stabile, semplice e rigoroso.
+Answer the question:
+> What is the canonical PET representation of this integer?
+
+### Core properties
+
+- **canonicality**: the construction yields one PET for each integer
+- **invertibility**: the integer can be reconstructed from its PET
+- **losslessness**: the representation preserves all information needed for reconstruction
+
+### Format and implementation properties
+
+- **validatability**: the implementation can explicitly reject malformed or non-canonical PET documents
+- **serializability**: PET has a canonical JSON representation for storage and data exchange
+
+### Role
+
+PET-Base is the foundational grammar of the project.
+It should remain as stable, simple, and rigorous as possible.
 
 ---
 
 ## 2. PET-Metrics
-PET-Metrics studia la forma dei PET canonici.
 
-Una volta rappresentato un intero come albero, diventa naturale chiedersi:
-- quanto è profondo?
-- quanto è ramificato?
-- quanto è largo o stretto?
-- quanto è simmetrico?
-- quanto è complesso strutturalmente?
+PET-Metrics studies the shape of canonical PETs.
 
-### Obiettivo
-Usare PET come **lente morfologica** sugli interi.
+Once an integer is represented as a tree, natural questions follow:
+- how deep is it?
+- how branched is it?
+- how wide or narrow is it?
+- how symmetric is it?
+- how structurally complex is it?
 
-### Esempi di metriche iniziali
+### Objective
+
+Use PET as a **morphological lens** on integers.
+
+### Examples of initial metrics
+
 - `height`
 - `node_count`
 - `leaf_count`
 - `max_branching`
 - `verticality_ratio`
 
-### Esempi di metriche più promettenti
-- profilo di ramificazione per livello
-- massa esponenziale ricorsiva
-- asimmetria strutturale
+### Examples of more exploratory metrics
 
-### Ruolo
-Questo livello è il primo vero banco di prova del valore di PET.
+- branch profile by level
+- recursive exponential mass
+- structural asymmetry
 
-Se le metriche PET mostrano pattern non banali, allora PET smette di essere solo una codifica elegante e diventa uno strumento per classificare e confrontare interi in modo nuovo.
+### Role
+
+This layer is the first real test of PET's broader value.
+
+If PET metrics reveal non-trivial and reproducible patterns, PET can become more than an elegant encoding: it can become an exploratory tool for comparing families of integers structurally.
 
 ---
 
 ## 3. PET-Algebra
-PET-Algebra è il livello più sperimentale.
 
-Qui non ci si limita a rappresentare o misurare alberi, ma si esplorano **operazioni strutturali** sui PET.
+PET-Algebra is the most experimental layer.
 
-### Esempi di direzioni possibili
-- composizione di PET
-- innesto di un PET su foglie di un altro
-- sostituzione di sottoalberi
-- confronto strutturale
-- distanze tra PET
-- trasformazioni canoniche e non canoniche
+At this level, the goal is not only to represent or measure trees, but also to explore **structural operations** on PETs.
 
-### Obiettivo
-Studiare i PET come oggetti matematici attivi, non solo come rappresentazioni statiche.
+### Possible directions
 
-### Nota importante
-PET-Algebra non deve alterare PET-Base.
+- PET composition
+- grafting one PET onto leaves of another
+- subtree substitution
+- structural comparison
+- distances between PETs
+- canonical and non-canonical transformations
 
-La rappresentazione canonica di un intero deve restare separata dalle operazioni sperimentali sugli alberi.
-Per questo motivo gli innesti e le composizioni non fanno parte del PET canonico di base, ma di un livello successivo.
+### Objective
 
----
+Study PETs as active mathematical objects, not only as static representations.
 
-## Perché PET può avere valore
-PET non sembra, almeno per ora, una soluzione a un grande problema classico già noto.
+### Important note
 
-Il suo valore potenziale sta altrove:
-- offrire una **forma normale ricorsiva canonica**
-- rendere visibile la **morfologia esponenziale** degli interi
-- permettere la definizione di **invarianti strutturali**
-- generare **nuove domande** sugli interi
-- aprire la strada a una possibile **algebra strutturale degli alberi PET**
+PET-Algebra must not alter PET-Base.
 
-In questo senso, PET non è una nuova teoria dei numeri nel senso tradizionale, ma potrebbe diventare una **piattaforma per studiare la forma degli interi**.
+The canonical representation of an integer must remain separate from experimental operations on trees.
+For this reason, grafts and compositions do not belong to the canonical base layer, but to a later experimental one.
 
 ---
 
-## Roadmap concettuale
+## Why PET may be valuable
 
-### Fase A — consolidare PET-Base
-- definizione formale
-- formato JSON canonico
+PET does not appear, at least for now, to solve a major classical problem.
+
+Its potential value lies elsewhere:
+- offering a canonical recursive representation
+- making the exponential morphology of integers visible
+- supporting the definition and study of possible structural invariants
+- generating new questions about integers
+- opening the way to a possible structural algebra of PET trees
+
+In this sense, PET is not a new number theory in the traditional sense, but it may become a **platform for studying the shape of integers**.
+
+---
+
+## Conceptual roadmap
+
+### Phase A — consolidate PET-Base
+- formal definition
+- canonical JSON format
 - encode/decode
-- validazione robusta
+- robust validation
 
-### Fase B — esplorare PET-Metrics
-- definire metriche
-- confrontare famiglie di numeri
-- cercare pattern non banali
+### Phase B — explore PET-Metrics
+- define metrics
+- compare families of numbers
+- search for non-trivial patterns
 
-### Fase C — sperimentare PET-Algebra
-- innesti
-- composizioni
-- distanze
-- trasformazioni di alberi
+### Phase C — experiment with PET-Algebra
+- grafts
+- compositions
+- distances
+- tree transformations
 
 ---
 
-## Conclusione
-PET è una **buona infrastruttura concettuale**:
-- rigorosa nel nucleo
-- promettente nelle metriche
-- aperta a sviluppi algebrici
+## Conclusion
+
+PET is a conceptual framework with:
+- a rigorous core
+- a metric layer to validate empirically
+- an algebraic space that remains experimental

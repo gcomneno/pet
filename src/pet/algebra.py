@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pet import PET
+    from pet.core import PET
 
 
 def _graft(tree: "PET", scion: "PET") -> "PET":
@@ -37,7 +37,7 @@ def graft(tree: "PET", scion: "PET") -> "PET":
     Returns:
         A new canonical PET.
     """
-    from pet import validate
+    from pet.core import validate
     validate(tree)
     validate(scion)
     result = _graft(tree, scion)
@@ -91,7 +91,7 @@ def distance(a, b) -> int:
 
     The result is 0 if and only if the two PETs are identical.
     """
-    from pet import validate
+    from pet.core import validate
     validate(a)
     validate(b)
     return _tree_distance(a, b)
@@ -154,7 +154,7 @@ def structural_distance(a, b) -> int:
         PET(4) = [(2,[(2,•)])]  and  PET(9) = [(3,[(2,•)])]
         are structurally identical -> structural_distance = 0
     """
-    from pet import validate
+    from pet.core import validate
     validate(a)
     validate(b)
     return _structural_distance(_shape(a), _shape(b))

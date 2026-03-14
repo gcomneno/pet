@@ -1,6 +1,8 @@
 # PET — Prime Exponent Tree
 
-PET è un modello canonico per rappresentare ogni intero `N >= 2` come un albero ricorsivo basato sulla fattorizzazione prima e sulla struttura degli esponenti.
+PET è un modello per rappresentare ogni intero `N >= 2` come un albero ricorsivo basato sulla fattorizzazione prima e sulla struttura degli esponenti.
+
+La rappresentazione è progettata per essere canonica, invertibile e adatta alla serializzazione in JSON.
 
 ## Idea
 
@@ -17,12 +19,18 @@ PET applica la stessa idea ricorsivamente agli esponenti:
 - gli esponenti stanno nei sottoalberi
 - l'esponente `1` è rappresentato da una foglia terminale (`null` in JSON)
 
-## Proprietà
-- **canonico** — un solo PET per ogni intero
-- **esatto** — il PET rappresenta esattamente il numero
+## Proprietà del modello
+
+- **canonico** — la costruzione produce una rappresentazione unica per ogni intero `N >= 2`
 - **invertibile** — dal PET si ricostruisce l'intero senza perdita
-- **validabile** — forme non canoniche vengono rifiutate esplicitamente
-- **serializzabile** — il PET si salva e si scambia come JSON
+- **lossless** — il PET conserva tutta l'informazione necessaria per ricostruire il numero
+- **strutturale** — la rappresentazione rende esplicita la struttura ricorsiva degli esponenti
+
+## Proprietà del formato e dell'implementazione
+
+- **validabile** — l'implementazione può rifiutare esplicitamente documenti PET malformati o non canonici
+- **serializzabile** — il PET ha una rappresentazione JSON canonica per salvataggio e scambio dati
+- **render separato** — `render()` produce un output human-facing distinto dal formato JSON canonico
 
 ## Esempio
 
@@ -68,7 +76,8 @@ Esempio — `12 = 2^2 * 3`:
 ]
 ```
 
-Il formato JSON è **canonico e machine-facing**. La funzione `render()` produce invece un output **human-facing** non destinato allo scambio di dati.
+Il formato JSON definisce la rappresentazione canonica usata per serializzazione e scambio dati.
+La funzione `render()` produce invece una rappresentazione human-facing, non destinata allo scambio di dati.
 
 ## Installazione
 

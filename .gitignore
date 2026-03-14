@@ -8,3 +8,6 @@ __pycache__/
 *.tmp
 
 *.egg-info/
+
+data/
+*.jsonl

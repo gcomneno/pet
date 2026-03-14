@@ -116,7 +116,6 @@ def _node_count(tree: PET) -> int:
 
 
 def node_count(tree: PET) -> int:
-    """Return the total number of nodes in a valid PET."""
     validate(tree)
     return _node_count(tree)
 
@@ -132,7 +131,6 @@ def _leaf_count(tree: PET) -> int:
 
 
 def leaf_count(tree: PET) -> int:
-    """Return the total number of terminal nodes in a valid PET."""
     validate(tree)
     return _leaf_count(tree)
 
@@ -149,7 +147,6 @@ def _height(tree: PET) -> int:
 
 
 def height(tree: PET) -> int:
-    """Return the recursive height of a valid PET."""
     validate(tree)
     return _height(tree)
 
@@ -178,7 +175,6 @@ def _branch_profile(tree: PET, depth: int, counts: list[int]) -> None:
 
 
 def branch_profile(tree: PET) -> list[int]:
-    """Return the number of nodes at each recursive PET level."""
     validate(tree)
     counts: list[int] = []
     _branch_profile(tree, 0, counts)
@@ -186,19 +182,16 @@ def branch_profile(tree: PET) -> list[int]:
 
 
 def max_branching(tree: PET) -> int:
-    """Return the maximum number of nodes at any single PET level."""
     validate(tree)
     return _max_branching(tree)
 
 
 def recursive_mass(tree: PET) -> int:
-    """Return the number of nodes that belong to recursive exponent subtrees."""
     validate(tree)
     return node_count(tree) - len(tree)
 
 
 def metrics_dict(tree: PET) -> dict[str, Any]:
-    """Return the base structural metrics for a valid PET."""
     validate(tree)
     return {
         "node_count": node_count(tree),
@@ -211,7 +204,6 @@ def metrics_dict(tree: PET) -> dict[str, Any]:
 
 
 def render(tree: PET, indent: int = 0) -> str:
-    """Render a PET in a readable multiline format with proper commas."""
     pad = " " * indent
     lines = [pad + "["]
 
@@ -237,7 +229,6 @@ def render(tree: PET, indent: int = 0) -> str:
 
 
 def to_jsonable(tree: PET) -> list[dict[str, Any]]:
-    """Convert a PET into a JSON-serializable structure."""
     return [
         {
             "p": prime,
@@ -248,12 +239,10 @@ def to_jsonable(tree: PET) -> list[dict[str, Any]]:
 
 
 def to_json(tree: PET) -> str:
-    """Convert a PET into pretty-printed JSON."""
     return json.dumps(to_jsonable(tree), indent=2, ensure_ascii=False)
 
 
 def from_jsonable(data: Any) -> PET:
-    """Convert JSON-loaded data into internal PET representation."""
     if not isinstance(data, list) or not data:
         raise TypeError("JSON PET must be a non-empty list")
 
@@ -285,7 +274,6 @@ def from_jsonable(data: Any) -> PET:
 
 
 def load_json_file(path: str) -> PET:
-    """Load a PET from a JSON file."""
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return from_jsonable(data)
@@ -301,10 +289,10 @@ def main(argv: list[str]) -> int:
 
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
-    # encode (default)
+    # encode
     p_encode = subparsers.add_parser("encode", help="encode N into PET and print JSON")
     p_encode.add_argument("n", type=int, metavar="N")
-    p_encode.add_argument("--json", action="store_true", help="output only JSON")
+    p_encode.add_argument("--json", action="store_true")
 
     # decode
     p_decode = subparsers.add_parser("decode", help="decode a PET JSON file back to N")
@@ -321,7 +309,36 @@ def main(argv: list[str]) -> int:
     # metrics
     p_metrics = subparsers.add_parser("metrics", help="print structural metrics for N")
     p_metrics.add_argument("n", type=int, metavar="N")
-    p_metrics.add_argument("--json", action="store_true", help="output as JSON")
+    p_metrics.add_argument("--json", action="store_true")
+
+    # scan
+    p_scan = subparsers.add_parser("scan", help="scan range and output JSONL dataset")
+    p_scan.add_argument("start", type=int)
+    p_scan.add_argument("end", type=int)
+    p_scan.add_argument("--jsonl", required=True)
+
+    # atlas
+    p_atlas = subparsers.add_parser(
+        "atlas",
+        help="compute atlas statistics for a PET dataset",
+    )
+    p_atlas.add_argument("file", metavar="DATASET.jsonl")
+
+    # shape growth
+    p_growth = subparsers.add_parser(
+        "shapes-growth",
+        help="compute growth of PET structural shapes",
+    )
+    p_growth.add_argument("file", metavar="DATASET.jsonl")
+    p_growth.add_argument("--step", type=int, default=10000)
+
+    # shape generators
+    p_generators = subparsers.add_parser(
+        "shape-generators",
+        help="print the first integer generating each PET structural shape",
+    )
+    p_generators.add_argument("file", metavar="DATASET.jsonl")
+    p_generators.add_argument("--metrics", action="store_true")
 
     args = parser.parse_args(argv[1:])
 
@@ -335,7 +352,7 @@ def main(argv: list[str]) -> int:
                 print(f"N = {args.n}")
                 print(to_json(tree))
                 print(f"decoded = {back}")
-                
+
         elif args.command == "decode":
             tree = load_json_file(args.file)
             print(decode(tree))
@@ -357,6 +374,75 @@ def main(argv: list[str]) -> int:
                 print(f"N = {args.n}")
                 for key, value in metrics_dict(tree).items():
                     print(f"{key} = {value}")
+
+        elif args.command == "scan":
+            if args.start < 2:
+                raise ValueError("start must be >= 2")
+
+            if args.end < args.start:
+                raise ValueError("end must be >= start")
+
+            from .scan import scan_range, write_jsonl
+            records = scan_range(args.start, args.end)
+            write_jsonl(records, args.jsonl)
+
+        elif args.command == "atlas":
+            from .atlas import atlas, print_atlas
+            stats = atlas(args.file)
+            print_atlas(stats)
+
+        elif args.command == "shapes-growth":
+            from .shapes_growth import shapes_growth, print_growth, save_growth
+
+            data = shapes_growth(args.file, args.step)
+
+            print_growth(data)
+            save_growth(data)
+
+        elif args.command == "shape-generators":
+            import json
+            from .atlas import extract_shape, draw_shape
+
+            seen = set()
+            index = 0
+            generators = []
+
+            with open(args.file, "r", encoding="utf-8") as f:
+                for line in f:
+                    rec = json.loads(line)
+
+                    n = rec["n"]
+                    tree = rec["pet"]
+                    metrics = rec["metrics"]
+
+                    shape = extract_shape(tree)
+
+                    if shape not in seen:
+                        seen.add(shape)
+                        index += 1
+                        generators.append(n)
+
+                        print()
+                        print(f"shape {index}")
+                        print(f"generator: {n}")
+
+                        if args.metrics:
+                            print(
+                                "metrics:",
+                                f"nodes={metrics['node_count']}",
+                                f"height={metrics['height']}",
+                                f"max_branching={metrics['max_branching']}",
+                                f"recursive_mass={metrics['recursive_mass']}",
+                            )
+
+                        lines = draw_shape(shape, lines=[])
+
+                        for line in lines:
+                            print(line)
+
+            print()
+            print("generator sequence G(k):")
+            print(generators)
 
         else:
             parser.print_help()

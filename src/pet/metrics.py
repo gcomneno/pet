@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pet import PET
+    from pet.core import PET
 
 
 def verticality_ratio(tree: "PET") -> float:
@@ -12,7 +12,7 @@ def verticality_ratio(tree: "PET") -> float:
     Ranges from 1.0 (perfectly linear chain) down toward 0.0
     (wide, flat tree with many nodes at the same level).
     """
-    from pet import height, node_count, validate
+    from pet.core import height, node_count, validate
     validate(tree)
     return height(tree) / node_count(tree)
 
@@ -24,7 +24,7 @@ def structural_asymmetry(tree: "PET") -> float:
     at every level (perfectly uniform). Higher values indicate
     irregular, asymmetric branching across levels.
     """
-    from pet import branch_profile, validate
+    from pet.core import branch_profile, validate
     validate(tree)
 
     profile = branch_profile(tree)
@@ -39,7 +39,7 @@ def structural_asymmetry(tree: "PET") -> float:
 
 def extended_metrics(tree: "PET") -> dict:
     """Return all base metrics plus verticality_ratio and structural_asymmetry."""
-    from pet import metrics_dict
+    from pet.core import metrics_dict
     base = metrics_dict(tree)
     base["verticality_ratio"] = verticality_ratio(tree)
     base["structural_asymmetry"] = structural_asymmetry(tree)
@@ -48,7 +48,7 @@ def extended_metrics(tree: "PET") -> dict:
 
 def is_linear(tree: "PET") -> bool:
     """Return True if the PET is a pure linear chain (max_branching == 1)."""
-    from pet import max_branching, validate
+    from pet.core import max_branching, validate
     validate(tree)
     return max_branching(tree) == 1
 
@@ -59,7 +59,7 @@ def is_level_uniform(tree: "PET") -> bool:
     This is equivalent to structural_asymmetry == 0.0.
     Note: is_linear is the special case where max_branching == 1.
     """
-    from pet import branch_profile, validate
+    from pet.core import branch_profile, validate
     validate(tree)
     profile = branch_profile(tree)
     return len(set(profile)) == 1
@@ -72,7 +72,7 @@ def is_expanding(tree: "PET") -> bool:
     exponent subtree branches at the second level (i.e. the exponent
     itself has two or more distinct prime factors).
     """
-    from pet import branch_profile, validate
+    from pet.core import branch_profile, validate
     validate(tree)
     profile = branch_profile(tree)
     return len(profile) >= 2 and profile[-1] > profile[0]
@@ -85,7 +85,7 @@ def is_squarefree(tree: "PET") -> bool:
     i.e. the number is squarefree.
     All nodes in the tree are at depth 0 (root level only).
     """
-    from pet import recursive_mass, validate
+    from pet.core import recursive_mass, validate
     validate(tree)
     return recursive_mass(tree) == 0
 
@@ -100,7 +100,7 @@ def leaf_ratio(tree: "PET"):
     - k/(2k+1)  for two-level uniform trees (profile [k,k,1])
     """
     from fractions import Fraction
-    from pet import leaf_count, node_count, validate
+    from pet.core import leaf_count, node_count, validate
     validate(tree)
     return Fraction(leaf_count(tree), node_count(tree))
 
@@ -115,7 +115,7 @@ def profile_shape(tree: "PET") -> str:
     - 'bell'       — peak is at an internal level (not first or last)
     - 'normal'     — none of the above (typical contracting shape)
     """
-    from pet import branch_profile, validate
+    from pet.core import branch_profile, validate
     validate(tree)
     profile = branch_profile(tree)
 
