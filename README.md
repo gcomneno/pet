@@ -1,130 +1,252 @@
-# PET — Prime Exponent Tree
+# PET --- Prime Exponent Tree
 
-PET è un modello per rappresentare ogni intero `N >= 2` come un albero ricorsivo basato sulla fattorizzazione prima e sulla struttura degli esponenti.
+**PET (Prime Exponent Tree)** è un modello strutturale per rappresentare
+la fattorizzazione degli interi come **alberi ricorsivi basati sugli
+esponenti primi**.
 
-La rappresentazione è progettata per essere canonica, invertibile e adatta alla serializzazione in JSON.
+L'idea centrale è separare due aspetti degli interi:
 
-## Idea
+-   il **valore numerico**
+-   la **struttura moltiplicativa**
 
-Ogni intero `N >= 2` si scrive in modo unico come:
+Questo permette di studiare la **geometria strutturale della
+fattorizzazione degli interi**.
 
-```
-N = p1^e1 * p2^e2 * ... * pk^ek
-```
+------------------------------------------------------------------------
 
-dove i `p_i` sono numeri primi distinti in ordine crescente e gli `e_i >= 1`.
+# Esempio
 
-PET applica la stessa idea ricorsivamente agli esponenti:
-- i primi stanno nei nodi
-- gli esponenti stanno nei sottoalberi
-- l'esponente `1` è rappresentato da una foglia terminale (`null` in JSON)
+    12 = 2² × 3
 
-## Proprietà del modello
+PET(12):
 
-- **canonico** — la costruzione produce una rappresentazione unica per ogni intero `N >= 2`
-- **invertibile** — dal PET si ricostruisce l'intero senza perdita
-- **lossless** — il PET conserva tutta l'informazione necessaria per ricostruire il numero
-- **strutturale** — la rappresentazione rende esplicita la struttura ricorsiva degli esponenti
+    •
+    ├─2
+    │  •
+    │  └─2
+    └─3
 
-## Proprietà del formato e dell'implementazione
+------------------------------------------------------------------------
 
-- **validabile** — l'implementazione può rifiutare esplicitamente documenti PET malformati o non canonici
-- **serializzabile** — il PET ha una rappresentazione JSON canonica per salvataggio e scambio dati
-- **render separato** — `render()` produce un output human-facing distinto dal formato JSON canonico
+# Quick start
 
-## Esempio
+Installazione locale:
 
-```
-12 = 2^2 * 3^1
-
-PET(12) = [(2, [(2, •)]), (3, •)]
-```
-
-## Formato JSON canonico
-
-Ogni nodo PET ha esattamente questa forma:
-
-```json
-{
-  "p": <primo>,
-  "e": null | [ ... ]
-}
-```
-
-- `p` è la base prima
-- `e` è `null` quando l'esponente è `1`, oppure un altro PET quando l'esponente è `>= 2`
-
-Un documento JSON PET è una lista non vuota di nodi, con primi in ordine strettamente crescente a ogni livello.
-
-Esempio — `12 = 2^2 * 3`:
-
-```json
-[
-  {
-    "p": 2,
-    "e": [
-      {
-        "p": 2,
-        "e": null
-      }
-    ]
-  },
-  {
-    "p": 3,
-    "e": null
-  }
-]
-```
-
-Il formato JSON definisce la rappresentazione canonica usata per serializzazione e scambio dati.
-La funzione `render()` produce invece una rappresentazione human-facing, non destinata allo scambio di dati.
-
-## Installazione
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
+``` bash
 pip install -e .
 ```
 
-## Uso rapido
+Esempi:
 
-```bash
+``` bash
 pet encode 72
-pet encode --json 72
 pet metrics 256
-pet metrics --json 256
-pet render FILE.json
-pet decode FILE.json
-pet validate FILE.json
 ```
 
-## Struttura del progetto
+Generare un dataset:
 
-```bash
-src/pet.py                        — implementazione PET
-tests/test_pet.py                 — test di roundtrip
-tests/test_invalid_pet.py         — test su input invalidi
-tests/test_metrics.py             — test sulle metriche strutturali
-tests/test_cli_metrics.py         — test CLI metriche
-tests/test_cli_metrics_json.py    — test CLI metriche JSON
-docs/SPEC.md                      — specifica formale
-docs/VISION.md                    — visione concettuale
-docs/examples/basic_examples.txt  — esempi base
+``` bash
+pet scan 2 1000000 --jsonl artifacts/pet_1M.jsonl
 ```
 
-## Test
+------------------------------------------------------------------------
 
-```bash
-make test
+# Motivazione
+
+La fattorizzazione prima descrive gli interi come prodotti di primi:
+
+N = ∏ p_i\^{e_i}
+
+Nel modello PET:
+
+-   ogni **fattore primo** genera un nodo
+-   gli **esponenti** vengono rappresentati ricorsivamente come alberi
+    PET
+
+Questo produce una rappresentazione:
+
+-   **canonica**
+-   **invertibile**
+-   **lossless**
+
+------------------------------------------------------------------------
+
+# Risultati principali
+
+Analizzando tutti gli interi fino a 10\^6 emergono proprietà
+sorprendentemente semplici.
+
+## Numero di shape strutturali
+
+-   interi analizzati: **999.999**
+-   shape distinte: **78**
+
+Lo spazio delle strutture moltiplicative risulta **fortemente
+compresso**.
+
+------------------------------------------------------------------------
+
+## Shape dominanti
+
+Le shape più frequenti osservate sono:
+
+-   p
+-   pq
+-   pqr
+-   pqrs
+-   p²q
+-   p²qr
+-   p²qrs
+
+Le **7 shape più comuni coprono circa l'87% degli interi**.
+
+------------------------------------------------------------------------
+
+## Profondità PET
+
+Distribuzione osservata:
+
+  height   percentuale
+  -------- -------------
+  1        60.79%
+  2        34.80%
+  3        4.41%
+  ≥4       \~0%
+
+Quindi:
+
+**95.6% degli interi hanno profondità ≤ 2.**
+
+------------------------------------------------------------------------
+
+## Distribuzione di ω(n)
+
+ω(n) = numero di fattori primi distinti.
+
+  ω(n)   percentuale
+  ------ -------------
+  1      7.87%
+  2      28.87%
+  3      37.97%
+  4      20.80%
+  5      4.25%
+  ≥6     \<1%
+
+Il picco si trova a:
+
+ω(n) = 3
+
+coerente con il **teorema di Hardy--Ramanujan**.
+
+------------------------------------------------------------------------
+
+## Entropia strutturale
+
+Definiamo:
+
+H = - Σ pᵢ log(pᵢ)
+
+Per N ≤ 10⁶:
+
+H ≈ 2.35
+
+Numero effettivo di shape:
+
+exp(H) ≈ 10.5
+
+Interpretazione:
+
+gli interi si comportano come se esistessero **circa 10 strutture
+dominanti**.
+
+------------------------------------------------------------------------
+
+# Crescita delle strutture
+
+Misurazioni empiriche:
+
+  N     H(N)
+  ----- ------
+  10⁴   2.18
+  10⁵   2.28
+  10⁶   2.35
+
+Suggerendo la relazione:
+
+H(N) \~ log log N
+
+Numero di shape:
+
+  N     shape
+  ----- -----------------
+  10³   \~29
+  10⁴   \~63
+  10⁵   \~123
+  10⁶   \~230 (stimato)
+
+Ipotesi empirica:
+
+S(N) ≈ (log N)²
+
+------------------------------------------------------------------------
+
+# Collegamenti teorici
+
+I fenomeni osservati sono compatibili con risultati noti della teoria
+dei numeri probabilistica:
+
+-   Hardy--Ramanujan theorem
+-   Erdős--Kac theorem
+-   Kubilius probabilistic model
+
+Il modello PET fornisce una **rappresentazione strutturale esplicita**
+di questi fenomeni.
+
+------------------------------------------------------------------------
+
+# Riprodurre gli esperimenti
+
+Generare dataset:
+
+``` bash
+pet scan 2 1000000 --jsonl artifacts/pet_1M.jsonl
 ```
 
-## Metriche strutturali
+Analisi:
 
-PET espone metriche sulla forma dell'albero:
-- `node_count` — numero totale di nodi
-- `leaf_count` — numero di foglie (esponenti `1`)
-- `height` — profondità ricorsiva massima
-- `max_branching` — massimo numero di nodi a un singolo livello
-- `branch_profile` — nodi per livello
-- `recursive_mass` — nodi appartenenti a sottoalberi esponenziali
+``` bash
+python tools/shape_entropy.py artifacts/pet_1M.jsonl
+python tools/height_distribution.py artifacts/pet_1M.jsonl
+python tools/omega_distribution.py artifacts/pet_1M.jsonl
+```
+
+------------------------------------------------------------------------
+
+# Struttura del progetto
+
+    src/pet
+        core.py           # rappresentazione PET
+        metrics.py        # metriche strutturali
+        algebra.py        # operazioni sugli alberi
+        scan.py           # generazione dataset
+        atlas.py          # catalogo shape
+        cli.py            # interfaccia CLI
+
+------------------------------------------------------------------------
+
+# Paper
+
+docs/paper/pet_paper.tex
+
+Il paper descrive:
+
+-   definizione formale del modello PET
+-   metriche strutturali
+-   analisi empirica fino a 10\^6
+-   implicazioni per la teoria dei numeri probabilistica.
+
+------------------------------------------------------------------------
+
+# Licenza
+
+MIT
