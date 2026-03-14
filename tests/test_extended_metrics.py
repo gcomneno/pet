@@ -7,7 +7,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pet import encode
-from pet_metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
+from pet.metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
 from fractions import Fraction
 
 

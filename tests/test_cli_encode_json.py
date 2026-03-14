@@ -6,7 +6,7 @@ import sys
 
 def test_cli_encode_json():
     result = subprocess.run(
-        [sys.executable, "src/pet.py", "encode", "--json", "72"],
+        [sys.executable, "-m", "pet.cli", "encode", "--json", "72"],
         capture_output=True,
         text=True,
         check=True,

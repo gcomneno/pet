@@ -5,7 +5,7 @@ import sys
 
 def test_cli_metrics():
     result = subprocess.run(
-        [sys.executable, "src/pet.py", "metrics", "256"],
+        [sys.executable, "-m", "pet.cli", "metrics", "256"],
         capture_output=True,
         text=True,
         check=True,

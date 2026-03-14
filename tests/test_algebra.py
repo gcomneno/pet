@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pet import encode, decode, prime_factorization
-from pet_algebra import graft
+from pet.algebra import graft
 
 
 def is_squarefree(n: int) -> bool:

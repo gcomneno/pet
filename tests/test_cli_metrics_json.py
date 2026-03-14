@@ -6,7 +6,7 @@ import sys
 
 def test_cli_metrics_json():
     result = subprocess.run(
-        [sys.executable, "src/pet.py", "metrics", "--json", "256"],
+        [sys.executable, "-m", "pet.cli", "metrics", "--json", "256"],
         capture_output=True,
         text=True,
         check=True,

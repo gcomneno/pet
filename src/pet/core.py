@@ -5,6 +5,9 @@ import sys
 
 from typing import Any, List, Tuple, Union
 
+from .atlas import atlas, print_atlas, extract_shape, draw_shape
+from .shapes_growth import shapes_growth, print_growth, save_growth
+
 
 PETExp = Union[None, "PET"]
 PETNode = Tuple[int, PETExp]
@@ -376,33 +379,28 @@ def main(argv: list[str]) -> int:
                     print(f"{key} = {value}")
 
         elif args.command == "scan":
+            from .scan import scan_range, write_jsonl            
+
             if args.start < 2:
                 raise ValueError("start must be >= 2")
 
             if args.end < args.start:
                 raise ValueError("end must be >= start")
 
-            from .scan import scan_range, write_jsonl
             records = scan_range(args.start, args.end)
             write_jsonl(records, args.jsonl)
 
         elif args.command == "atlas":
-            from .atlas import atlas, print_atlas
             stats = atlas(args.file)
             print_atlas(stats)
 
         elif args.command == "shapes-growth":
-            from .shapes_growth import shapes_growth, print_growth, save_growth
-
             data = shapes_growth(args.file, args.step)
 
             print_growth(data)
             save_growth(data)
 
         elif args.command == "shape-generators":
-            import json
-            from .atlas import extract_shape, draw_shape
-
             seen = set()
             index = 0
             generators = []

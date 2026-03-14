@@ -20,7 +20,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pet import encode, PET
-from pet_algebra import distance, structural_distance
+from pet.algebra import distance, structural_distance
 
 # ── Famiglie ────────────────────────────────────────────────────────────────
 

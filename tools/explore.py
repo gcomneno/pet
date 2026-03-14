@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from pet import encode
-from pet_metrics import extended_metrics
+from pet.metrics import extended_metrics
 
 
 def explore(start: int, stop: int) -> None:
