@@ -9,5 +9,5 @@ __pycache__/
 
 *.egg-info/
 
-data/
+artifacts/
 *.jsonl
