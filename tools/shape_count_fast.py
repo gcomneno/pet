@@ -1,17 +1,16 @@
 import math
+from collections import defaultdict
 
 PRIMES = [
 2,3,5,7,11,13,17,19,23,29,
-31,37,41,43,47
+31,37,41,43,47,53,59,61,67,71,
+73,79,83,89,97
 ]
 
-# memo per evitare ricalcoli
 shape_cache = {}
 
 def shape_exp(e):
-    """
-    Shape PET dell'intero e (solo per esponenti)
-    """
+
     if e == 1:
         return None
 
@@ -39,9 +38,10 @@ def shape_exp(e):
     return s
 
 
-def count_shapes(N):
+def width_distribution(N):
 
     shapes = set()
+    width_counts = defaultdict(int)
 
     def dfs(i, last_exp, current_n, exps):
 
@@ -49,8 +49,12 @@ def count_shapes(N):
             return
 
         if exps:
+
             shape = tuple(sorted((shape_exp(e) for e in exps), key=str))
-            shapes.add(shape)
+
+            if shape not in shapes:
+                shapes.add(shape)
+                width_counts[len(exps)] += 1
 
         if i >= len(PRIMES):
             return
@@ -66,32 +70,18 @@ def count_shapes(N):
 
             dfs(i+1, e, new_n, exps + [e])
 
-    dfs(0, 60, 1, [])
+    max_e = int(math.log2(N)) + 1
+    dfs(0, max_e, 1, [])
 
-    return len(shapes)
+    return shapes, width_counts
 
 
-targets = [
-10**6,
-10**7,
-10**8,
-10**9,
-10**10,
-10**11,
-10**12,
-10**13,
-10**14,
-10**15,
-10**16,
-10**17,
-10**18,
-10**19,
-10**20,
-10**21,
-10**22,
-10**23,
-10**24,
-]
+N = 10**24
 
-for N in targets:
-    print(N, count_shapes(N))
+shapes, width_counts = width_distribution(N)
+
+print("total shapes:", len(shapes))
+print()
+
+for w in sorted(width_counts):
+    print("width", w, width_counts[w])
