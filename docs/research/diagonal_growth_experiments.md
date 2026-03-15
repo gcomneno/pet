@@ -91,3 +91,34 @@ log(n_k) ~ sqrt(k / C)
 
 This indicates that the space of PET shapes behaves like a two–dimensional geometry in logarithmic scale.
 
+
+---
+
+## PET Diagonal Law
+
+Let n_k denote the minimal integer realizing the k-th PET shape.
+
+Empirical analysis of the generator sequence suggests the asymptotic relation
+
+log(n_k) ~ c √k
+
+with
+
+c ≈ 0.155
+
+Equivalently,
+
+n_k ~ exp(c √k)
+
+This law describes the growth of the minimal generators along the diagonal of the PET shape space.
+
+Combined with the empirical relation
+
+S(N) ~ C (log N)^2
+
+this implies
+
+S(n_k) ~ k
+
+meaning that the diagonal generators traverse the PET shape space approximately linearly.
+
