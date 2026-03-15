@@ -66,3 +66,28 @@ Thus:
 
 appear governed by the same log² geometry.
 
+
+---
+
+## PET Shape Growth Conjecture
+
+Let S(N) be the number of distinct PET shapes realized by integers n ≤ N.
+
+Empirical data up to N = 10^24 strongly suggests:
+
+S(N) ~ C (log N)^2
+
+with
+
+C ≈ 0.52
+
+Equivalently, if n_k denotes the minimal integer realizing the k-th PET shape,
+
+k ~ C (log n_k)^2
+
+or
+
+log(n_k) ~ sqrt(k / C)
+
+This indicates that the space of PET shapes behaves like a two–dimensional geometry in logarithmic scale.
+
