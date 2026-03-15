@@ -6,7 +6,6 @@ import sys
 from typing import Any, List, Tuple, Union
 
 from .atlas import atlas, print_atlas, extract_shape, draw_shape
-from .shapes_growth import shapes_growth, print_growth, save_growth
 
 
 PETExp = Union[None, "PET"]
