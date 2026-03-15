@@ -1,0 +1,68 @@
+# PET — Diagonal Growth Experiments
+
+Dataset:
+docs/paper/data/shape_first_occurrence.txt
+
+We study the growth of the generator sequence
+
+n_k = minimal integer realizing the k-th PET shape.
+
+Goal:
+understand the asymptotic law of n_k.
+
+---
+
+## Empirical observation
+
+From the dataset we observe:
+
+log(n_k) ≈ 0.15585 * sqrt(k) + 24.5129
+
+which implies
+
+n_k ≈ 4.424 × 10^10 · exp(0.15585 √k)
+
+The fit is extremely accurate for k ≥ 200.
+
+---
+
+## Empirical verification
+
+Example at k = 400
+
+Observed:
+
+log(n_400) = 27.6299
+
+Prediction:
+
+0.155852 * sqrt(400) + 24.5129  
+= 27.6299
+
+Relative error ≈ 0.0001%.
+
+The model matches the tail of the dataset almost perfectly.
+
+---
+
+## Geometric interpretation
+
+If
+
+log(n_k) ≈ c √k
+
+then
+
+k ≈ (log n_k)^2 / c^2
+
+This is consistent with the empirical shape count:
+
+S(N) ≈ (log N)^2
+
+Thus:
+
+• the number of PET shapes ≤ N  
+• the position of the minimal generator n_k  
+
+appear governed by the same log² geometry.
+
