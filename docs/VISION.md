@@ -29,6 +29,47 @@ This separation is important to avoid confusion between:
 
 ---
 
+## Operating principles
+
+PET is not intended as a replacement for classical number theory.
+
+Its role is narrower and more practical:
+PET is a **structural laboratory for integers**, built on the recursive behavior of exponents in prime factorization.
+
+The project should grow through disciplined accumulation of evidence, not through premature large claims.
+
+### Operational stance
+
+- **evidence before interpretation**  
+  Strong claims should follow explicit definitions, reproducible scans, and concrete examples.
+
+- **canonical core, exploratory layers**  
+  PET-Base should remain minimal, stable, and rigorous.  
+  PET-Metrics and PET-Algebra are the exploratory layers where structural phenomena can be measured and tested.
+
+- **local questions before global theories**  
+  PET should prioritize bounded, checkable, cumulative questions over broad and vague theoretical ambitions.
+
+- **structure matters**  
+  PET is useful not only for representing the value of an integer, but for exposing the recursive structural form induced by its exponents.
+
+- **every step should leave an artifact**  
+  Reports, reproducible datasets, examples, metrics, tools, and documented observations are preferred over abstract claims without operational residue.
+
+- **formalization follows observation**  
+  Empirical patterns may motivate conjectures, but conjectures should only be promoted when the observed signal is clear and reproducible.
+
+### Practical consequence
+
+In its current stage, PET should be treated primarily as:
+- a canonical representation system
+- a structural measurement framework
+- an empirical research environment for bounded and reproducible experiments
+
+Not as a complete new theory of integers.
+
+---
+
 ## 1. PET-Base
 
 PET-Base is the rigorous core of the project.
@@ -161,6 +202,33 @@ In this sense, PET is not a new number theory in the traditional sense, but it m
 - compositions
 - distances
 - tree transformations
+
+---
+
+## Claim discipline
+
+PET makes a deliberate distinction between:
+
+- **definitions and format choices**
+- **properties established by construction**
+- **implementation guarantees**
+- **architectural layering**
+- **research directions and conjectural interpretations**
+
+At the current stage:
+
+- the PET representation itself is part of the stable core:
+  canonical, deterministic, and invertible by construction
+
+- the JSON encoding is a project format decision:
+  machine-facing, explicit, and intentionally distinct from human-oriented rendering
+
+- validation and rejection of malformed non-canonical PET documents are implementation properties, not mathematical theorems
+
+- PET-Metrics and PET-Algebra remain exploratory layers:
+  useful for empirical study, but not to be confused with already-proved structural theory
+
+- broader claims about invariants, family classification, and structural algebra remain research directions unless explicitly promoted with evidence and formal justification
 
 ---
 
