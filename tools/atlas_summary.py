@@ -1,7 +1,13 @@
 import argparse
 import json
 import math
+import sys
 from collections import Counter
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from pet.atlas import extract_shape
 
 
 def normalize_shape(node_list):
@@ -40,7 +46,7 @@ def main():
             metrics = row["metrics"]
 
             total += 1
-            shapes[normalize_shape(row["pet"])] += 1
+            shapes[extract_shape(row["pet"])] += 1
             height_dist[metrics["height"]] += 1
             branching_dist[metrics["max_branching"]] += 1
 
