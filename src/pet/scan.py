@@ -8,9 +8,13 @@ def build_record(n: int) -> dict:
     tree = encode(n)
 
     return {
+        "schema_version": 1,
         "n": n,
         "pet": to_jsonable(tree),
         "metrics": metrics_dict(tree),
+        "meta": {
+            "pet_format": "canonical-json",
+        },
     }
 
 
