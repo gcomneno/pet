@@ -18,3 +18,9 @@ artifacts/
 .DS_Store
 .vscode/
 .idea/
+
+*.zst
+*.bin
+
+docs/research/*.zst
+docs/research/*.bin

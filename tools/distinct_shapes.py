@@ -1,4 +1,6 @@
 import json
+import sys
+
 from collections import Counter
 
 
@@ -15,10 +17,10 @@ def normalize(node_list):
 
     return tuple(sorted(shape, key=str))
 
-
 shapes = Counter()
 
-with open("./data/pet_1M.jsonl") as f:
+path = sys.argv[1]
+with open(path) as f:
     for line in f:
         row = json.loads(line)
 

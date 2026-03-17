@@ -521,3 +521,116 @@ ma cattura differenze reali e misurabili. Il potere discriminante è presente
 
 Gli strumenti di analisi sono in `tools/cluster_families.py` (famiglie originali)
 e `tools/cluster_families_disjoint.py` (famiglie disgiunte).
+
+## JSONL scan record schema (v1)
+
+The `pet scan` command produces one JSON object per line (JSONL).
+Each line represents one integer `n >= 2` together with its canonical PET
+encoding and structural analysis data.
+
+### Record model
+
+A scan record in schema v1 has the following top-level structure:
+
+```json
+{
+  "schema_version": 1,
+  "n": 72,
+  "pet": [
+    {"p": 2, "e": [{"p": 3, "e": null}]},
+    {"p": 3, "e": [{"p": 2, "e": null}]}
+  ],
+  "metrics": {
+    "node_count": 4,
+    "leaf_count": 2,
+    "height": 2,
+    "max_branching": 2,
+    "branch_profile": [2, 2],
+    "recursive_mass": 2
+  },
+  "meta": {
+    "pet_format": "canonical-json"
+  }
+}
+```
+
+### Required top-level fields
+
+- `schema_version`: integer schema version for compatibility tracking
+- `n`: represented integer, with `n >= 2`
+- `pet`: canonical PET JSON representation
+- `metrics`: required structural metrics object
+
+### Optional top-level fields
+
+- `labels`: derived structural classifiers
+- `meta`: descriptive non-structural metadata
+
+### PET field
+
+`pet` stores the canonical machine-facing PET JSON representation.
+
+A PET JSON value is:
+
+- a non-empty list
+- of objects with exactly the keys `p` and `e`
+- where `p` is a prime integer
+- and `e` is either `null` (for exponent `1`) or another PET JSON value
+
+This is the only normative structural representation in JSONL scan output.
+Human-oriented renderings are out of scope for the dataset schema.
+
+### Metrics field
+
+The `metrics` object contains these required fields in schema v1:
+
+- `node_count`: total number of PET nodes
+- `leaf_count`: number of leaves (`e = null`)
+- `height`: PET height in levels
+- `max_branching`: maximum width at any local node set
+- `branch_profile`: number of nodes per depth level
+- `recursive_mass`: number of non-root nodes
+
+All metric fields above are mandatory in schema v1.
+
+### Labels field
+
+If present, `labels` contains derived structural classifiers.
+
+Schema v1 reserves the following label names:
+
+- `is_linear`
+- `is_level_uniform`
+- `is_squarefree`
+- `is_expanding`
+- `profile_shape`
+
+These fields are derived convenience values, not the source of truth for PET structure.
+
+### Meta field
+
+If present, `meta` contains descriptive metadata about record encoding.
+
+Schema v1 defines:
+
+- `pet_format`: currently `"canonical-json"`
+
+Arithmetic metadata may be added later, but it is not part of the required base schema.
+
+### Stability and future evolution
+
+Schema v1 guarantees the naming and meaning of all required fields above.
+
+Compatibility rules:
+
+- new optional fields may be added without changing `schema_version`
+- removing or renaming required fields requires a new schema version
+- changing the meaning of a required field requires a new schema version
+- downstream consumers should ignore unknown optional fields
+
+### Example JSONL line
+
+```json
+{"schema_version":1,"n":72,"pet":[{"p":2,"e":[{"p":3,"e":null}]},{"p":3,"e":[{"p":2,"e":null}]}],"metrics":{"node_count":4,"leaf_count":2,"height":2,"max_branching":2,"branch_profile":[2,2],"recursive_mass":2},"meta":{"pet_format":"canonical-json"}}
+```
+
