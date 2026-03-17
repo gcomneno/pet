@@ -1,0 +1,96 @@
+# First reproducible PET metrics report (2..10000)
+
+## Scope
+
+This report summarizes a bounded empirical scan of PET representations for integers
+in the closed range `2..10000`.
+
+It is intended as a first reproducible report for PET metrics, with explicit inputs,
+generation path, and compact observations separated from interpretation.
+
+## Reproduction
+
+### Command
+
+    python3 -m src.pet.cli scan 2 10000 --jsonl docs/reports/data/scan-2-10000.jsonl
+
+### Output dataset
+
+- path: `docs/reports/data/scan-2-10000.jsonl`
+- record count: `9999`
+- schema: JSONL scan schema v1
+
+## Summary statistics
+
+### Height distribution
+
+| height | count |
+|---|---:|
+| 1 | 6082 |
+| 2 | 3477 |
+| 3 | 440 |
+
+### Maximum branching distribution
+
+| max_branching | count |
+|---|---:|
+| 1 | 1276 |
+| 2 | 4101 |
+| 3 | 3695 |
+| 4 | 894 |
+| 5 | 33 |
+
+### Other aggregate results
+
+| metric | value |
+|---|---:|
+| total records | 9999 |
+| records with `recursive_mass = 0` | 6082 |
+| maximum `node_count` | 7 |
+| first `n` with maximum `node_count` | 3600 |
+| maximum `height` | 3 |
+| first `n` with maximum `height` | 16 |
+| maximum `max_branching` | 5 |
+| first `n` with maximum `max_branching` | 2310 |
+
+## Concrete examples
+
+### First record reaching maximum height
+
+- `n = 16`
+- `height = 3`
+
+### First record reaching maximum branching
+
+- `n = 2310`
+- `max_branching = 5`
+
+### First record reaching maximum node count
+
+- `n = 3600`
+- `node_count = 7`
+
+## Observations
+
+1. Most PETs in `2..10000` are shallow: height `1` or `2` accounts for `9559 / 9999` records.
+
+2. Height `1` occurs exactly `6082` times, which matches the number of records with `recursive_mass = 0` in this dataset.
+
+3. The most common local branching values are `2` and `3`, while `max_branching = 5` is rare (`33` cases in `9999` records).
+
+4. The first record reaching maximum height is `16`, while the first record reaching maximum branching is `2310`, showing that depth and width peak on different inputs.
+
+5. The first record reaching the maximum observed `node_count` is `3600`, indicating that larger structural mass appears before the upper bound of the scan.
+
+## Interpretation and limits
+
+This report is descriptive only.
+
+It does not claim asymptotic laws, universality, or deep classification results.
+All observations above are bounded to the explicit range `2..10000` and depend on the current PET encoding and metric definitions.
+
+In particular:
+
+- the report is intended as a reproducible empirical baseline
+- it does not replace broader scans such as `2..10^5` or `2..10^6`
+- it does not prove that the observed distributions remain stable beyond this range
