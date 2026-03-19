@@ -32,21 +32,21 @@ PET(12):
 
 Installazione locale:
 
-``` bash
+```bash
 pip install -e .
 ```
 
 Esempi:
 
-``` bash
+```bash
 pet encode 72
 pet metrics 256
 ```
 
 Generare un dataset:
 
-``` bash
-pet scan 2 1000000 --jsonl artifacts/pet_1M.jsonl
+```bash
+pet scan 2 1000000 --jsonl docs/reports/data/scan-2-1000000.jsonl
 ```
 
 ------------------------------------------------------------------------
@@ -55,7 +55,7 @@ pet scan 2 1000000 --jsonl artifacts/pet_1M.jsonl
 
 La fattorizzazione prima descrive gli interi come prodotti di primi:
 
-N = ∏ p_i\^{e_i}
+N = ∏ p_i^{e_i}
 
 Nel modello PET:
 
@@ -71,182 +71,63 @@ Questo produce una rappresentazione:
 
 ------------------------------------------------------------------------
 
-# Risultati principali
+# Reproducible reports and workflows
 
-Analizzando tutti gli interi fino a 10\^6 emergono proprietà
-sorprendentemente semplici.
+Il progetto ora tiene i risultati empirici bounded in report dedicati,
+invece di lasciare nel README numeri e claim destinati a diventare stantii.
 
-## Numero di shape strutturali
+Entry point attuali:
 
--   interi analizzati: **999.999**
--   shape distinte: **78**
-
-Lo spazio delle strutture moltiplicative risulta **fortemente
-compresso**.
-
-------------------------------------------------------------------------
-
-## Shape dominanti
-
-Le shape più frequenti osservate sono:
-
--   p
--   pq
--   pqr
--   pqrs
--   p²q
--   p²qr
--   p²qrs
-
-Le **7 shape più comuni coprono circa l'87% degli interi**.
+-   `docs/SPEC.md` — formato, schema, metriche e contratti di comportamento
+-   `docs/STATUS.md` — cosa è definito, provato, empirico o ancora aperto
+-   `docs/reports/metrics-2-10000.md` — prima baseline riproducibile delle metriche
+-   `docs/reports/atlas-2-100000.md` — empirical atlas report per `2..100000`
+-   `docs/reports/atlas-2-1000000.md` — empirical atlas report per `2..1000000`
+-   `docs/reports/signatures-catalog-2-1000000.md` — primo catalogo di signature strutturali
+-   `docs/reports/families-benchmark-disjoint.md` — benchmark su famiglie classiche disgiunte
+-   `docs/reports/observation-pipeline.md` — vocabolario per observation, bounded empirical pattern, conjecture ed established statement
 
 ------------------------------------------------------------------------
 
-## Profondità PET
+# Riprodurre una bounded scan
 
-Distribuzione osservata:
+Generare un dataset JSONL:
 
-  height   percentuale
-  -------- -------------
-  1        60.79%
-  2        34.80%
-  3        4.41%
-  ≥4       \~0%
-
-Quindi:
-
-**95.6% degli interi hanno profondità ≤ 2.**
-
-------------------------------------------------------------------------
-
-## Distribuzione di ω(n)
-
-ω(n) = numero di fattori primi distinti.
-
-  ω(n)   percentuale
-  ------ -------------
-  1      7.87%
-  2      28.87%
-  3      37.97%
-  4      20.80%
-  5      4.25%
-  ≥6     \<1%
-
-Il picco si trova a:
-
-ω(n) = 3
-
-coerente con il **teorema di Hardy--Ramanujan**.
-
-------------------------------------------------------------------------
-
-## Entropia strutturale
-
-Definiamo:
-
-H = - Σ pᵢ log(pᵢ)
-
-Per N ≤ 10⁶:
-
-H ≈ 2.35
-
-Numero effettivo di shape:
-
-exp(H) ≈ 10.5
-
-Interpretazione:
-
-gli interi si comportano come se esistessero **circa 10 strutture
-dominanti**.
-
-------------------------------------------------------------------------
-
-# Crescita delle strutture
-
-Misurazioni empiriche:
-
-  N     H(N)
-  ----- ------
-  10⁴   2.18
-  10⁵   2.28
-  10⁶   2.35
-
-Suggerendo la relazione:
-
-H(N) \~ log log N
-
-Numero di shape:
-
-  N     shape
-  ----- -----------------
-  10³   \~29
-  10⁴   \~63
-  10⁵   \~123
-  10⁶   \~230 (stimato)
-
-Ipotesi empirica:
-
-S(N) ≈ (log N)²
-
-------------------------------------------------------------------------
-
-# Collegamenti teorici
-
-I fenomeni osservati sono compatibili con risultati noti della teoria
-dei numeri probabilistica:
-
--   Hardy--Ramanujan theorem
--   Erdős--Kac theorem
--   Kubilius probabilistic model
-
-Il modello PET fornisce una **rappresentazione strutturale esplicita**
-di questi fenomeni.
-
-------------------------------------------------------------------------
-
-# Riprodurre gli esperimenti
-
-Generare dataset:
-
-``` bash
-pet scan 2 1000000 --jsonl artifacts/pet_1M.jsonl
+```bash
+pet scan 2 1000000 --jsonl docs/reports/data/scan-2-1000000.jsonl
 ```
 
-Analisi:
+Riassumere una scan in stile atlas:
 
-``` bash
-python tools/shape_entropy.py artifacts/pet_1M.jsonl
-python tools/height_distribution.py artifacts/pet_1M.jsonl
-python tools/omega_distribution.py artifacts/pet_1M.jsonl
+```bash
+python tools/atlas_summary.py docs/reports/data/scan-2-1000000.jsonl
+```
+
+Ispezionare i generatori di shape con metriche:
+
+```bash
+python3 -m src.pet.cli shape-generators docs/reports/data/scan-2-1000000.jsonl --metrics
+```
+
+Eseguire il benchmark tra famiglie classiche:
+
+```bash
+python tools/cluster_families_disjoint.py
 ```
 
 ------------------------------------------------------------------------
 
-# Struttura del progetto
+# Note
 
-    src/pet
-        core.py           # rappresentazione PET
-        metrics.py        # metriche strutturali
-        algebra.py        # operazioni sugli alberi
-        scan.py           # generazione dataset
-        atlas.py          # catalogo shape
-        cli.py            # interfaccia CLI
+Le conclusioni forti non devono vivere nel README.
 
-------------------------------------------------------------------------
+Il README deve servire soprattutto come:
+- punto di ingresso rapido
+- guida minima d'uso
+- mappa dei documenti stabili
+- accesso ai workflow riproducibili
 
-# Paper
-
-docs/paper/pet_paper.tex
-
-Il paper descrive:
-
--   definizione formale del modello PET
--   metriche strutturali
--   analisi empirica fino a 10\^6
--   implicazioni per la teoria dei numeri probabilistica.
+Le osservazioni bounded, i benchmark e i cataloghi strutturali stanno nei
+report dedicati sotto `docs/reports/`.
 
 ------------------------------------------------------------------------
-
-# Licenza
-
-MIT
