@@ -96,6 +96,65 @@ Command:
 This workflow is currently script-output-backed: the report is derived from the
 benchmark script output rather than from a committed scan dataset.
 
+## Stable filenames and expected outputs
+
+### Scan step
+
+Command pattern:
+
+    python3 -m src.pet.cli scan <start> <end> --jsonl docs/reports/data/scan-<start>-<end>.jsonl
+
+Expected output:
+- committed JSONL dataset at `docs/reports/data/scan-<start>-<end>.jsonl`
+
+Stable filename pattern:
+- `scan-<start>-<end>.jsonl`
+
+### Atlas summary step
+
+Command pattern:
+
+    python3 tools/atlas_summary.py docs/reports/data/scan-<start>-<end>.jsonl > docs/reports/data/atlas-summary-<start>-<end>.txt
+
+Expected output:
+- derived summary text at `docs/reports/data/atlas-summary-<start>-<end>.txt`
+
+Stable filename pattern:
+- `atlas-summary-<start>-<end>.txt`
+
+### Atlas report step
+
+Expected output:
+- committed report at `docs/reports/atlas-<start>-<end>.md`
+
+Stable filename pattern:
+- `atlas-<start>-<end>.md`
+
+### Metrics baseline step
+
+Current canonical example:
+- dataset: `docs/reports/data/scan-2-10000.jsonl`
+- report: `docs/reports/metrics-2-10000.md`
+
+Expected output:
+- committed bounded metrics report
+
+Current stable filename:
+- `metrics-2-10000.md`
+
+### Family benchmark step
+
+Command pattern:
+
+    python3 tools/cluster_families_disjoint.py
+
+Expected output:
+- stdout from the benchmark script, to be used when preparing
+  `docs/reports/families-benchmark-disjoint.md`
+
+Current stable report filename:
+- `families-benchmark-disjoint.md`
+
 ### 5. Classify statements before promoting them
 
 Interpretation must follow `docs/reports/observation-pipeline.md`.
