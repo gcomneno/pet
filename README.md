@@ -80,6 +80,7 @@ Entry point attuali:
 
 -   `docs/SPEC.md` — formato, schema, metriche e contratti di comportamento
 -   `docs/STATUS.md` — cosa è definito, provato, empirico o ancora aperto
+-   `docs/reports/canonical-workflow.md` — workflow canonico del PET lab: dataset, summary, report e classificazione
 -   `docs/reports/metrics-2-10000.md` — prima baseline riproducibile delle metriche
 -   `docs/reports/atlas-2-100000.md` — empirical atlas report per `2..100000`
 -   `docs/reports/atlas-2-1000000.md` — empirical atlas report per `2..1000000`
