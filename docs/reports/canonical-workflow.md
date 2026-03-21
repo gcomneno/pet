@@ -64,6 +64,38 @@ Current bounded artifact families include:
 These artifacts must stay tied to explicit bounded inputs and must not be
 presented as general theory by default.
 
+### 4a. Metrics baseline workflow
+
+Canonical path:
+- generate a bounded scan dataset
+- publish a descriptive metrics report tied to that dataset
+
+Current example:
+- dataset: `docs/reports/data/scan-2-10000.jsonl`
+- report: `docs/reports/metrics-2-10000.md`
+
+Command:
+
+    python3 -m src.pet.cli scan 2 10000 --jsonl docs/reports/data/scan-2-10000.jsonl
+
+The metrics baseline is currently scan-backed rather than driven by a separate
+stable summary script.
+
+### 4b. Family benchmark workflow
+
+Primary helper:
+- `tools/cluster_families_disjoint.py`
+
+Current example:
+- report: `docs/reports/families-benchmark-disjoint.md`
+
+Command:
+
+    python3 tools/cluster_families_disjoint.py
+
+This workflow is currently script-output-backed: the report is derived from the
+benchmark script output rather than from a committed scan dataset.
+
 ### 5. Classify statements before promoting them
 
 Interpretation must follow `docs/reports/observation-pipeline.md`.
