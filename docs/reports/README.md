@@ -9,7 +9,7 @@ For the canonical end-to-end lab path, see:
 ## Directory structure
 
 - `docs/reports/` — committed bounded reports and workflow notes
-- `docs/reports/data/` — committed datasets and committed/derived summary artifacts used by bounded reports
+- `docs/reports/data/` — local generated datasets and local derived summary artifacts used to reproduce bounded reports under the current policy
 
 ## Report index
 
@@ -86,15 +86,15 @@ For the canonical end-to-end lab path, see:
 - associated dataset: references scan datasets and derived report artifacts
 - associated summary/tooling: `tools/atlas_summary.py`, `tools/cluster_families_disjoint.py`
 
-## Dataset and derived artifact index
+## Local dataset and derived artifact index
 
-### Committed scan datasets
+### Local generated scan datasets
 
 - `docs/reports/data/scan-2-10000.jsonl` — source dataset for `metrics-2-10000.md`
 - `docs/reports/data/scan-2-100000.jsonl` — source dataset for `atlas-2-100000.md`
 - `docs/reports/data/scan-2-1000000.jsonl` — source dataset for `atlas-2-1000000.md` and `signatures-catalog-2-1000000.md`
 
-### Committed atlas summaries
+### Local derived atlas summaries
 
 - `docs/reports/data/atlas-summary-2-100000.txt` — derived summary for `atlas-2-100000.md`
 - `docs/reports/data/atlas-summary-2-1000000.txt` — derived summary for `atlas-2-1000000.md`
