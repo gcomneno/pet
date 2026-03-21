@@ -105,7 +105,12 @@ Command pattern:
     python3 -m src.pet.cli scan <start> <end> --jsonl docs/reports/data/scan-<start>-<end>.jsonl
 
 Expected output:
-- committed JSONL dataset at `docs/reports/data/scan-<start>-<end>.jsonl`
+- local generated JSONL dataset at `docs/reports/data/scan-<start>-<end>.jsonl`
+
+Artifact status:
+- operator-side artifact
+- not expected to be present in a fresh clone
+- regenerated via the documented command pattern
 
 Stable filename pattern:
 - `scan-<start>-<end>.jsonl`
@@ -117,7 +122,12 @@ Command pattern:
     python3 tools/atlas_summary.py docs/reports/data/scan-<start>-<end>.jsonl > docs/reports/data/atlas-summary-<start>-<end>.txt
 
 Expected output:
-- derived summary text at `docs/reports/data/atlas-summary-<start>-<end>.txt`
+- local derived summary text at `docs/reports/data/atlas-summary-<start>-<end>.txt`
+
+Artifact status:
+- operator-side derived artifact
+- not expected to be present in a fresh clone
+- regenerated from the corresponding scan dataset
 
 Stable filename pattern:
 - `atlas-summary-<start>-<end>.txt`
