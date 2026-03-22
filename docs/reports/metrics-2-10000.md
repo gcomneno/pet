@@ -113,3 +113,20 @@ was observed to produce many repeated signatures across different integers, as e
 However, in empirical checks on the ranges `2..200`, `2..1000`, and `2..10000`, no collisions were found between **different unordered PET shapes** under this signature. All observed collisions corresponded only to permutations of sibling subtrees.
 
 This does **not** establish a general theorem. It is only an observational result for the tested ranges, but it supports the current canonical metric set as a compact descriptor of unordered PET structural shape.
+
+### Canonical metric signature vs atlas shape granularity
+
+In empirical checks on the range `2..10000`:
+
+- distinct canonical metric signatures: `33`
+- distinct unordered PET shapes: `33`
+- distinct ordered PET shapes (atlas structural shapes): `63`
+
+This suggests that, on the tested range, the canonical metric signature matches unordered PET structural shape exactly, while the atlas distinguishes a finer ordered-shape granularity.
+
+Equivalently:
+
+- canonical metrics act as a compact descriptor of **unordered** PET shape
+- the atlas captures a more detailed notion of **ordered** PET shape
+
+This is an empirical observation for the tested range, not a general proof.
