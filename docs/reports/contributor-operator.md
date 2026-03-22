@@ -44,6 +44,27 @@ Run the current canonical family benchmark:
 
     python3 tools/cluster_families_disjoint.py
 
+## Minimal smoke run
+
+A small bounded run can be used as a quick operator-side smoke check for the
+current scan + summary path.
+
+Example:
+
+    python3 -m src.pet.cli scan 2 5000 --jsonl docs/reports/data/scan-2-5000.jsonl
+    python3 tools/atlas_summary.py docs/reports/data/scan-2-5000.jsonl > docs/reports/data/atlas-summary-2-5000.txt
+
+Quick checks:
+
+    ls -lh docs/reports/data/scan-2-5000.jsonl
+    tail -n 3 docs/reports/data/scan-2-5000.jsonl
+    ls -lh docs/reports/data/atlas-summary-2-5000.txt
+    sed -n '1,120p' docs/reports/data/atlas-summary-2-5000.txt
+
+Notes:
+- these files are local operator-side artifacts under the current artifact policy
+- this is a smoke run for the bounded scan + summary workflow, not a committed report artifact by itself
+
 ## Tooling boundary
 
 Treat these as stable research tooling:
