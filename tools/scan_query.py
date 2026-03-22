@@ -18,6 +18,8 @@ ALLOWED_FIELDS = {
     "node_count",
     "recursive_mass",
     "branch_profile",
+    "average_leaf_depth",
+    "leaf_depth_variance",
 }
 
 WHERE_RE = re.compile(r"^(?P<field>[a-z_]+)(?P<op>>=|<=|=)(?P<value>.+)$")
@@ -42,6 +44,12 @@ def parse_value(field: str, raw: str) -> Any:
         if not isinstance(value, list) or not all(isinstance(x, int) for x in value):
             raise SystemExit(f"branch_profile must be a list of ints: {raw}")
         return value
+
+    if field in {"average_leaf_depth", "leaf_depth_variance"}:
+        try:
+            return float(raw)
+        except ValueError as exc:
+            raise SystemExit(f"Expected float value for {field}: {raw}") from exc
 
     try:
         return int(raw)

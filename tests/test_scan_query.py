@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import subprocess
 import sys
 
@@ -90,3 +91,40 @@ def test_scan_query_group_count_branch_profile(tmp_path):
     normalized = "\n".join(line.split() for line in [])
     assert "\n".join(" ".join(line.split()) for line in result.stdout.strip().splitlines()) == \
         "\n".join(" ".join(line.split()) for line in expected.strip().splitlines())
+
+
+def test_scan_query_filter_leaf_depth_variance_float(tmp_path):
+    jsonl_path = tmp_path / "scan.jsonl"
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "scan",
+            "2",
+            "100",
+            "--jsonl",
+            str(jsonl_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "tools/scan_query.py",
+            "filter",
+            str(jsonl_path),
+            "--where",
+            "leaf_depth_variance=1.0",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [48, 80]
