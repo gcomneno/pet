@@ -110,6 +110,6 @@ In exploratory checks on PET scan data, the canonical metric signature
 
 was observed to produce many repeated signatures across different integers, as expected for structural family-level descriptors.
 
-However, in empirical checks on the ranges `2..200` and `2..1000`, no collisions were found between **different unordered PET shapes** under this signature. All observed collisions corresponded only to permutations of sibling subtrees.
+However, in empirical checks on the ranges `2..200`, `2..1000`, and `2..10000`, no collisions were found between **different unordered PET shapes** under this signature. All observed collisions corresponded only to permutations of sibling subtrees.
 
 This does **not** establish a general theorem. It is only an observational result for the tested ranges, but it supports the current canonical metric set as a compact descriptor of unordered PET structural shape.
