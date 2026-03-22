@@ -155,6 +155,33 @@ un corrispondente diretto nella fattorizzazione prima classica.
 
 Le seguenti metriche sono definite in `src/pet_metrics.py` e operano su PET canonici validi.
 
+### Admission rule for canonical metrics
+
+A metric may be added to the canonical PET metric set only if all of the following hold:
+
+1. **Deterministic on canonical PETs**  
+   The metric must be a pure function of a valid canonical PET and must always return the same value for the same tree.
+
+2. **Independent from incidental representation details**  
+   The metric must not depend on serialization choices, implementation accidents, or traversal artifacts that do not carry structural meaning.
+
+3. **Semantically explicit**  
+   Its definition must be precise, compact, and understandable without relying on implementation-specific behavior.
+
+4. **Non-redundant**  
+   It must add structurally meaningful information that is not already captured well enough by the existing canonical metrics.
+
+5. **Empirically justified**  
+   It must help distinguish real observed PET families or notable cases, not only artificially constructed examples.
+
+6. **Generally useful**  
+   It must describe a recurring structural property of PETs, rather than a niche, ad hoc, or research-only curiosity.
+
+7. **Canonical-output worthy**  
+   Its value must be important enough to appear by default in the canonical metrics block, CLI metrics output, and scan JSONL records.
+
+Metrics that are informative but fail one or more of these criteria should remain in extended, research, or reporting layers rather than in the canonical metric set.
+
 ### Metriche scalari
 
 - `verticality_ratio(tree)` — rapporto `height / node_count`. Vale `1.0` per catene pure, tende a `0` per alberi piatti.
