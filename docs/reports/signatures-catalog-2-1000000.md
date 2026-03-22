@@ -11,6 +11,20 @@ height, maximum branching, recursive mass, and minimal realizer.
 
 The goal is descriptive stability, not complete classification.
 
+## Reproduction
+
+### Command
+
+    python3 -m src.pet.cli scan 2 1000000 --jsonl docs/reports/data/scan-2-1000000.jsonl
+
+### Input basis
+
+This catalog is based on bounded evidence from the scan dataset
+`docs/reports/data/scan-2-1000000.jsonl`.
+
+It also consolidates stable signature components already reused in current PET
+reports and code-facing descriptors.
+
 ## Proposed signature vocabulary
 
 A practical PET structural signature can be described by the tuple
@@ -51,6 +65,18 @@ The full `shape` is also stable as a prime-free rooted structure, but its human-
 
 Minimal realizers in this document are bounded empirical minima within `2..1000000`.
 They should be treated as reproducible observations, not as proofs of global minimality beyond the scanned range.
+
+## Observations
+
+1. The catalog does not attempt a full taxonomy of all PET forms; it isolates a
+   compact subset of signature components that already have stable descriptive use.
+
+2. `profile_shape`, `height`, `max_branching`, and `recursive_mass` already form
+   a practical bounded vocabulary for comparing PET structures across reports.
+
+3. Minimal realizers listed here are bounded empirical first occurrences within
+   `2..1000000`, so they are useful as reproducible reference points but not as
+   global minimality claims.
 
 ## Limits
 
