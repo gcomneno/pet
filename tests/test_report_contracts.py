@@ -11,6 +11,9 @@ REPORT_CONTRACTS = {
     "docs/reports/atlas-2-100000.md": {
         "kind": "scan+summary-backed",
     },
+    "docs/reports/atlas-2-1000000.md": {
+        "kind": "scan+summary-backed",
+    },
     "docs/reports/families-benchmark-disjoint.md": {
         "kind": "script-backed-benchmark",
     },
