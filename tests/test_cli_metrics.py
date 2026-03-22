@@ -20,6 +20,7 @@ def test_cli_metrics():
         "branch_profile = [1, 1, 1]",
         "recursive_mass = 2",
         "average_leaf_depth = 3.0",
+        "leaf_depth_variance = 0.0",
     ]
 
     assert result.stdout.strip().splitlines() == expected

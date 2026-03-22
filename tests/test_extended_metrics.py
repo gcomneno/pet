@@ -29,7 +29,7 @@ def test_extended_metrics_contains_all_keys():
     m = extended_metrics(tree)
     expected_keys = {
         "node_count", "leaf_count", "height", "max_branching",
-        "branch_profile", "recursive_mass", "average_leaf_depth",
+        "branch_profile", "recursive_mass", "average_leaf_depth", "leaf_depth_variance",
         "verticality_ratio", "structural_asymmetry",
     }
     assert set(m.keys()) == expected_keys

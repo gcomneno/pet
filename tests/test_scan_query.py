@@ -40,11 +40,11 @@ def test_scan_query_filter_height_and_branching(tmp_path):
         text=True,
     )
 
-    expected = """{"schema_version": 1, "n": 12, "pet": [{"p": 2, "e": [{"p": 2, "e": null}]}, {"p": 3, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5}, "meta": {"pet_format": "canonical-json"}}
-{"schema_version": 1, "n": 18, "pet": [{"p": 2, "e": null}, {"p": 3, "e": [{"p": 2, "e": null}]}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5}, "meta": {"pet_format": "canonical-json"}}
-{"schema_version": 1, "n": 20, "pet": [{"p": 2, "e": [{"p": 2, "e": null}]}, {"p": 5, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5}, "meta": {"pet_format": "canonical-json"}}
-{"schema_version": 1, "n": 24, "pet": [{"p": 2, "e": [{"p": 3, "e": null}]}, {"p": 3, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5}, "meta": {"pet_format": "canonical-json"}}
-{"schema_version": 1, "n": 28, "pet": [{"p": 2, "e": [{"p": 2, "e": null}]}, {"p": 7, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5}, "meta": {"pet_format": "canonical-json"}}
+    expected = """{"schema_version": 1, "n": 12, "pet": [{"p": 2, "e": [{"p": 2, "e": null}]}, {"p": 3, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5, "leaf_depth_variance": 0.25}, "meta": {"pet_format": "canonical-json"}}
+{"schema_version": 1, "n": 18, "pet": [{"p": 2, "e": null}, {"p": 3, "e": [{"p": 2, "e": null}]}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5, "leaf_depth_variance": 0.25}, "meta": {"pet_format": "canonical-json"}}
+{"schema_version": 1, "n": 20, "pet": [{"p": 2, "e": [{"p": 2, "e": null}]}, {"p": 5, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5, "leaf_depth_variance": 0.25}, "meta": {"pet_format": "canonical-json"}}
+{"schema_version": 1, "n": 24, "pet": [{"p": 2, "e": [{"p": 3, "e": null}]}, {"p": 3, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5, "leaf_depth_variance": 0.25}, "meta": {"pet_format": "canonical-json"}}
+{"schema_version": 1, "n": 28, "pet": [{"p": 2, "e": [{"p": 2, "e": null}]}, {"p": 7, "e": null}], "metrics": {"node_count": 3, "leaf_count": 2, "height": 2, "max_branching": 2, "branch_profile": [2, 1], "recursive_mass": 1, "average_leaf_depth": 1.5, "leaf_depth_variance": 0.25}, "meta": {"pet_format": "canonical-json"}}
 """
     assert result.stdout == expected
 

@@ -152,6 +152,14 @@ def average_leaf_depth(tree: PET) -> float:
     return sum(depths) / len(depths)
 
 
+def leaf_depth_variance(tree: PET) -> float:
+    validate(tree)
+    depths: list[int] = []
+    _collect_leaf_depths(tree, 1, depths)
+    mean = sum(depths) / len(depths)
+    return sum((depth - mean) ** 2 for depth in depths) / len(depths)
+
+
 def _height(tree: PET) -> int:
     child_heights = [
         _height(exp_repr)
@@ -218,6 +226,7 @@ def metrics_dict(tree: PET) -> dict[str, Any]:
         "branch_profile": branch_profile(tree),
         "recursive_mass": recursive_mass(tree),
         "average_leaf_depth": average_leaf_depth(tree),
+        "leaf_depth_variance": leaf_depth_variance(tree),
     }
 
 
