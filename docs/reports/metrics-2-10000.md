@@ -94,3 +94,22 @@ In particular:
 - the report is intended as a reproducible empirical baseline
 - it does not replace broader scans such as `2..10^5` or `2..10^6`
 - it does not prove that the observed distributions remain stable beyond this range
+
+### Metric-signature collision note
+
+In exploratory checks on PET scan data, the canonical metric signature
+
+- `node_count`
+- `leaf_count`
+- `height`
+- `max_branching`
+- `branch_profile`
+- `recursive_mass`
+- `average_leaf_depth`
+- `leaf_depth_variance`
+
+was observed to produce many repeated signatures across different integers, as expected for structural family-level descriptors.
+
+However, in empirical checks on the ranges `2..200` and `2..1000`, no collisions were found between **different unordered PET shapes** under this signature. All observed collisions corresponded only to permutations of sibling subtrees.
+
+This does **not** establish a general theorem. It is only an observational result for the tested ranges, but it supports the current canonical metric set as a compact descriptor of unordered PET structural shape.
