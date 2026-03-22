@@ -74,7 +74,7 @@ one-off analysis tools rather than stable workflow interfaces:
 - `tools/shape_first_occurrence.py`
 - `tools/shape_graph.py`
 - `tools/shapes_growth.py`
-- `tools/test_diagonal_ratio.py`
+- `tools/plot_diagonal_ratio.py`
 
 Common reasons:
 - not referenced by the current canonical workflow
