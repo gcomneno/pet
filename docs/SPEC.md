@@ -546,7 +546,9 @@ A scan record in schema v1 has the following top-level structure:
     "height": 2,
     "max_branching": 2,
     "branch_profile": [2, 2],
-    "recursive_mass": 2
+    "recursive_mass": 2,
+    "average_leaf_depth": 2.0,
+    "leaf_depth_variance": 0.0
   },
   "meta": {
     "pet_format": "canonical-json"
@@ -590,6 +592,8 @@ The `metrics` object contains these required fields in schema v1:
 - `max_branching`: maximum width at any local node set
 - `branch_profile`: number of nodes per depth level
 - `recursive_mass`: number of non-root nodes
+- `average_leaf_depth`: arithmetic mean of leaf depths, with root depth = 1
+- `leaf_depth_variance`: population variance of leaf depths
 
 All metric fields above are mandatory in schema v1.
 
@@ -631,6 +635,6 @@ Compatibility rules:
 ### Example JSONL line
 
 ```json
-{"schema_version":1,"n":72,"pet":[{"p":2,"e":[{"p":3,"e":null}]},{"p":3,"e":[{"p":2,"e":null}]}],"metrics":{"node_count":4,"leaf_count":2,"height":2,"max_branching":2,"branch_profile":[2,2],"recursive_mass":2},"meta":{"pet_format":"canonical-json"}}
+{"schema_version":1,"n":72,"pet":[{"p":2,"e":[{"p":3,"e":null}]},{"p":3,"e":[{"p":2,"e":null}]}],"metrics":{"node_count":4,"leaf_count":2,"height":2,"max_branching":2,"branch_profile":[2,2],"recursive_mass":2,"average_leaf_depth":2.0,"leaf_depth_variance":0.0},"meta":{"pet_format":"canonical-json"}}
 ```
 
