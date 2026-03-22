@@ -14,6 +14,9 @@ REPORT_CONTRACTS = {
     "docs/reports/families-benchmark-disjoint.md": {
         "kind": "script-backed-benchmark",
     },
+    "docs/reports/signatures-catalog-2-1000000.md": {
+        "kind": "scan-backed",
+    },
 }
 
 
