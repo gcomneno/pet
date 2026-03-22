@@ -39,6 +39,7 @@ def test_scan_jsonl_schema(tmp_path):
             "max_branching",
             "branch_profile",
             "recursive_mass",
+            "average_leaf_depth",
         }
 
     assert rows[0]["pet"] == [{"p": 2, "e": None}]
