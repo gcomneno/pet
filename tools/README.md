@@ -28,6 +28,8 @@ For the current tooling classification, see
 
 - `cluster_families.py` — related family-clustering tooling that is not part of
   the current canonical report-facing path
+- `scan_query.py` — small operator-side helper for filtering and grouped counts
+  over PET scan JSONL artifacts
 
 ## Exploratory / one-off tooling
 
