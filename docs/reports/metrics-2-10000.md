@@ -143,3 +143,12 @@ Observed summary on `2..50000`:
 So the current canonical metric signature remains a very strong descriptor of unordered PET shape, but it is **not** a complete identifier in general.
 
 This refines the earlier `2..10000` observation: the correspondence holds on that smaller tested range, but extremely rare counterexamples do appear beyond it.
+
+The first unordered-shape counterexample beyond `10000` is not explained by leaf-depth information loss alone. Instead, it reflects a finer difference in how branching and recursive mass are grouped across internal subtrees.
+
+In the observed counterexample, the current canonical metrics capture the same global depth/profile statistics, but they do not distinguish between:
+
+- a shape combining a dedicated fork subtree and a dedicated chain subtree
+- a shape where the same structural mass is grouped into a more locally mixed subtree pattern
+
+So the current canonical metric set captures global structural distribution very well, but it does not fully capture local subtree grouping.
