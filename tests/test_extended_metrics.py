@@ -143,6 +143,7 @@ def test_profile_shape(n, expected):
     (4096, 1.0),
     (36864, 1.0),
     (1073741824, 0.0),
+    (2176782336, 2.0),
 ])
 def test_subtree_mixing_score_small_cases(n, expected):
     tree = encode(n)
