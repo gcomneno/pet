@@ -154,3 +154,5 @@ In the observed counterexample, the current canonical metrics capture the same g
 So the current canonical metric set captures global structural distribution very well, but it does not fully capture local subtree grouping.
 
 In the broader `2..100000` check, the ambiguous unordered-shape signature still appears to be dominated by one recurring shape, while the alternative locally mixed shape was observed only once (`36864`) in the tested range.
+
+An experimental extended metric, `subtree_mixing_score`, was then added as a research-only probe for this blind spot. In its current form, it measures local child-subtree shape heterogeneity inside internal exponent subtrees. Empirically, it remains extremely sparse: on `2..10000` it is positive only for `4096`, and on `2..1000000` it is positive for `125` cases. In this first version it behaves more like a rare binary detector of local structural mixing than like a graded general-purpose metric, so it does **not** justify promotion into the canonical metric set at this stage.
