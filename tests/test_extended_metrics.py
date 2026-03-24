@@ -148,3 +148,20 @@ def test_profile_shape(n, expected):
 def test_subtree_mixing_score_small_cases(n, expected):
     tree = encode(n)
     assert subtree_mixing_score(tree) == expected, f"subtree_mixing_score failed for {n}"
+
+
+def test_subtree_mixing_score_separates_known_bad_signature_groups():
+    separated_examples = [5184, 25920, 129600]
+    mixed_examples = [36864, 184320, 921600]
+
+    for n in separated_examples:
+        tree = encode(n)
+        assert subtree_mixing_score(tree) == 0.0, (
+            f"expected separated-shape example {n} to have score 0.0"
+        )
+
+    for n in mixed_examples:
+        tree = encode(n)
+        assert subtree_mixing_score(tree) == 1.0, (
+            f"expected mixed-shape example {n} to have score 1.0"
+        )
