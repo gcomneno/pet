@@ -130,3 +130,16 @@ Equivalently:
 - the atlas captures a more detailed notion of **ordered** PET shape
 
 This is an empirical observation for the tested range, not a general proof.
+
+### Stress check beyond `10000`
+
+A broader empirical check on the range `2..50000` found the first counterexample to the correspondence between canonical metric signature and unordered PET shape.
+
+Observed summary on `2..50000`:
+
+- bad signature groups (same canonical metric signature, different unordered shapes): `1`
+- rows in bad signature groups: `4`
+
+So the current canonical metric signature remains a very strong descriptor of unordered PET shape, but it is **not** a complete identifier in general.
+
+This refines the earlier `2..10000` observation: the correspondence holds on that smaller tested range, but extremely rare counterexamples do appear beyond it.
