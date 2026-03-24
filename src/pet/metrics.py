@@ -37,12 +37,41 @@ def structural_asymmetry(tree: "PET") -> float:
     return variance ** 0.5
 
 
+def subtree_mixing_score(tree: "PET") -> float:
+    """Return an experimental score for local subtree mixing.
+
+    This is a research/extended metric, not part of the canonical metric set.
+    It is intended to explore whether locally mixed child-subtree structure
+    can distinguish rare collisions between different unordered PET shapes.
+    """
+    from pet.algebra import _shape
+    from pet.core import validate
+
+    validate(tree)
+
+    def _score(subtree: "PET") -> int:
+        total = 0
+
+        for _, exp_repr in subtree:
+            if exp_repr is None:
+                continue
+
+            child_shapes = [_shape(child_exp) for _, child_exp in exp_repr]
+            total += len(set(child_shapes)) - 1
+            total += _score(exp_repr)
+
+        return total
+
+    return float(_score(tree))
+
+
 def extended_metrics(tree: "PET") -> dict:
-    """Return all base metrics plus verticality_ratio and structural_asymmetry."""
+    """Return all base metrics plus extra/research metrics."""
     from pet.core import metrics_dict
     base = metrics_dict(tree)
     base["verticality_ratio"] = verticality_ratio(tree)
     base["structural_asymmetry"] = structural_asymmetry(tree)
+    base["subtree_mixing_score"] = subtree_mixing_score(tree)
     return base
 
 

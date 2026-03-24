@@ -6,9 +6,13 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from pet import encode
-from pet.metrics import extended_metrics, verticality_ratio, structural_asymmetry, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
 from fractions import Fraction
+from pet import encode
+from pet.metrics import extended_metrics, verticality_ratio, structural_asymmetry, subtree_mixing_score, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
 
 
 @pytest.mark.parametrize("n, expected_vr, expected_sa", [
@@ -30,7 +34,7 @@ def test_extended_metrics_contains_all_keys():
     expected_keys = {
         "node_count", "leaf_count", "height", "max_branching",
         "branch_profile", "recursive_mass", "average_leaf_depth", "leaf_depth_variance",
-        "verticality_ratio", "structural_asymmetry",
+        "verticality_ratio", "structural_asymmetry", "subtree_mixing_score",
     }
     assert set(m.keys()) == expected_keys
 
@@ -129,3 +133,17 @@ def test_leaf_ratio(n, expected):
 def test_profile_shape(n, expected):
     tree = encode(n)
     assert profile_shape(tree) == expected, f"profile_shape failed for {n}"
+
+
+@pytest.mark.parametrize("n, expected", [
+    (12, 0.0),
+    (72, 0.0),
+    (144, 0.0),
+    (360, 0.0),
+    (4096, 1.0),
+    (36864, 1.0),
+    (1073741824, 0.0),
+])
+def test_subtree_mixing_score_small_cases(n, expected):
+    tree = encode(n)
+    assert subtree_mixing_score(tree) == expected, f"subtree_mixing_score failed for {n}"
