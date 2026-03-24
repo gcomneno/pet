@@ -152,3 +152,5 @@ In the observed counterexample, the current canonical metrics capture the same g
 - a shape where the same structural mass is grouped into a more locally mixed subtree pattern
 
 So the current canonical metric set captures global structural distribution very well, but it does not fully capture local subtree grouping.
+
+In the broader `2..100000` check, the ambiguous unordered-shape signature still appears to be dominated by one recurring shape, while the alternative locally mixed shape was observed only once (`36864`) in the tested range.
