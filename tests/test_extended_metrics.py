@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from fractions import Fraction
 from pet import encode
-from pet.metrics import extended_metrics, verticality_ratio, structural_asymmetry, subtree_mixing_score, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
+from pet.metrics import extended_metrics, verticality_ratio, structural_asymmetry, subtree_mixing_score, has_root_mixed_simple_pattern, is_linear, is_level_uniform, is_expanding, is_squarefree, leaf_ratio, profile_shape
 
 
 @pytest.mark.parametrize("n, expected_vr, expected_sa", [
@@ -35,6 +35,7 @@ def test_extended_metrics_contains_all_keys():
         "node_count", "leaf_count", "height", "max_branching",
         "branch_profile", "recursive_mass", "average_leaf_depth", "leaf_depth_variance",
         "verticality_ratio", "structural_asymmetry", "subtree_mixing_score",
+        "has_root_mixed_simple_pattern",
     }
     assert set(m.keys()) == expected_keys
 
@@ -164,4 +165,27 @@ def test_subtree_mixing_score_separates_known_bad_signature_groups():
         tree = encode(n)
         assert subtree_mixing_score(tree) == 1.0, (
             f"expected mixed-shape example {n} to have score 1.0"
+        )
+
+def test_has_root_mixed_simple_pattern_matches_known_bad_signature_groups():
+    separated_examples = [5184, 25920, 129600]
+    mixed_examples = [36864, 184320, 921600]
+    orphan_positive_examples = [4096, 12288, 61440, 430080, 331776]
+
+    for n in separated_examples:
+        tree = encode(n)
+        assert has_root_mixed_simple_pattern(tree) is False, (
+            f"expected separated-shape example {n} not to match root mixed+simple pattern"
+        )
+
+    for n in mixed_examples:
+        tree = encode(n)
+        assert has_root_mixed_simple_pattern(tree) is True, (
+            f"expected mixed-shape example {n} to match root mixed+simple pattern"
+        )
+
+    for n in orphan_positive_examples:
+        tree = encode(n)
+        assert has_root_mixed_simple_pattern(tree) is False, (
+            f"expected orphan positive example {n} not to match root mixed+simple pattern"
         )

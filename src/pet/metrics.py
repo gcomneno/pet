@@ -65,6 +65,21 @@ def subtree_mixing_score(tree: "PET") -> float:
     return float(_score(tree))
 
 
+def has_root_mixed_simple_pattern(tree: "PET") -> bool:
+    """Return True for the root-level mixed+simple pattern linked to issue #46.
+
+    This is a research helper, not a canonical metric. It detects whether the
+    root shape contains both a simple child subtree ``(None,)`` and a mixed
+    child subtree ``(None, (None,))``.
+    """
+    from pet.algebra import _shape
+    from pet.core import validate
+
+    validate(tree)
+    shape = _shape(tree)
+    return (None,) in shape and (None, (None,)) in shape
+
+
 def extended_metrics(tree: "PET") -> dict:
     """Return all base metrics plus extra/research metrics."""
     from pet.core import metrics_dict
@@ -72,6 +87,7 @@ def extended_metrics(tree: "PET") -> dict:
     base["verticality_ratio"] = verticality_ratio(tree)
     base["structural_asymmetry"] = structural_asymmetry(tree)
     base["subtree_mixing_score"] = subtree_mixing_score(tree)
+    base["has_root_mixed_simple_pattern"] = has_root_mixed_simple_pattern(tree)
     return base
 
 
