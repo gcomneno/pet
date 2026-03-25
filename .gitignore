@@ -25,3 +25,7 @@ artifacts/
 docs/research/*.zst
 docs/research/*.bin
 docs/reports/data/
+
+.mypy_cache
+.pytest_cache
+
