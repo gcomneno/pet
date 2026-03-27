@@ -5,13 +5,11 @@ from .core import (
     average_leaf_depth,
     leaf_depth_variance,
     branch_profile,
-    cli,
     decode,
     encode,
     height,
     is_prime,
     leaf_count,
-    main,
     max_branching,
     metrics_dict,
     node_count,
@@ -26,6 +24,17 @@ from .io import (
     to_json,
     to_jsonable,
 )
+
+
+def main(argv=None):
+    from .cli import main as _main
+    return _main(argv)
+
+
+def cli():
+    from .cli import cli as _cli
+    return _cli()
+
 
 __all__ = [
     "PET",
