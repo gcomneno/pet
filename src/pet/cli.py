@@ -5,6 +5,7 @@ import json
 import sys
 
 from .atlas import atlas, draw_shape, extract_shape, print_atlas
+from .algebra import distance, structural_distance
 from .core import decode, encode, metrics_dict, validate
 from .io import load_json_file, render, to_json
 from .metrics import extended_metrics
@@ -37,6 +38,15 @@ def main(argv: list[str] | None = None) -> int:
     # validate
     p_validate = subparsers.add_parser("validate", help="validate a PET JSON file")
     p_validate.add_argument("file", metavar="FILE.json")
+
+    # compare
+    p_compare = subparsers.add_parser(
+        "compare",
+        help="compare two integers via PET distance and structural distance",
+    )
+    p_compare.add_argument("n1", type=int, metavar="N1")
+    p_compare.add_argument("n2", type=int, metavar="N2")
+    p_compare.add_argument("--json", action="store_true")
 
     # metrics
     p_metrics = subparsers.add_parser("metrics", help="print structural metrics for N")
@@ -97,6 +107,26 @@ def main(argv: list[str] | None = None) -> int:
             tree = load_json_file(args.file)
             validate(tree)
             print("OK")
+
+        elif args.command == "compare":
+            tree1 = encode(args.n1)
+            tree2 = encode(args.n2)
+            data = {
+                "n1": args.n1,
+                "n2": args.n2,
+                "distance": distance(tree1, tree2),
+                "structural_distance": structural_distance(tree1, tree2),
+                "same_shape": structural_distance(tree1, tree2) == 0,
+            }
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(f"N1 = {args.n1}")
+                print(f"N2 = {args.n2}")
+                for key, value in data.items():
+                    if key in {"n1", "n2"}:
+                        continue
+                    print(f"{key} = {value}")
 
         elif args.command == "metrics":
             tree = encode(args.n)
