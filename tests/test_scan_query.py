@@ -128,3 +128,39 @@ def test_scan_query_filter_leaf_depth_variance_float(tmp_path):
 
     rows = [json.loads(line) for line in result.stdout.splitlines()]
     assert [row["n"] for row in rows] == [48, 80]
+
+
+def test_scan_query_rejects_branch_profile_ordering_operator(tmp_path):
+    jsonl_path = tmp_path / "scan.jsonl"
+
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "scan",
+            "2",
+            "30",
+            "--jsonl",
+            str(jsonl_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "tools/scan_query.py",
+            "filter",
+            str(jsonl_path),
+            "--where",
+            "branch_profile>=[2,1]",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "branch_profile only supports '='" in result.stderr
