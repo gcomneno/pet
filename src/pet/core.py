@@ -351,14 +351,6 @@ def main(argv: list[str]) -> int:
     )
     p_atlas.add_argument("file", metavar="DATASET.jsonl")
 
-    # shape growth
-    p_growth = subparsers.add_parser(
-        "shapes-growth",
-        help="compute growth of PET structural shapes",
-    )
-    p_growth.add_argument("file", metavar="DATASET.jsonl")
-    p_growth.add_argument("--step", type=int, default=10000)
-
     # shape generators
     p_generators = subparsers.add_parser(
         "shape-generators",
@@ -417,12 +409,6 @@ def main(argv: list[str]) -> int:
         elif args.command == "atlas":
             stats = atlas(args.file)
             print_atlas(stats)
-
-        elif args.command == "shapes-growth":
-            data = shapes_growth(args.file, args.step)
-
-            print_growth(data)
-            save_growth(data)
 
         elif args.command == "shape-generators":
             seen = set()
