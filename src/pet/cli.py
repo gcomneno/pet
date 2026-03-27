@@ -7,6 +7,7 @@ import sys
 from .atlas import atlas, draw_shape, extract_shape, print_atlas
 from .core import decode, encode, metrics_dict, validate
 from .io import load_json_file, render, to_json
+from .metrics import extended_metrics
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -41,6 +42,14 @@ def main(argv: list[str] | None = None) -> int:
     p_metrics = subparsers.add_parser("metrics", help="print structural metrics for N")
     p_metrics.add_argument("n", type=int, metavar="N")
     p_metrics.add_argument("--json", action="store_true")
+
+    # extended metrics
+    p_xmetrics = subparsers.add_parser(
+        "xmetrics",
+        help="print extended/research metrics for N",
+    )
+    p_xmetrics.add_argument("n", type=int, metavar="N")
+    p_xmetrics.add_argument("--json", action="store_true")
 
     # scan
     p_scan = subparsers.add_parser("scan", help="scan range and output JSONL dataset")
@@ -96,6 +105,16 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 print(f"N = {args.n}")
                 for key, value in metrics_dict(tree).items():
+                    print(f"{key} = {value}")
+
+        elif args.command == "xmetrics":
+            tree = encode(args.n)
+            data = extended_metrics(tree)
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                for key, value in data.items():
                     print(f"{key} = {value}")
 
         elif args.command == "scan":
