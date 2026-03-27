@@ -46,6 +46,7 @@ Esempi:
 ```bash
 pet encode 72
 pet metrics 256
+pet query filter docs/reports/data/scan-2-1000000.jsonl --where "height=2" --limit 5
 ```
 
 Generare un dataset:
@@ -107,6 +108,13 @@ Generare un dataset JSONL:
 
 ```bash
 pet scan 2 1000000 --jsonl docs/reports/data/scan-2-1000000.jsonl
+```
+
+Interrogare una scan per metriche:
+
+```bash
+pet query filter docs/reports/data/scan-2-1000000.jsonl --where "height=2" --limit 10
+pet query group-count docs/reports/data/scan-2-1000000.jsonl --field branch_profile
 ```
 
 Riassumere una scan in stile atlas:

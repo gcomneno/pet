@@ -8,6 +8,7 @@ Il CLI è pensato come punto di accesso operativo per:
 - ispezione della struttura di un intero
 - confronto tra strutture PET
 - generazione di dataset JSONL
+- interrogazione di dataset PET per metriche
 - analisi bounded su dataset PET
 
 Per la visione generale del progetto, vedere `VISION.md`.
@@ -41,6 +42,7 @@ pet --help
 | `pet metrics N` | stampa le metriche strutturali canoniche |
 | `pet xmetrics N` | stampa metriche estese / research |
 | `pet scan START END --jsonl OUT.jsonl` | genera un dataset PET JSONL |
+| `pet query ...` | filtra o raggruppa un dataset PET JSONL per metriche |
 | `pet atlas DATASET.jsonl` | produce statistiche atlas-style su un dataset |
 | `pet shape-generators DATASET.jsonl` | mostra i primi generatori delle shape strutturali |
 
@@ -53,7 +55,8 @@ Se vuoi capire PET senza perderti nei report, fai questo ordine:
 3. `classify`
 4. `compare`
 5. `scan`
-6. `atlas`
+6. `query`
+7. `atlas`
 
 È il percorso più corto tra “ho capito il comando” e “sto già osservando struttura”.
 
@@ -195,7 +198,45 @@ Questo produce un dataset JSONL con:
 
 Per i contratti del dataset, vedere `SPEC.md`.
 
-### 8. Analizzare una scan con atlas
+### 8. Interrogare una scan con query
+
+Dopo aver generato un dataset JSONL, puoi filtrarlo o raggrupparlo
+direttamente da terminale.
+
+Filtrare per predicati semplici:
+
+```bash
+pet query filter docs/reports/data/scan-2-10000.jsonl --where "height=2" --where "max_branching>=2" --limit 10
+```
+
+Raggruppare per una metrica:
+
+```bash
+pet query group-count docs/reports/data/scan-2-10000.jsonl --field branch_profile
+```
+
+Campi attualmente supportati:
+
+- `height`
+- `max_branching`
+- `node_count`
+- `recursive_mass`
+- `branch_profile`
+- `average_leaf_depth`
+- `leaf_depth_variance`
+
+Operatori supportati in `--where`:
+
+- `=`
+- `>=`
+- `<=`
+
+Nota pratica:
+
+- `branch_profile` supporta solo `=`
+- esempio valido: `--where "branch_profile=[2,1]"`
+
+### 9. Analizzare una scan con atlas
 
 ```bash
 pet atlas docs/reports/data/scan-2-10000.jsonl
@@ -207,7 +248,7 @@ Questo comando serve per osservare:
 - distribuzioni aggregate
 - segnali strutturali bounded sul dataset
 
-### 9. Ispezionare i generatori di shape
+### 10. Ispezionare i generatori di shape
 
 ```bash
 pet shape-generators docs/reports/data/scan-2-10000.jsonl --metrics
@@ -226,6 +267,7 @@ pet metrics 72
 pet classify 72
 pet compare 12 18
 pet scan 2 10000 --jsonl docs/reports/data/scan-2-10000.jsonl
+pet query filter docs/reports/data/scan-2-10000.jsonl --where "height=2" --limit 5
 pet atlas docs/reports/data/scan-2-10000.jsonl
 ```
 
@@ -235,7 +277,9 @@ pet atlas docs/reports/data/scan-2-10000.jsonl
 - Usa `xmetrics` quando vuoi anche misure research-facing.
 - Usa `classify` quando vuoi una lettura qualitativa rapida.
 - Usa `compare` quando vuoi confrontare due interi come struttura.
-- Usa `scan` e `atlas` quando vuoi passare dal singolo intero all'osservazione bounded su insiemi.
+- Usa `scan` per generare un dataset osservabile.
+- Usa `query` per cercare casi strutturali specifici dentro una scan.
+- Usa `atlas` quando vuoi una vista aggregata del dataset.
 
 ## Cosa aspettarsi dal CLI
 
