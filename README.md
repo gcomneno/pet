@@ -86,6 +86,7 @@ Entry point attuali:
 
 -   `docs/SPEC.md` — formato, schema, metriche e contratti di comportamento
 -   `docs/STATUS.md` — cosa è definito, provato, empirico o ancora aperto
+-   `CHANGELOG.md` — cronologia sintetica delle release pubbliche
 -   `docs/reports/canonical-workflow.md` — workflow canonico del PET lab: dataset, summary, report e classificazione
 -   `docs/reports/README.md` — indice SSOT di report, dataset e comandi di rigenerazione
 -   `docs/reports/artifact-policy.md` — policy attuale su artifact commitati, locali e rigenerabili
