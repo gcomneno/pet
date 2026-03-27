@@ -10,6 +10,18 @@ Versioning corrente: `0.y.z`.
 ### Changed
 - Nessuna modifica documentata al momento.
 
+## [0.1.2] - 2026-03-27
+
+### Added
+- Nuovo comando `pet xmetrics` per esporre metriche estese / research dal CLI.
+- Nuovo comando `pet compare` per confrontare due interi tramite distanza PET e distanza strutturale.
+- Nuovo comando `pet classify` per classificare un intero con predicati strutturali derivati dal PET.
+- Nuovi test end-to-end per `xmetrics`, `compare` e `classify`.
+- Nuovo test negativo per `tools/scan_query.py` sul vincolo `branch_profile only supports '='`.
+
+### Changed
+- Il CLI pubblico espone ora una parte più ampia delle capacità già mature del progetto.
+
 ## [0.1.1] - 2026-03-27
 
 ### Added
