@@ -9,6 +9,14 @@ from .algebra import distance, structural_distance
 from .core import decode, encode, metrics_dict, validate
 from .io import load_json_file, render, to_json
 from .metrics import extended_metrics
+from .metrics import (
+    is_expanding,
+    is_level_uniform,
+    is_linear,
+    is_squarefree,
+    leaf_ratio,
+    profile_shape,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,6 +55,14 @@ def main(argv: list[str] | None = None) -> int:
     p_compare.add_argument("n1", type=int, metavar="N1")
     p_compare.add_argument("n2", type=int, metavar="N2")
     p_compare.add_argument("--json", action="store_true")
+
+    # classify
+    p_classify = subparsers.add_parser(
+        "classify",
+        help="classify one integer via PET-derived structural predicates",
+    )
+    p_classify.add_argument("n", type=int, metavar="N")
+    p_classify.add_argument("--json", action="store_true")
 
     # metrics
     p_metrics = subparsers.add_parser("metrics", help="print structural metrics for N")
@@ -125,6 +141,26 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"N2 = {args.n2}")
                 for key, value in data.items():
                     if key in {"n1", "n2"}:
+                        continue
+                    print(f"{key} = {value}")
+
+        elif args.command == "classify":
+            tree = encode(args.n)
+            data = {
+                "n": args.n,
+                "is_linear": is_linear(tree),
+                "is_level_uniform": is_level_uniform(tree),
+                "is_expanding": is_expanding(tree),
+                "is_squarefree": is_squarefree(tree),
+                "leaf_ratio": str(leaf_ratio(tree)),
+                "profile_shape": profile_shape(tree),
+            }
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                for key, value in data.items():
+                    if key == "n":
                         continue
                     print(f"{key} = {value}")
 
