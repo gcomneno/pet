@@ -10,6 +10,17 @@ Versioning corrente: `0.y.z`.
 ### Changed
 - Nessuna modifica documentata al momento.
 
+## [0.1.3] - 2026-03-27
+
+### Added
+- Nuovo comando pubblico `pet query` per interrogare dataset PET JSONL generati con `scan`.
+- Sottocomandi `pet query filter` e `pet query group-count` per filtrare o raggruppare record tramite metriche PET.
+- Nuovi test end-to-end per il CLI pubblico `query`.
+
+### Changed
+- `tools/scan_query.py` ora riusa la logica del modulo package `pet.query` invece di duplicarla.
+- Aggiornata la documentazione pratica del CLI per includere la nuova capacità di query sui dataset scan.
+
 ## [0.1.2] - 2026-03-27
 
 ### Added
