@@ -1,5 +1,11 @@
 # PET --- Prime Exponent Tree
 
+[![CI](https://github.com/gcomneno/pet/actions/workflows/ci.yml/badge.svg)](https://github.com/gcomneno/pet/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/gcomneno/pet)](https://github.com/gcomneno/pet/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+
+
 **PET (Prime Exponent Tree)** è un modello strutturale per rappresentare
 la fattorizzazione degli interi come **alberi ricorsivi basati sugli
 esponenti primi**.
