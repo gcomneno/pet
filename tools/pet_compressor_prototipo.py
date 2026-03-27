@@ -1,10 +1,11 @@
 import json
+import sys
 from collections import Counter
 import heapq
 import zlib
 from pathlib import Path
 
-INPUT_FILE = Path("artifacts/pet_1M.jsonl")
+INPUT_FILE = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("docs/reports/data/scan-2-1000000.jsonl")
 OUTPUT_FILE = Path("docs/research/pet_compressed_1M.bin")
 SHAPE_INDEX_FILE = Path("docs/research/pet_shape_index.json")
 
