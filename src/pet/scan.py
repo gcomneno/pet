@@ -1,7 +1,8 @@
 import json
 import sys
 
-from .core import encode, metrics_dict, to_jsonable
+from .core import encode, metrics_dict
+from .io import to_jsonable
 
 
 def build_record(n: int) -> dict:
