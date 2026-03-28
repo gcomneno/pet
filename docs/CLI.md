@@ -38,6 +38,7 @@ pet --help
 | `pet render FILE.json` | stampa una vista ad albero leggibile del PET |
 | `pet validate FILE.json` | valida un PET JSON canonico |
 | `pet generator N` | stampa il più piccolo intero con la stessa shape PET di `N` |
+| `pet signature N` | mostra la signature canonica della shape PET di `N` |
 | `pet compare N1 N2` | confronta due interi tramite distanza PET e distanza strutturale |
 | `pet classify N` | classifica un intero con predicati strutturali derivati dal PET |
 | `pet metrics N` | stampa le metriche strutturali canoniche |
@@ -55,10 +56,11 @@ Se vuoi capire PET senza perderti nei report, fai questo ordine:
 2. `metrics`
 3. `classify`
 4. `generator`
-5. `compare`
-6. `scan`
-7. `query`
-8. `atlas`
+5. `signature`
+6. `compare`
+7. `scan`
+8. `query`
+9. `atlas`
 
 È il percorso più corto tra “ho capito il comando” e “sto già osservando struttura”.
 
@@ -166,6 +168,28 @@ Esempi tipici:
 - `4620 -> 4620`
 
 È utile quando vuoi separare la taglia numerica dalla forma strutturale.
+
+#### Signature canonica della shape
+
+```bash
+pet signature 7776
+pet signature 192
+pet signature 3600 --json
+```
+
+Questo comando mostra la signature strutturale canonica della shape PET di `N`,
+calcolata sul generatore minimo della classe strutturale.
+
+Output tipico:
+
+- `generator`: il rappresentante minimo canonico della shape
+- `already_minimal`: dice se `N` è già quel rappresentante
+- `child_costs`: i costi canonici dei figli del root
+- `signature`: la signature strutturale canonica serializzata
+- `shape`: una vista ad albero della shape canonica (in output testuale)
+
+È utile quando `metrics` e `classify` non bastano a distinguere collisioni
+strutturali con stesso `branch_profile`.
 
 ### 6. Confrontare due interi
 
@@ -297,6 +321,7 @@ pet encode 72 --json
 pet metrics 72
 pet classify 72
 pet generator 7776
+pet signature 7776
 pet compare 12 18
 pet scan 2 10000 --jsonl docs/reports/data/scan-2-10000.jsonl
 pet query filter docs/reports/data/scan-2-10000.jsonl --where "height=2" --limit 5
@@ -309,6 +334,7 @@ pet atlas docs/reports/data/scan-2-10000.jsonl
 - Usa `xmetrics` quando vuoi anche misure research-facing.
 - Usa `classify` quando vuoi una lettura qualitativa rapida.
 - Usa `generator` quando vuoi ridurre un intero al rappresentante minimo della sua shape.
+- Usa `signature` quando vuoi vedere la signature canonica della shape e distinguere collisioni che le metriche aggregate non separano.
 - Usa `compare` quando vuoi confrontare due interi come struttura.
 - Usa `scan` per generare un dataset osservabile.
 - Usa `query` per cercare casi strutturali specifici dentro una scan.
