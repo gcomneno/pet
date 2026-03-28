@@ -236,6 +236,16 @@ Nota pratica:
 - `branch_profile` supporta solo `=`
 - esempio valido: `--where "branch_profile=[2,1]"`
 
+Trovare gli interi con la stessa shape strutturale di un dato `N`:
+
+```bash
+pet query same-shape docs/reports/data/scan-2-10000.jsonl 72
+pet query same-shape docs/reports/data/scan-2-10000.jsonl 72 --limit 10
+```
+
+Questo comando confronta la shape PET ignorando i valori primi
+e restituisce i record del dataset che hanno la stessa struttura di `N`.
+
 ### 9. Analizzare una scan con atlas
 
 ```bash

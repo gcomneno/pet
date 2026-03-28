@@ -7,8 +7,11 @@ Versioning corrente: `0.y.z`.
 
 ## [Unreleased]
 
+### Added
+- Nuovo sottocomando `pet query same-shape` per trovare nei dataset scan gli interi con la stessa shape strutturale PET di un dato `N`.
+
 ### Changed
-- Nessuna modifica documentata al momento.
+- Aggiornata la guida pratica del CLI con esempi per `pet query same-shape`.
 
 ## [0.1.3] - 2026-03-27
 
@@ -60,4 +63,3 @@ Versioning corrente: `0.y.z`.
 
 ### Notes
 - `v0.1.0` rappresenta la prima baseline pubblica del repository prima del successivo hardening di packaging, CI e modularizzazione.
-

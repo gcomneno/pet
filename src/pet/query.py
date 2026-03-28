@@ -8,6 +8,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .core import encode
+from .io import to_jsonable
+
 
 ALLOWED_FIELDS = {
     "height",
@@ -100,6 +103,23 @@ def matches_all(row: dict, conditions: list[tuple[str, str, Any]]) -> bool:
     return True
 
 
+def _shape_key(shape):
+    if shape is None:
+        return ()
+    return tuple(_shape_key(child) for child in shape)
+
+
+def _jsonable_shape(tree):
+    if tree is None:
+        return None
+
+    children = []
+    for node in tree:
+        children.append(_jsonable_shape(node["e"]))
+
+    return tuple(sorted(children, key=_shape_key))
+
+
 def cmd_filter(args: argparse.Namespace) -> int:
     conditions = [parse_where(expr) for expr in args.where]
     shown = 0
@@ -133,6 +153,20 @@ def cmd_group_count(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_same_shape(args: argparse.Namespace) -> int:
+    target_shape = _jsonable_shape(to_jsonable(encode(args.n)))
+    shown = 0
+
+    for row in load_rows(args.jsonl_path):
+        if _jsonable_shape(row["pet"]) == target_shape:
+            print(json.dumps(row, ensure_ascii=False))
+            shown += 1
+            if args.limit is not None and shown >= args.limit:
+                break
+
+    return 0
+
+
 def _add_query_subcommands(subparsers) -> None:
     p_filter = subparsers.add_parser(
         "filter",
@@ -160,6 +194,20 @@ def _add_query_subcommands(subparsers) -> None:
     p_group.add_argument("jsonl_path", help="Path to scan JSONL file")
     p_group.add_argument("--field", required=True, help="Metric field to group by")
     p_group.set_defaults(func=cmd_group_count)
+
+    p_same_shape = subparsers.add_parser(
+        "same-shape",
+        help="find scan rows having the same PET structural shape as N",
+    )
+    p_same_shape.add_argument("jsonl_path", help="Path to scan JSONL file")
+    p_same_shape.add_argument("n", type=int, metavar="N")
+    p_same_shape.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Maximum number of matching rows to print",
+    )
+    p_same_shape.set_defaults(func=cmd_same_shape)
 
 
 def register_subparser(subparsers) -> None:

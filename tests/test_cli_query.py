@@ -100,3 +100,48 @@ def test_cli_query_rejects_branch_profile_ordering_operator(tmp_path):
 
     assert result.returncode != 0
     assert "branch_profile only supports '='" in result.stderr
+
+def test_cli_query_same_shape(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 30)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "same-shape",
+            str(jsonl_path),
+            "12",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [12, 18, 20, 24, 28]
+
+
+def test_cli_query_same_shape_limit(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 30)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "same-shape",
+            str(jsonl_path),
+            "12",
+            "--limit",
+            "3",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [12, 18, 20]
