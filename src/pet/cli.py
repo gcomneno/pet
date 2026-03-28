@@ -6,7 +6,15 @@ import sys
 
 from .atlas import atlas, draw_shape, extract_shape, print_atlas
 from .algebra import distance, structural_distance
-from .core import decode, encode, metrics_dict, shape_generator, validate
+from .core import (
+    decode,
+    encode,
+    metrics_dict,
+    minimal_shape_representative,
+    shape_generator,
+    shape_signature_dict,
+    validate,
+)
 from .io import load_json_file, render, to_json
 from .metrics import extended_metrics
 from .query import register_subparser, run_args as run_query
@@ -54,6 +62,14 @@ def main(argv: list[str] | None = None) -> int:
         help="print the smallest integer having the same PET structural shape as N",
     )
     p_generator.add_argument("n", type=int, metavar="N")
+
+    # signature
+    p_signature = subparsers.add_parser(
+        "signature",
+        help="print the canonical structural signature of the PET shape class of N",
+    )
+    p_signature.add_argument("n", type=int, metavar="N")
+    p_signature.add_argument("--json", action="store_true")
 
     # compare
     p_compare = subparsers.add_parser(
@@ -137,6 +153,29 @@ def main(argv: list[str] | None = None) -> int:
 
         elif args.command == "generator":
             print(shape_generator(args.n))
+
+        elif args.command == "signature":
+            data = shape_signature_dict(args.n)
+
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                print(f"generator = {data['generator']}")
+                print(f"already_minimal = {data['already_minimal']}")
+                print(f"child_costs = {data['child_costs']}")
+                print(f"signature = {data['signature']}")
+
+                def _list_to_tuple_shape(obj):
+                    if isinstance(obj, list):
+                        return tuple(_list_to_tuple_shape(child) for child in obj)
+                    return obj
+
+                print("shape:")
+                shape = _list_to_tuple_shape(data["signature"])
+                lines = draw_shape(shape, lines=[])
+                for line in lines:
+                    print(line)
 
         elif args.command == "compare":
             tree1 = encode(args.n1)

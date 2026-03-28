@@ -10,6 +10,43 @@ PETNode = Tuple[int, PETExp]
 PET = List[PETNode]
 
 
+def _shape_signature(tree: PET) -> tuple:
+    children = []
+    for _, exp_repr in tree:
+        if exp_repr is None:
+            children.append(())
+        else:
+            children.append(_shape_signature(exp_repr))
+    return tuple(sorted(children))
+
+
+def _signature_to_jsonable(sig: tuple) -> list:
+    return [_signature_to_jsonable(child) for child in sig]
+
+
+def shape_signature_dict(n: int) -> dict[str, Any]:
+    """Return canonical signature data for the PET shape class of n.
+
+    The signature is computed on the minimal shape representative, not on n
+    directly.
+    """
+    minimal_tree = minimal_shape_representative(encode(n))
+    generator = decode(minimal_tree)
+    child_costs = [
+        1 if exp_repr is None else decode(exp_repr)
+        for _, exp_repr in minimal_tree
+    ]
+    signature = _shape_signature(minimal_tree)
+
+    return {
+        "n": n,
+        "generator": generator,
+        "already_minimal": generator == n,
+        "child_costs": child_costs,
+        "signature": _signature_to_jsonable(signature),
+    }
+
+
 def is_prime(n: int) -> bool:
     """Return True if n is prime, else False."""
     if n < 2:
