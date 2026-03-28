@@ -21,7 +21,7 @@ def test_signature_json_for_36() -> None:
     assert data["n"] == 36
     assert data["generator"] == 36
     assert data["already_minimal"] is True
-    assert data["child_costs"] == [2, 2]
+    assert data["child_generators"] == [2, 2]
     assert data["signature"] == [[[]], [[]]]
 
 
@@ -32,7 +32,7 @@ def test_signature_json_for_192() -> None:
     assert data["n"] == 192
     assert data["generator"] == 192
     assert data["already_minimal"] is True
-    assert data["child_costs"] == [6, 1]
+    assert data["child_generators"] == [6, 1]
     assert data["signature"] == [[], [[], []]]
 
 
@@ -43,5 +43,5 @@ def test_signature_json_for_7776_uses_canonical_generator() -> None:
     assert data["n"] == 7776
     assert data["generator"] == 36
     assert data["already_minimal"] is False
-    assert data["child_costs"] == [2, 2]
+    assert data["child_generators"] == [2, 2]
     assert data["signature"] == [[[]], [[]]]

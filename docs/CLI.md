@@ -184,7 +184,7 @@ Output tipico:
 
 - `generator`: il rappresentante minimo canonico della shape
 - `already_minimal`: dice se `N` è già quel rappresentante
-- `child_costs`: i costi canonici dei figli del root
+- `child_generators`: i generatori canonici dei figli del root
 - `signature`: la signature strutturale canonica serializzata
 - `shape`: una vista ad albero della shape canonica (in output testuale)
 

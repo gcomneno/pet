@@ -33,9 +33,9 @@ def encode_sig(sig):
             primes.append(candidate)
         candidate += 1 if candidate == 2 else 2
 
-    child_costs = sorted((encode_sig(child) for child in sig), reverse=True)
+    child_generators = sorted((encode_sig(child) for child in sig), reverse=True)
     n = 1
-    for p, e in zip(primes, child_costs):
+    for p, e in zip(primes, child_generators):
         n *= p ** e
     return n
 
@@ -80,9 +80,9 @@ def main() -> int:
     print()
 
     for sig, n in items:
-        child_costs = sorted((encode_sig(child) for child in sig), reverse=True)
+        child_generators = sorted((encode_sig(child) for child in sig), reverse=True)
         print(f"generator = {n}")
-        print(f"child_costs = {child_costs}")
+        print(f"child_generators = {child_generators}")
         print(f"signature = {sig}")
         print()
 

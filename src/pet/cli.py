@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"N = {args.n}")
                 print(f"generator = {data['generator']}")
                 print(f"already_minimal = {data['already_minimal']}")
-                print(f"child_costs = {data['child_costs']}")
+                print(f"child_generators = {data['child_generators']}")
                 print(f"signature = {data['signature']}")
 
                 def _list_to_tuple_shape(obj):

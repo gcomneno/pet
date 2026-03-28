@@ -32,7 +32,7 @@ def shape_signature_dict(n: int) -> dict[str, Any]:
     """
     minimal_tree = minimal_shape_representative(encode(n))
     generator = decode(minimal_tree)
-    child_costs = [
+    child_generators = [
         1 if exp_repr is None else decode(exp_repr)
         for _, exp_repr in minimal_tree
     ]
@@ -42,7 +42,7 @@ def shape_signature_dict(n: int) -> dict[str, Any]:
         "n": n,
         "generator": generator,
         "already_minimal": generator == n,
-        "child_costs": child_costs,
+        "child_generators": child_generators,
         "signature": _signature_to_jsonable(signature),
     }
 
