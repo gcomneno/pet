@@ -35,21 +35,61 @@ Reason:
 - explicitly referenced by `docs/reports/canonical-workflow.md`
 - currently defines the canonical family benchmark path
 
-## Secondary / non-canonical research tooling
+## Secondary / non-canonical tooling
 
-These scripts are related to documented PET analysis, but are not currently part
-of the canonical bounded lab workflow.
+These scripts are useful PET analysis or operator-side utilities, but are not
+currently part of the canonical bounded lab workflow.
 
 ### `tools/cluster_families.py`
 
 Status:
-- secondary research tooling
+- secondary/non-canonical tooling
 - not part of the current canonical workflow
 
 Reason:
 - cited in `docs/SPEC.md`
 - superseded in the current report workflow by `tools/cluster_families_disjoint.py`
 - still meaningful, but not the benchmark path currently promoted by stable lab docs
+
+### `tools/scan_query.py`
+
+Status:
+- secondary/non-canonical tooling
+
+Reason:
+- small operator-side helper for filtering and grouped counts over PET scan JSONL artifacts
+- explicitly called out in `tools/README.md`
+- useful, but not part of the current canonical report-facing path
+
+### `tools/pet_table.py`
+
+Status:
+- secondary/non-canonical tooling
+
+Reason:
+- explicit CLI utility for producing PET tables from integer datasets
+- supports stdin/file input, filtering, sorting, and optional report outputs
+- useful operator-side tooling, but not part of the current canonical bounded workflow
+
+### `tools/pet_profile_range.py`
+
+Status:
+- secondary/non-canonical tooling
+
+Reason:
+- explicit CLI utility for exploring PET profiles over numeric ranges
+- useful for family/profile exploration and counting
+- not part of the current canonical report-facing workflow
+
+### `tools/pet_family_combinations.py`
+
+Status:
+- secondary/non-canonical tooling
+
+Reason:
+- explicit CLI utility for generating/counting combinations across PET families in a range
+- useful for exploratory family analysis
+- not part of the current canonical report-facing workflow
 
 ## Exploratory / one-off tooling
 
@@ -66,6 +106,7 @@ one-off analysis tools rather than stable workflow interfaces:
 - `tools/omega_distribution.py`
 - `tools/pet_compressor_prototipo.py`
 - `tools/plot_diagonal_law.py`
+- `tools/plot_diagonal_ratio.py`
 - `tools/plot_shape_birth.py`
 - `tools/plot_shape_growth_law.py`
 - `tools/shape_count_fast.py`
@@ -74,12 +115,11 @@ one-off analysis tools rather than stable workflow interfaces:
 - `tools/shape_first_occurrence.py`
 - `tools/shape_graph.py`
 - `tools/shapes_growth.py`
-- `tools/plot_diagonal_ratio.py`
 
 Common reasons:
 - not referenced by the current canonical workflow
 - not used directly by committed bounded reports
-- rely on hardcoded local paths or local `artifacts/`
+- often rely on hardcoded local paths or local `artifacts/`
 - look like prototypes, exploratory utilities, or plotting helpers
 - no current stability promise should be inferred from their presence in `tools/`
 
@@ -88,6 +128,10 @@ Common reasons:
 Workflow docs, contributor docs, and report regeneration notes should treat only
 the current stable research tooling as interface-stable unless this document is
 updated.
+
+Secondary/non-canonical tooling may still be useful and intentionally kept in
+the repository, but it should not be presented as canonical PET lab commands by
+default.
 
 Exploratory scripts may still be useful for investigation, but they should not
 be presented as canonical PET lab commands by default.

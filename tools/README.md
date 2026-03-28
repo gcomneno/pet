@@ -12,8 +12,9 @@ For the current tooling classification, see
 
 - **Stable research tooling**: scripts used by the current bounded,
   report-facing PET lab workflow.
-- **Secondary / non-canonical tooling**: useful scripts that are not part of the
-  current canonical workflow.
+- **Secondary / non-canonical tooling**: useful scripts that are kept in-repo
+  and may be operationally useful, but are not part of the current canonical
+  workflow.
 - **Exploratory / one-off tooling**: exploratory, plotting, prototype, or
   historical scripts whose presence here should not be read as a stability
   guarantee.
@@ -30,6 +31,11 @@ For the current tooling classification, see
   the current canonical report-facing path
 - `scan_query.py` — small operator-side helper for filtering and grouped counts
   over PET scan JSONL artifacts
+- `pet_table.py` — CLI utility for generating PET tables from integer datasets
+- `pet_profile_range.py` — CLI utility for exploring PET profiles over numeric
+  ranges
+- `pet_family_combinations.py` — CLI utility for generating or counting
+  combinations across PET families in a range
 
 ## Exploratory / one-off tooling
 
