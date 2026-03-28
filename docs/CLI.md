@@ -37,6 +37,7 @@ pet --help
 | `pet decode FILE.json` | decodifica un PET JSON e ricostruisce l'intero |
 | `pet render FILE.json` | stampa una vista ad albero leggibile del PET |
 | `pet validate FILE.json` | valida un PET JSON canonico |
+| `pet generator N` | stampa il più piccolo intero con la stessa shape PET di `N` |
 | `pet compare N1 N2` | confronta due interi tramite distanza PET e distanza strutturale |
 | `pet classify N` | classifica un intero con predicati strutturali derivati dal PET |
 | `pet metrics N` | stampa le metriche strutturali canoniche |
@@ -53,10 +54,11 @@ Se vuoi capire PET senza perderti nei report, fai questo ordine:
 1. `encode`
 2. `metrics`
 3. `classify`
-4. `compare`
-5. `scan`
-6. `query`
-7. `atlas`
+4. `generator`
+5. `compare`
+6. `scan`
+7. `query`
+8. `atlas`
 
 È il percorso più corto tra “ho capito il comando” e “sto già osservando struttura”.
 
@@ -146,7 +148,26 @@ Questo comando espone predicati strutturali già derivati dal PET, per esempio:
 
 È il comando più leggibile quando vuoi una sintesi qualitativa della struttura.
 
-### 5. Confrontare due interi
+### 5. Trovare il generatore minimo di una shape
+
+```bash
+pet generator 7776
+pet generator 1024
+pet generator 4620
+```
+
+Questo comando restituisce il più piccolo intero che ha la stessa
+shape strutturale PET di `N`.
+
+Esempi tipici:
+
+- `7776 -> 36`
+- `1024 -> 64`
+- `4620 -> 4620`
+
+È utile quando vuoi separare la taglia numerica dalla forma strutturale.
+
+### 6. Confrontare due interi
 
 ```bash
 pet compare 12 18
@@ -167,7 +188,7 @@ Output concettuale:
 Questo è spesso il comando più utile per rispondere alla domanda:
 “questi due interi sono strutturalmente uguali o solo numericamente diversi?”
 
-### 6. Validare e renderizzare un PET JSON
+### 7. Validare e renderizzare un PET JSON
 
 Partendo da un file JSON:
 
@@ -183,7 +204,7 @@ Uso tipico:
 - visualizzarne la struttura
 - ricostruire l'intero rappresentato
 
-### 7. Generare una scan bounded
+### 8. Generare una scan bounded
 
 ```bash
 pet scan 2 10000 --jsonl docs/reports/data/scan-2-10000.jsonl
@@ -198,7 +219,7 @@ Questo produce un dataset JSONL con:
 
 Per i contratti del dataset, vedere `SPEC.md`.
 
-### 8. Interrogare una scan con query
+### 9. Interrogare una scan con query
 
 Dopo aver generato un dataset JSONL, puoi filtrarlo o raggrupparlo
 direttamente da terminale.
@@ -246,7 +267,7 @@ pet query same-shape docs/reports/data/scan-2-10000.jsonl 72 --limit 10
 Questo comando confronta la shape PET ignorando i valori primi
 e restituisce i record del dataset che hanno la stessa struttura di `N`.
 
-### 9. Analizzare una scan con atlas
+### 10. Analizzare una scan con atlas
 
 ```bash
 pet atlas docs/reports/data/scan-2-10000.jsonl
@@ -258,7 +279,7 @@ Questo comando serve per osservare:
 - distribuzioni aggregate
 - segnali strutturali bounded sul dataset
 
-### 10. Ispezionare i generatori di shape
+### 11. Ispezionare i generatori di shape
 
 ```bash
 pet shape-generators docs/reports/data/scan-2-10000.jsonl --metrics
@@ -275,6 +296,7 @@ Un workflow corto ma utile può essere questo:
 pet encode 72 --json
 pet metrics 72
 pet classify 72
+pet generator 7776
 pet compare 12 18
 pet scan 2 10000 --jsonl docs/reports/data/scan-2-10000.jsonl
 pet query filter docs/reports/data/scan-2-10000.jsonl --where "height=2" --limit 5
@@ -286,6 +308,7 @@ pet atlas docs/reports/data/scan-2-10000.jsonl
 - Usa `metrics` quando vuoi misure canoniche e stabili.
 - Usa `xmetrics` quando vuoi anche misure research-facing.
 - Usa `classify` quando vuoi una lettura qualitativa rapida.
+- Usa `generator` quando vuoi ridurre un intero al rappresentante minimo della sua shape.
 - Usa `compare` quando vuoi confrontare due interi come struttura.
 - Usa `scan` per generare un dataset osservabile.
 - Usa `query` per cercare casi strutturali specifici dentro una scan.

@@ -8,10 +8,12 @@ Versioning corrente: `0.y.z`.
 ## [Unreleased]
 
 ### Added
+- Nuovo comando pubblico `pet generator` per calcolare il più piccolo intero con la stessa shape PET di un dato `N`.
+- Nuovo test end-to-end per il CLI pubblico `generator`.
 - Nuovo sottocomando `pet query same-shape` per trovare nei dataset scan gli interi con la stessa shape strutturale PET di un dato `N`.
 
 ### Changed
-- Aggiornata la guida pratica del CLI con esempi per `pet query same-shape`.
+- Aggiornata la guida pratica del CLI con esempi per `pet generator` e `pet query same-shape`.
 
 ## [0.1.3] - 2026-03-27
 

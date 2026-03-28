@@ -213,6 +213,56 @@ def recursive_mass(tree: PET) -> int:
     return node_count(tree) - len(tree)
 
 
+def _first_primes(count: int) -> list[int]:
+    primes: list[int] = []
+    candidate = 2
+
+    while len(primes) < count:
+        if is_prime(candidate):
+            primes.append(candidate)
+        candidate += 1 if candidate == 2 else 2
+
+    return primes
+
+
+def _minimal_shape_tree(tree: PET) -> PET:
+    children: list[tuple[int, PETExp]] = []
+
+    for _, exp_repr in tree:
+        if exp_repr is None:
+            child_tree = None
+            child_value = 1
+        else:
+            child_tree = _minimal_shape_tree(exp_repr)
+            child_value = decode(child_tree)
+
+        children.append((child_value, child_tree))
+
+    children.sort(key=lambda item: item[0], reverse=True)
+    primes = _first_primes(len(children))
+
+    result: PET = []
+    for prime, (_, exp_repr) in zip(primes, children):
+        result.append((prime, exp_repr))
+
+    return result
+
+
+def minimal_shape_representative(tree: PET) -> PET:
+    """Return the canonical PET with minimal decoded value among all PETs
+    having the same structural shape as ``tree``.
+    """
+    validate(tree)
+    result = _minimal_shape_tree(tree)
+    validate(result)
+    return result
+
+
+def shape_generator(n: int) -> int:
+    """Return the smallest integer having the same PET structural shape as n."""
+    return decode(minimal_shape_representative(encode(n)))
+
+
 def metrics_dict(tree: PET) -> dict[str, Any]:
     validate(tree)
     return {

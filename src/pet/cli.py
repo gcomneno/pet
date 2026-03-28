@@ -6,7 +6,7 @@ import sys
 
 from .atlas import atlas, draw_shape, extract_shape, print_atlas
 from .algebra import distance, structural_distance
-from .core import decode, encode, metrics_dict, validate
+from .core import decode, encode, metrics_dict, shape_generator, validate
 from .io import load_json_file, render, to_json
 from .metrics import extended_metrics
 from .query import register_subparser, run_args as run_query
@@ -47,6 +47,13 @@ def main(argv: list[str] | None = None) -> int:
     # validate
     p_validate = subparsers.add_parser("validate", help="validate a PET JSON file")
     p_validate.add_argument("file", metavar="FILE.json")
+
+    # generator
+    p_generator = subparsers.add_parser(
+        "generator",
+        help="print the smallest integer having the same PET structural shape as N",
+    )
+    p_generator.add_argument("n", type=int, metavar="N")
 
     # compare
     p_compare = subparsers.add_parser(
@@ -127,6 +134,9 @@ def main(argv: list[str] | None = None) -> int:
             tree = load_json_file(args.file)
             validate(tree)
             print("OK")
+
+        elif args.command == "generator":
+            print(shape_generator(args.n))
 
         elif args.command == "compare":
             tree1 = encode(args.n1)
