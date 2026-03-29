@@ -28,8 +28,16 @@ def test_scan_jsonl_schema(tmp_path):
     assert [row["n"] for row in rows] == [2, 3, 4]
 
     for row in rows:
-        assert set(row.keys()) == {"schema_version", "n", "pet", "metrics", "meta"}
-        assert row["schema_version"] == 1
+        assert set(row.keys()) == {
+            "schema_version",
+            "n",
+            "pet",
+            "generator",
+            "signature",
+            "metrics",
+            "meta",
+        }
+        assert row["schema_version"] == 2
         assert row["meta"] == {"pet_format": "canonical-json"}
 
         assert set(row["metrics"].keys()) == {
@@ -44,5 +52,13 @@ def test_scan_jsonl_schema(tmp_path):
         }
 
     assert rows[0]["pet"] == [{"p": 2, "e": None}]
+    assert rows[0]["generator"] == 2
+    assert rows[0]["signature"] == [[]]
+
     assert rows[1]["pet"] == [{"p": 3, "e": None}]
+    assert rows[1]["generator"] == 2
+    assert rows[1]["signature"] == [[]]
+
     assert rows[2]["pet"] == [{"p": 2, "e": [{"p": 2, "e": None}]}]
+    assert rows[2]["generator"] == 4
+    assert rows[2]["signature"] == [[[]]]

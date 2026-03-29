@@ -1,17 +1,20 @@
 import json
 import sys
 
-from .core import encode, metrics_dict
+from .core import encode, metrics_dict, shape_signature_dict
 from .io import to_jsonable
 
 
 def build_record(n: int) -> dict:
     tree = encode(n)
+    signature_data = shape_signature_dict(n)
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "n": n,
         "pet": to_jsonable(tree),
+        "generator": signature_data["generator"],
+        "signature": signature_data["signature"],
         "metrics": metrics_dict(tree),
         "meta": {
             "pet_format": "canonical-json",
