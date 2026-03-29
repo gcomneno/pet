@@ -145,3 +145,54 @@ def test_cli_query_same_shape_limit(tmp_path):
 
     rows = [json.loads(line) for line in result.stdout.splitlines()]
     assert [row["n"] for row in rows] == [12, 18, 20]
+
+
+def test_cli_query_filter_generator(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 40)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "filter",
+            str(jsonl_path),
+            "--where",
+            "generator=12",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [12, 18, 20, 24, 28, 40]
+
+
+def test_cli_query_group_count_generator(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 12)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "group-count",
+            str(jsonl_path),
+            "--field",
+            "generator",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    expected = ["2\t5", "4\t3", "6\t2", "12\t1"]
+
+    assert [
+        " ".join(line.split()) for line in result.stdout.strip().splitlines()
+    ] == [
+        " ".join(line.split()) for line in expected
+    ]

@@ -13,6 +13,7 @@ from .io import to_jsonable
 
 
 ALLOWED_FIELDS = {
+    "generator",
     "height",
     "max_branching",
     "node_count",
@@ -81,6 +82,8 @@ def parse_where(expr: str):
 
 
 def row_value(row: dict, field: str):
+    if field == "generator":
+        return row["generator"]
     return row["metrics"][field]
 
 
@@ -170,14 +173,14 @@ def cmd_same_shape(args: argparse.Namespace) -> int:
 def _add_query_subcommands(subparsers) -> None:
     p_filter = subparsers.add_parser(
         "filter",
-        help="filter scan rows by simple metric predicates",
+        help="filter scan rows by simple field predicates",
     )
     p_filter.add_argument("jsonl_path", help="Path to scan JSONL file")
     p_filter.add_argument(
         "--where",
         action="append",
         default=[],
-        help="Predicate like height=3, max_branching>=3, branch_profile=[3,1,1]",
+        help="Predicate like generator=12, height=3, max_branching>=3, branch_profile=[3,1,1]",
     )
     p_filter.add_argument(
         "--limit",
@@ -189,10 +192,10 @@ def _add_query_subcommands(subparsers) -> None:
 
     p_group = subparsers.add_parser(
         "group-count",
-        help="count rows grouped by one metric field",
+        help="count rows grouped by one scan field",
     )
     p_group.add_argument("jsonl_path", help="Path to scan JSONL file")
-    p_group.add_argument("--field", required=True, help="Metric field to group by")
+    p_group.add_argument("--field", required=True, help="Scan field to group by")
     p_group.set_defaults(func=cmd_group_count)
 
     p_same_shape = subparsers.add_parser(
@@ -213,7 +216,7 @@ def _add_query_subcommands(subparsers) -> None:
 def register_subparser(subparsers) -> None:
     p_query = subparsers.add_parser(
         "query",
-        help="query scan JSONL artifacts by PET metrics",
+        help="query scan JSONL artifacts by PET-derived fields",
     )
     query_subparsers = p_query.add_subparsers(
         dest="query_command",
