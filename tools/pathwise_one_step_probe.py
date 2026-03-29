@@ -58,6 +58,11 @@ def main():
 
     pool = [1] + sorted({shape_generator(n) for n in range(2, args.limit + 1)})
     hits = []
+    counts = {
+        "globally_canonical": 0,
+        "ancestor_only_obstruction": 0,
+        "other": 0,
+    }
 
     for h in pool[1:]:
         tree0 = encode(h)
@@ -77,30 +82,41 @@ def main():
                     local_ok = is_locally_canonical(local_node)
                     global_ok = is_globally_canonical(tree1)
 
-                    hits.append(
-                        {
-                            "initial_h": h,
-                            "new_h": decode(tree1),
-                            "path": path,
-                            "child_idx": child_idx,
-                            "move": (gs[child_idx], new_g),
-                            "after_child_gs": child_generators(local_node),
-                            "local_ok": local_ok,
-                            "global_ok": global_ok,
-                        }
-                    )
+                    item = {
+                        "initial_h": h,
+                        "new_h": decode(tree1),
+                        "path": path,
+                        "child_idx": child_idx,
+                        "move": (gs[child_idx], new_g),
+                        "after_child_gs": child_generators(local_node),
+                        "local_ok": local_ok,
+                        "global_ok": global_ok,
+                    }
 
-                    if len(hits) >= args.max_hits:
-                        break
-                if len(hits) >= args.max_hits:
+                    if local_ok and global_ok:
+                        counts["globally_canonical"] += 1
+                    elif local_ok and not global_ok:
+                        counts["ancestor_only_obstruction"] += 1
+                    else:
+                        counts["other"] += 1
+
+                    if len(hits) < args.max_hits:
+                        hits.append(item)
+                if len(hits) >= args.max_hits and sum(counts.values()) >= args.max_hits:
                     break
-            if len(hits) >= args.max_hits:
+            if len(hits) >= args.max_hits and sum(counts.values()) >= args.max_hits:
                 break
-        if len(hits) >= args.max_hits:
+        if len(hits) >= args.max_hits and sum(counts.values()) >= args.max_hits:
             break
 
-    print(f"hits = {len(hits)}")
+    total = sum(counts.values())
+
+    print(f"total_checked = {total}")
+    print(f"globally_canonical = {counts['globally_canonical']}")
+    print(f"ancestor_only_obstruction = {counts['ancestor_only_obstruction']}")
+    print(f"other = {counts['other']}")
     print()
+    print("sample hits:")
     for item in hits:
         print(
             f"initial_h={item['initial_h']} new_h={item['new_h']} "
