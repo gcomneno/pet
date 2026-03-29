@@ -111,6 +111,98 @@ Interpretation:
 the failure is local and structural.
 It is not a mysterious failure of the algebra; it is an order obstruction in the original sibling context.
 
+### 5. Local ceiling law for nested constructive rewrites
+
+Additional targeted probes suggest a sharper local admissibility rule.
+
+In this section, slots are indexed from `0`.
+
+Let the original parent have child generators
+
+`g_0 >= g_1 >= ... >= g_{k-1}`
+
+and let a nested constructive chain act entirely inside slot `j`,
+producing a final child generator `final_h` for that same slot.
+
+Empirical local rule observed so far:
+
+- if `j = 0`, there is no local upper ceiling from the left
+- if `j > 0`, direct substitution into the original parent appears to be canonically admissible exactly when
+
+`final_h <= g_{j-1}`
+
+and when it is admissible, the direct substitution agrees with the nested constructive result.
+
+Equivalently:
+- `final_h > g_{j-1}` gives a local order obstruction
+- `final_h <= g_{j-1}` allows the one-step substitution at the original parent
+
+#### Targeted evidence
+
+##### Threshold behavior for slot `1` in parents of the form `[u, 1]`
+
+Using the same nested constructive pattern, with final child generator `final_h = 4`:
+
+- `[2, 1]` -> blocked
+- `[3, 1]` -> blocked
+- `[4, 1]` -> admissible
+- `[5, 1]` -> admissible
+- `[6, 1]` -> admissible
+- `[8, 1]` -> admissible
+
+So the observed threshold is exactly `u = 4`.
+
+Using a deeper nested constructive pattern, with final child generator `final_h = 16`:
+
+- `[4, 1]` -> blocked
+- `[8, 1]` -> blocked
+- `[12, 1]` -> blocked
+- `[15, 1]` -> blocked
+- `[16, 1]` -> admissible
+- `[20, 1]` -> admissible
+
+So the observed threshold is exactly `u = 16`.
+
+##### Slot-local ceiling in parents of the form `[20, m, 1]`
+
+For slot `2`, with the same final child generator `final_h = 16`:
+
+- `[20, 12, 1]` -> blocked
+- `[20, 15, 1]` -> blocked
+- `[20, 16, 1]` -> admissible
+- `[20, 18, 1]` -> admissible
+
+This suggests that the relevant ceiling is not a global parent bound,
+but specifically the immediate left sibling bound for the rewritten slot,
+here `m = g_1`.
+
+##### Head-slot behavior
+
+For slot `0`, no upper ceiling from the left was observed.
+
+In the parent `[1, 1]`, nested constructive growth inside slot `0` remained admissible for:
+
+- `final_h = 2`
+- `final_h = 4`
+- `final_h = 16`
+- `final_h = 65536`
+
+This is consistent with the rule that slot `0` has no local upper ceiling.
+
+#### Interpretation
+
+This strengthens the earlier admissible-substitution picture.
+
+The current working hypothesis is that, for nested constructive rewrites confined to one original slot:
+
+- the obstruction is purely local
+- it is determined by the original parent ordering constraints
+- for `j > 0`, the only upper admissibility test is whether the final child generator stays below or equal to the immediate left sibling bound
+- for `j = 0`, there is no such upper bound
+
+This is still an empirical rule, not yet a general proof.
+But it appears to explain the previously observed obstruction witness cleanly.
+
 ## Current picture
 
 At this stage the rewrite behavior seems to split into three regimes:
@@ -122,7 +214,7 @@ At this stage the rewrite behavior seems to split into three regimes:
    -> prune absorption
 
 3. nested constructive rewrites  
-   -> direct substitution only when the final child generator remains locally admissible
+   -> direct substitution controlled by a local slot ceiling (`final_h <= g_{j-1}` for `j > 0`)
 
 ## Open direction
 
