@@ -286,6 +286,24 @@ The current working hypothesis is that, for nested constructive rewrites confine
 This is still an empirical rule, not yet a general proof.
 But it appears to explain the previously observed obstruction witness cleanly.
 
+## Correction / refinement
+
+The observations above about local slot ceilings remain useful, but they are not by themselves sufficient to guarantee global canonicity.
+
+Further targeted witnesses show that a nested constructive chain can remain locally admissible at the rewritten node while still breaking canonicity at a higher ancestor on the path to the root.
+
+So the stronger working hypothesis is no longer a purely local ceiling law at one parent.
+Instead, the relevant condition appears to be pathwise:
+
+- along the target path, every ancestor must continue to satisfy its immediate-left-sibling ceiling constraint
+- a constructive chain becomes globally non-canonical as soon as one ancestor on that path violates its ceiling
+
+Observed witness split:
+- `4096`: the obstruction appears at the local parent of the rewritten slot
+- canonical embedding `[2000, 900]`: the first constructive step remains canonical, but a deeper nested step breaks both the local target ceiling and the root-level ancestor ceiling
+
+This suggests a pathwise ceiling law rather than a single-parent ceiling law.
+
 ## Current picture
 
 At this stage the rewrite behavior seems to split into three regimes:
@@ -297,7 +315,7 @@ At this stage the rewrite behavior seems to split into three regimes:
    -> prune absorption
 
 3. nested constructive rewrites  
-   -> direct substitution controlled by a local slot ceiling (`final_h <= g_{j-1}` for `j > 0`)
+   -> global canonicity appears to be controlled by pathwise ceiling constraints along the ancestor chain
 
 ## Open direction
 
