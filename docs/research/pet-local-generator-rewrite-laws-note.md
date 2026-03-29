@@ -335,6 +335,28 @@ This suggests that pathwise constructive obstruction splits into:
 - local obstruction at the rewritten node
 - ancestor-only obstruction higher on the path
 
+##### Refinement: first bad ancestor need not be the root
+
+Additional canonical embeddings show that, in one-step ancestor-only obstruction,
+the first violated ceiling need not occur at the root.
+
+Observed canonical witnesses:
+- embedding `[576, 36]`, with an internal one-step constructive rewrite inside the embedded `36`
+- embedding `[10000, 900]`, with an internal one-step constructive rewrite inside the embedded `900`
+
+In both cases:
+- the starting tree is globally canonical
+- the rewritten local node remains locally canonical
+- the resulting tree becomes globally non-canonical
+- the first bad parent is the embedded ancestor `(1,)`, not the root
+
+So the more accurate working rule is:
+
+the first failure occurs at the first ancestor on the rewritten path whose ceiling is exceeded.
+
+When the rewritten object is studied as a standalone root, that first bad ancestor often coincides with the root.
+But this is an artifact of the embedding, not a general property of ancestor-only obstruction.
+
 ## Current picture
 
 At this stage the rewrite behavior seems to split into three regimes:
