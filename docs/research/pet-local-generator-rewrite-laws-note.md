@@ -248,6 +248,30 @@ So the current local picture is:
 - right siblings appear irrelevant to the obstruction
 - siblings further left than the immediate left sibling also appear irrelevant
 
+##### Apparent vacuity of lower-side constraints in the constructive regime
+
+A further targeted probe suggests why right siblings have not produced independent obstructions
+in the constructive nested cases observed so far.
+
+In the sampled constructive chains, the final child generator did not decrease below the original child generator.
+This was observed both:
+- in small sampled cases where the rewritten child initially had generator `1`
+- in a targeted probe where the rewritten child initially had generator `12`
+
+In the latter probe:
+- original parent form: `[500, 12]`
+- rewritten slot: `1`
+- sampled constructive chains explored: `18`
+- observed violations of `final_h >= initial_h`: `0`
+
+So, in the constructive regime observed so far, the lower-side sibling constraints appear vacuous:
+if the original parent is canonical and the rewritten child does not decrease in the sampled constructive regime,
+then the final child generator remains above every original sibling to its right in those observed cases.
+
+This does not yet prove global monotonicity for all constructive nested chains.
+But it supports the current local picture in which the only nontrivial observed admissibility bound
+is the ceiling coming from the immediate left sibling.
+
 #### Interpretation
 
 This strengthens the earlier admissible-substitution picture.
