@@ -224,6 +224,30 @@ admissibility and direct-substitution behavior are determined by the original lo
 together with the final child generator,
 and are independent of the internal constructive history that produced that final child.
 
+##### Irrelevance of non-adjacent sibling context
+
+Additional targeted probes suggest that the observed constructive admissibility bound
+depends only on the immediate left sibling of the rewritten slot, not on the rest of the sibling context.
+
+Targeted evidence:
+- for parents of the form `[upper, 12, right]`, slot `1`, varying the right sibling among
+  `1, 2, 4, 12` did not change the outcome for `final_h = 144`
+- with `upper = 48`, all such cases were blocked
+- with `upper = 144`, all such cases were admissible, and direct substitution matched the nested result
+
+A complementary probe was run for slot `2` in parents of the form `[left, mid, 12]`:
+- varying the far-left sibling among `48, 144, 500` did not change the outcome for `final_h = 144`
+- with `mid = 48`, all such cases were blocked
+- with `mid = 144`, all such cases were admissible, and direct substitution matched the nested result
+
+This suggests that, for the constructive nested cases observed so far,
+the relevant upper admissibility constraint is the immediate left sibling bound only.
+
+So the current local picture is:
+- the immediate left sibling provides the effective ceiling when `j > 0`
+- right siblings appear irrelevant to the obstruction
+- siblings further left than the immediate left sibling also appear irrelevant
+
 #### Interpretation
 
 This strengthens the earlier admissible-substitution picture.
