@@ -60,7 +60,7 @@ def main():
     hits = []
     counts = {
         "globally_canonical": 0,
-        "ancestor_only_obstruction": 0,
+        "rewrite_node_ok_global_fail": 0,
         "other": 0,
     }
 
@@ -98,7 +98,7 @@ def main():
                     if local_ok and global_ok:
                         counts["globally_canonical"] += 1
                     elif local_ok and not global_ok:
-                        counts["ancestor_only_obstruction"] += 1
+                        counts["rewrite_node_ok_global_fail"] += 1
                     else:
                         counts["other"] += 1
 
@@ -115,7 +115,7 @@ def main():
 
     print(f"total_checked = {total}")
     print(f"globally_canonical = {counts['globally_canonical']}")
-    print(f"ancestor_only_obstruction = {counts['ancestor_only_obstruction']}")
+    print(f"rewrite_node_ok_global_fail = {counts['rewrite_node_ok_global_fail']}")
     print(f"other = {counts['other']}")
     print()
     print("sample hits:")
@@ -128,7 +128,7 @@ def main():
         )
 
     print()
-    print("ancestor-only samples:")
+    print("rewrite-node-ok/global-fail samples:")
     shown = 0
     for item in hits:
         if item["local_ok"] and not item["global_ok"]:
