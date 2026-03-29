@@ -88,6 +88,8 @@ def main():
                         "path": path,
                         "child_idx": child_idx,
                         "move": (gs[child_idx], new_g),
+                        "root_child_gs_before": child_generators(tree0),
+                        "root_child_gs_after": child_generators(tree1),
                         "after_child_gs": child_generators(local_node),
                         "local_ok": local_ok,
                         "global_ok": global_ok,
@@ -124,6 +126,23 @@ def main():
             f"move={item['move']} after_child_gs={item['after_child_gs']} "
             f"local_ok={item['local_ok']} global_ok={item['global_ok']}"
         )
+
+    print()
+    print("ancestor-only samples:")
+    shown = 0
+    for item in hits:
+        if item["local_ok"] and not item["global_ok"]:
+            print(
+                f"initial_h={item['initial_h']} new_h={item['new_h']} "
+                f"path={item['path']} child_idx={item['child_idx']} "
+                f"move={item['move']} "
+                f"root_before={item['root_child_gs_before']} "
+                f"root_after={item['root_child_gs_after']} "
+                f"after_child_gs={item['after_child_gs']}"
+            )
+            shown += 1
+    if shown == 0:
+        print("none in sample hits")
 
 if __name__ == "__main__":
     raise SystemExit(main())
