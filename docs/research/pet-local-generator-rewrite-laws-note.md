@@ -304,6 +304,37 @@ Observed witness split:
 
 This suggests a pathwise ceiling law rather than a single-parent ceiling law.
 
+##### Obstruction taxonomy: ancestor-only vs local obstruction
+
+Further targeted witnesses separate two different failure modes for nested constructive chains.
+
+Ancestor-only obstruction:
+- the rewritten target node remains locally canonical
+- but some higher ancestor on the path violates its ceiling
+- so the overall tree becomes globally non-canonical even though the target node itself still respects local order
+
+Observed witness:
+- canonical embedding `[4000, 900]`
+- after one locally canonical constructive step, the target becomes `[3, 2, 2]` and remains globally canonical
+- after a second locally canonical constructive step, the target becomes `[3, 3, 2]`, still locally canonical
+- but the root-level child generator becomes `5400`, exceeding the root ceiling `4000`
+- so the failure is purely ancestral
+
+Local obstruction:
+- the rewritten target node itself becomes locally non-canonical
+- global canonicity then fails automatically as well
+
+Observed witness:
+- canonical embedding `[20000, 900]`
+- after one constructive step, the target becomes `[3, 2, 2]` and remains globally canonical
+- after a second constructive step, the target becomes `[3, 4, 2]`
+- this already violates the local ceiling at the target node
+- global canonicity therefore fails as a consequence
+
+This suggests that pathwise constructive obstruction splits into:
+- local obstruction at the rewritten node
+- ancestor-only obstruction higher on the path
+
 ## Current picture
 
 At this stage the rewrite behavior seems to split into three regimes:
