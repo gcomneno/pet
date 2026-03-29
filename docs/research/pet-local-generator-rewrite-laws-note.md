@@ -189,6 +189,41 @@ In the parent `[1, 1]`, nested constructive growth inside slot `0` remained admi
 
 This is consistent with the rule that slot `0` has no local upper ceiling.
 
+##### Fixed-final-child history independence
+
+Additional targeted probes suggest a stronger local invariance principle.
+
+Fix the following local data:
+- the original parent
+- the original slot
+- the original child in that slot
+- the final child generator `final_h`
+
+Then the observed admissibility outcome appears to depend only on that local data,
+not on the particular constructive chain used inside the slot to produce `final_h`.
+
+In particular, different nested constructive chains that produced the same final child generator
+gave the same admissibility result, and whenever direct substitution was admissible,
+it agreed with the nested constructive result.
+
+Targeted evidence:
+- for parents of the form `[upper, 12]`, slot `1`, multiple distinct constructive chains produced the same `final_h = 144`
+- for `upper = 36`, all such chains were blocked
+- for `upper = 48`, all such chains were blocked
+- for `upper = 144`, all such chains were admissible, and the direct substitution matched the nested result
+
+The same pattern was observed for parents of the form `[200, mid, 12]`, slot `2`:
+- for `mid = 36`, all sampled chains with `final_h = 144` were blocked
+- for `mid = 48`, all sampled chains with `final_h = 144` were blocked
+- for `mid = 144`, all sampled chains with `final_h = 144` were admissible, and the direct substitution matched the nested result
+
+This suggests the following strengthened working hypothesis:
+
+For nested constructive rewrites confined to one original slot,
+admissibility and direct-substitution behavior are determined by the original local slot context
+together with the final child generator,
+and are independent of the internal constructive history that produced that final child.
+
 #### Interpretation
 
 This strengthens the earlier admissible-substitution picture.
