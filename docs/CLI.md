@@ -44,7 +44,7 @@ pet --help
 | `pet metrics N` | stampa le metriche strutturali canoniche |
 | `pet xmetrics N` | stampa metriche estese / research |
 | `pet scan START END --jsonl OUT.jsonl` | genera un dataset PET JSONL |
-| `pet query ...` | filtra o raggruppa un dataset PET JSONL per metriche |
+| `pet query ...` | filtra o raggruppa un dataset PET JSONL per campi strutturali e metriche |
 | `pet atlas DATASET.jsonl` | produce statistiche atlas-style su un dataset |
 | `pet shape-generators DATASET.jsonl` | mostra i primi generatori delle shape strutturali |
 
@@ -252,12 +252,14 @@ Filtrare per predicati semplici:
 
 ```bash
 pet query filter docs/reports/data/scan-2-10000.jsonl --where "height=2" --where "max_branching>=2" --limit 10
+pet query filter docs/reports/data/scan-2-10000.jsonl --where "signature=[[[]],[[]]]"
 ```
 
-Raggruppare per una metrica:
+Raggruppare per un campo:
 
 ```bash
 pet query group-count docs/reports/data/scan-2-10000.jsonl --field branch_profile
+pet query group-count docs/reports/data/scan-2-10000.jsonl --field signature
 ```
 
 Campi attualmente supportati:
@@ -280,6 +282,8 @@ Nota pratica:
 
 - `branch_profile` supporta solo `=`
 - esempio valido: `--where "branch_profile=[2,1]"`
+- `signature` supporta solo `=`
+- esempio valido: `--where "signature=[[[]],[[]]]"`
 
 Trovare gli interi con la stessa shape strutturale di un dato `N`:
 
@@ -337,7 +341,7 @@ pet atlas docs/reports/data/scan-2-10000.jsonl
 - Usa `signature` quando vuoi vedere la signature canonica della shape e distinguere collisioni che le metriche aggregate non separano.
 - Usa `compare` quando vuoi confrontare due interi come struttura.
 - Usa `scan` per generare un dataset osservabile.
-- Usa `query` per cercare casi strutturali specifici dentro una scan.
+- Usa `query` per cercare casi strutturali specifici dentro una scan, incluse signature e generatori canonici.
 - Usa `atlas` quando vuoi una vista aggregata del dataset.
 
 ## Cosa aspettarsi dal CLI
