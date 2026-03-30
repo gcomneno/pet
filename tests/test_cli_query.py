@@ -246,3 +246,49 @@ def test_cli_query_group_count_signature(tmp_path):
     ] == [
         " ".join(line.split()) for line in expected
     ]
+
+
+def test_cli_query_same_signature(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 250)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "same-signature",
+            str(jsonl_path),
+            "36",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [36, 72, 100, 108, 196, 200, 216, 225]
+
+
+def test_cli_query_same_signature_limit(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 250)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "same-signature",
+            str(jsonl_path),
+            "36",
+            "--limit",
+            "3",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [36, 72, 100]

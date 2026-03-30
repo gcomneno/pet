@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .core import encode
+from .core import encode, shape_signature_dict
 from .io import to_jsonable
 
 
@@ -199,6 +199,20 @@ def cmd_same_shape(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_same_signature(args: argparse.Namespace) -> int:
+    target_signature = shape_signature_dict(args.n)["signature"]
+    shown = 0
+
+    for row in load_rows(args.jsonl_path):
+        if row["signature"] == target_signature:
+            print(json.dumps(row, ensure_ascii=False))
+            shown += 1
+            if args.limit is not None and shown >= args.limit:
+                break
+
+    return 0
+
+
 def _add_query_subcommands(subparsers) -> None:
     p_filter = subparsers.add_parser(
         "filter",
@@ -240,6 +254,20 @@ def _add_query_subcommands(subparsers) -> None:
         help="Maximum number of matching rows to print",
     )
     p_same_shape.set_defaults(func=cmd_same_shape)
+
+    p_same_signature = subparsers.add_parser(
+        "same-signature",
+        help="find scan rows having the same canonical PET signature as N",
+    )
+    p_same_signature.add_argument("jsonl_path", help="Path to scan JSONL file")
+    p_same_signature.add_argument("n", type=int, metavar="N")
+    p_same_signature.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Maximum number of matching rows to print",
+    )
+    p_same_signature.set_defaults(func=cmd_same_signature)
 
 
 def register_subparser(subparsers) -> None:
