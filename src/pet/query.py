@@ -14,6 +14,7 @@ from .io import to_jsonable
 
 ALLOWED_FIELDS = {
     "generator",
+    "signature",
     "height",
     "max_branching",
     "node_count",
@@ -35,6 +36,24 @@ def load_rows(path: str | Path):
             yield json.loads(line)
 
 
+def _is_signature_value(value: Any) -> bool:
+    if not isinstance(value, list):
+        return False
+    return all(_is_signature_value(child) for child in value)
+
+
+def _freeze_value(value: Any) -> Any:
+    if isinstance(value, list):
+        return tuple(_freeze_value(child) for child in value)
+    return value
+
+
+def _thaw_value(value: Any) -> Any:
+    if isinstance(value, tuple):
+        return [_thaw_value(child) for child in value]
+    return value
+
+
 def parse_value(field: str, raw: str) -> Any:
     raw = raw.strip()
 
@@ -46,6 +65,17 @@ def parse_value(field: str, raw: str) -> Any:
 
         if not isinstance(value, list) or not all(isinstance(x, int) for x in value):
             raise SystemExit(f"branch_profile must be a list of ints: {raw}")
+
+        return value
+
+    if field == "signature":
+        try:
+            value = ast.literal_eval(raw)
+        except (SyntaxError, ValueError) as exc:
+            raise SystemExit(f"Invalid signature value: {raw}") from exc
+
+        if not _is_signature_value(value):
+            raise SystemExit(f"signature must be a nested list shape: {raw}")
 
         return value
 
@@ -75,15 +105,15 @@ def parse_where(expr: str):
 
     value = parse_value(field, raw_value)
 
-    if field == "branch_profile" and op != "=":
-        raise SystemExit("branch_profile only supports '='")
+    if field in {"branch_profile", "signature"} and op != "=":
+        raise SystemExit(f"{field} only supports '='")
 
     return field, op, value
 
 
 def row_value(row: dict, field: str):
-    if field == "generator":
-        return row["generator"]
+    if field in {"generator", "signature"}:
+        return row[field]
     return row["metrics"][field]
 
 
@@ -146,12 +176,11 @@ def cmd_group_count(args: argparse.Namespace) -> int:
 
     for row in load_rows(args.jsonl_path):
         value = row_value(row, field)
-        key = tuple(value) if isinstance(value, list) else value
+        key = _freeze_value(value)
         counter[key] += 1
 
     for key, count in sorted(counter.items(), key=lambda item: (-item[1], item[0])):
-        printable = list(key) if isinstance(key, tuple) else key
-        print(f"{printable}\t{count}")
+        print(f"{_thaw_value(key)}\t{count}")
 
     return 0
 
@@ -180,7 +209,7 @@ def _add_query_subcommands(subparsers) -> None:
         "--where",
         action="append",
         default=[],
-        help="Predicate like generator=12, height=3, max_branching>=3, branch_profile=[3,1,1]",
+        help="Predicate like generator=12, signature=[[[]],[[]]], height=3, max_branching>=3, branch_profile=[3,1,1]",
     )
     p_filter.add_argument(
         "--limit",

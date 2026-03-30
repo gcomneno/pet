@@ -196,3 +196,53 @@ def test_cli_query_group_count_generator(tmp_path):
     ] == [
         " ".join(line.split()) for line in expected
     ]
+
+def test_cli_query_filter_signature(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 250)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "filter",
+            str(jsonl_path),
+            "--where",
+            "signature=[[[]],[[]]]",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rows = [json.loads(line) for line in result.stdout.splitlines()]
+    assert [row["n"] for row in rows] == [36, 72, 100, 108, 196, 200, 216, 225]
+
+
+def test_cli_query_group_count_signature(tmp_path):
+    jsonl_path = build_scan(tmp_path, 2, 12)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "query",
+            "group-count",
+            str(jsonl_path),
+            "--field",
+            "signature",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    expected = ["[[]]\t5", "[[[]]]\t3", "[[], []]\t2", "[[], [[]]]\t1"]
+
+    assert [
+        " ".join(line.split()) for line in result.stdout.strip().splitlines()
+    ] == [
+        " ".join(line.split()) for line in expected
+    ]
