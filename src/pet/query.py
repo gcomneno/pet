@@ -8,7 +8,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from .core import encode, shape_signature_dict
+from .core import encode, shape_generator, shape_signature_dict
 from .io import to_jsonable
 
 
@@ -254,6 +254,48 @@ def cmd_signature_family(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_generator_family(args: argparse.Namespace) -> int:
+    target_generator = shape_generator(args.n)
+
+    values = []
+    signatures = set()
+    checked_schema = False
+
+    for row in load_rows(args.jsonl_path):
+        if not checked_schema:
+            checked_schema = True
+            if "generator" not in row:
+                schema_version = row.get("schema_version")
+                raise SystemExit(
+                    "Dataset does not contain 'generator' field; "
+                    f"found schema_version={schema_version}. "
+                    "Regenerate with current pet scan output (schema_version=2)."
+                )
+
+        if row["generator"] == target_generator:
+            values.append(row["n"])
+            if "signature" in row:
+                signatures.add(json.dumps(row["signature"], sort_keys=True))
+
+    if not values:
+        raise SystemExit("No rows found for target generator")
+
+    summary = {
+        "target_n": args.n,
+        "generator": target_generator,
+        "count": len(values),
+        "min_n": min(values),
+        "max_n": max(values),
+        "first_values": values[: args.preview],
+    }
+
+    if signatures:
+        summary["distinct_signatures"] = len(signatures)
+
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    return 0
+
+
 def _add_query_subcommands(subparsers) -> None:
     p_filter = subparsers.add_parser(
         "filter",
@@ -323,6 +365,20 @@ def _add_query_subcommands(subparsers) -> None:
         help="How many first matching values to include in the summary",
     )
     p_signature_family.set_defaults(func=cmd_signature_family)
+
+    p_generator_family = subparsers.add_parser(
+        "generator-family",
+        help="summarize the scan family having the same PET generator as N",
+    )
+    p_generator_family.add_argument("jsonl_path", help="Path to scan JSONL file")
+    p_generator_family.add_argument("n", type=int, metavar="N")
+    p_generator_family.add_argument(
+        "--preview",
+        type=int,
+        default=10,
+        help="How many first matching values to include in the summary",
+    )
+    p_generator_family.set_defaults(func=cmd_generator_family)
 
 
 def register_subparser(subparsers) -> None:
