@@ -266,3 +266,119 @@ In the multiplicative domain, it also admits a local transformation grammar:
 - exact division -> sequence of local inverse updates
 
 This appears to be the first solid layer of PET "musculature".
+
+---
+
+# Minimal worked examples
+
+These examples match the current research-facing prototype
+`tools/pet_structural_diff.py`.
+
+### Example 1: `12 * 15 = 180`
+
+Factorizations:
+
+```text
+12  = 2^2 * 3
+15  = 3 * 5
+180 = 2^2 * 3^2 * 5
+```
+
+Structural update:
+
+- `5` is new at the root → `attach_branch`
+- `3` is already present and its exponent goes `1 -> 2` → `bump_branch`
+- `2` is unchanged
+
+Prototype classification:
+
+```text
+attached:    5
+bumped:      3
+unchanged:   2
+```
+
+### Example 2: `20 * 18 = 360`
+
+Factorizations:
+
+```text
+20  = 2^2 * 5
+18  = 2 * 3^2
+360 = 2^3 * 3^2 * 5
+```
+
+Structural update:
+
+- `3` is new at the root → `attach_branch`
+- `2` is already present and its exponent goes `2 -> 3` → `bump_branch`
+- `5` is unchanged
+
+Prototype classification:
+
+```text
+attached:    3
+bumped:      2
+unchanged:   5
+```
+
+### Example 3: `180 / 15 = 12`
+
+Factorizations:
+
+```text
+180 = 2^2 * 3^2 * 5
+15  = 3 * 5
+12  = 2^2 * 3
+```
+
+Structural update:
+
+- `5` goes `1 -> 0` → `detach_branch`
+- `3` goes `2 -> 1` → `decrement_branch`
+- `2` is unchanged
+
+Prototype classification:
+
+```text
+removed:       5
+decremented:   3
+unchanged:     2
+```
+
+### Example 4: `360 / 18 = 20`
+
+Factorizations:
+
+```text
+360 = 2^3 * 3^2 * 5
+18  = 2 * 3^2
+20  = 2^2 * 5
+```
+
+Structural update:
+
+- `3` goes `2 -> 0` → `detach_branch`
+- `2` goes `3 -> 2` → `decrement_branch`
+- `5` is unchanged
+
+Prototype classification:
+
+```text
+removed:       3
+decremented:   2
+unchanged:     5
+```
+
+## Relation to the prototype
+
+The current prototype does not attempt to update a pure unlabeled signature directly.
+
+Instead, it works on concrete prime factorizations and reports the corresponding
+root-level branch events:
+
+- multiplication: `attached_branches`, `bumped_branches`
+- exact division: `removed_branches`, `decremented_branches`
+
+This is intentional: the structural grammar is clean, but branch identity under
+shared-prime updates still requires concrete prime bookkeeping.
