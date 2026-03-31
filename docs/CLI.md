@@ -250,8 +250,9 @@ Per i contratti del dataset, vedere `SPEC.md`.
 > layouts even when their filenames suggest newer scan generations.
 >
 > If you need `generator` / `signature` fields or commands such as
-> `same-signature` and `signature-family`, regenerate the dataset with the
-> current `pet scan` command instead of trusting the filename alone.
+> `same-signature`, `signature-family`, and `generator-family`, regenerate the
+> dataset with the current `pet scan` command instead of trusting the filename
+> alone.
 
 ### 9. Interrogare una scan con query
 
@@ -324,9 +325,27 @@ pet query signature-family docs/reports/data/scan-2-10000.jsonl 72 --preview 5
   - `max_n`
   - `first_values`
 
+Trovare o riassumere la famiglia con lo stesso generatore canonico di un dato `N`:
+
+```bash
+pet query generator-family docs/reports/data/scan-2-10000.jsonl 72
+pet query generator-family docs/reports/data/scan-2-10000.jsonl 72 --preview 5
+```
+
+- `generator-family` restituisce un riepilogo della famiglia con lo stesso
+  generatore canonico di `N`:
+  - `target_n`
+  - `generator`
+  - `count`
+  - `min_n`
+  - `max_n`
+  - `first_values`
+  - `distinct_signatures` (quando disponibile)
+
 Nota pratica:
-- `same-signature`, `signature-family` e i filtri su `signature`/`generator`
-  richiedono un dataset generato con lo schema corrente (`schema_version = 2`)
+- `same-signature`, `signature-family`, `generator-family` e i filtri su
+  `signature`/`generator` richiedono un dataset generato con lo schema corrente
+  (`schema_version = 2`)
 
 ### 10. Analizzare una scan con atlas
 
