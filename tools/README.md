@@ -36,6 +36,9 @@ For the current tooling classification, see
   ranges
 - `pet_family_combinations.py` — CLI utility for generating or counting
   combinations across PET families in a range
+- `pet_structural_diff.py` — research-facing structural diff helper for exact
+  multiplicative and divisive PET updates; classifies attached/bumped vs
+  removed/decremented branches on concrete prime-factor updates
 
 ## Exploratory / one-off tooling
 
