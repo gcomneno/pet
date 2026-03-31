@@ -245,6 +245,14 @@ Questo produce un dataset JSONL con:
 
 Per i contratti del dataset, vedere `SPEC.md`.
 
+> [!WARNING]
+> Some committed example datasets under `docs/reports/data/` still use legacy
+> layouts even when their filenames suggest newer scan generations.
+>
+> If you need `generator` / `signature` fields or commands such as
+> `same-signature` and `signature-family`, regenerate the dataset with the
+> current `pet scan` command instead of trusting the filename alone.
+
 ### 9. Interrogare una scan con query
 
 Dopo aver generato un dataset JSONL, puoi filtrarlo o raggrupparlo

@@ -6,6 +6,19 @@ associated datasets, and their regeneration paths.
 For the canonical end-to-end lab path, see:
 - `docs/reports/canonical-workflow.md`
 
+> [!WARNING]
+> Some committed scan artifacts under `docs/reports/data/` currently use legacy
+> dataset layouts even when their filenames suggest newer scan generations
+> (for example `scan-2-*`).
+>
+> In particular, some existing artifacts do **not** contain current schema-2
+> fields such as `generator` and `signature`, and one legacy artifact may even
+> lack `schema_version`.
+>
+> Treat the committed dataset contents as the source of truth, not the filename
+> alone. When a workflow requires `generator`/`signature` query support,
+> regenerate the dataset with the current `pet scan` command.
+
 ## Directory structure
 
 - `docs/reports/` — committed bounded reports and workflow notes
