@@ -167,6 +167,70 @@ In particular:
 - `bump` is governed by the PET structure of the updated exponent
 - large forward-constructed integers may still belong to shape classes with small generators
 
+## Exponent-shape trace
+
+For a repeated `bump` on a fixed prime branch, the most informative local observable is not the full PET signature of the whole integer, but the shape evolution of the updated exponent itself.
+
+We call this local sequence the **exponent-shape trace**.
+
+For a bump on prime `p`, each local transition is:
+
+- `exp_before -> exp_after`
+- `branch_before = signature(exp_before)`
+- `branch_after = signature(exp_after)`
+
+So the trace records the PET shape evolution of the successive exponents attached to that branch.
+
+### Example
+
+For the plan
+
+```json
+{
+  "start": 2,
+  "steps": [
+    {"op": "bump", "prime": 2, "repeat": 10}
+  ]
+}
+```
+
+the exponent-shape trace is:
+
+- `1 -> 2`: `[] -> [[]]`
+- `2 -> 3`: `[[]] -> [[]]`
+- `3 -> 4`: `[[]] -> [[[]]]`
+- `4 -> 5`: `[[[]]] -> [[]]`
+- `5 -> 6`: `[[]] -> [[], []]`
+- `6 -> 7`: `[[], []] -> [[]]`
+- `7 -> 8`: `[[]] -> [[[]]]`
+- `8 -> 9`: `[[[]]] -> [[[]]]`
+- `9 -> 10`: `[[[]]] -> [[], []]`
+- `10 -> 11`: `[[], []] -> [[]]`
+
+### Immediate observations
+
+1. The exponent-shape trace is local.
+
+   It isolates the structural dynamics of the updated branch and avoids mixing it with unrelated global shape changes elsewhere in the integer.
+
+2. The exponent-shape trace is generally non-monotone.
+
+   Successive exponent shapes may repeat, collapse, or branch in different ways.
+   A repeated `bump` therefore does not correspond to monotone structural growth.
+
+3. The exponent-shape trace explains why forward constructive plans can be easy to execute but hard to summarize globally.
+
+   The arithmetic update is trivial (`n -> n * p`), but the induced PET branch evolution is governed by the PET structure of the new exponent.
+
+### Usefulness
+
+This notion is useful because it separates two different questions:
+
+- **construction**: can we build the integer forward by local valid updates?
+- **structural evolution**: how does the PET shape of the updated branch evolve under those updates?
+
+The current prototype tool already exposes enough local data to study exponent-shape traces directly.
+
 ## Status
 
 This is currently a research-facing prototype only.
