@@ -213,6 +213,47 @@ def cmd_same_signature(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_signature_family(args: argparse.Namespace) -> int:
+    target = shape_signature_dict(args.n)
+    target_signature = target["signature"]
+
+    values = []
+    generator = None
+    checked_schema = False
+
+    for row in load_rows(args.jsonl_path):
+        if not checked_schema:
+            checked_schema = True
+            if "signature" not in row or "generator" not in row:
+                schema_version = row.get("schema_version")
+                raise SystemExit(
+                    "Dataset does not contain 'signature'/'generator' fields; "
+                    f"found schema_version={schema_version}. "
+                    "Regenerate with current pet scan output (schema_version=2)."
+                )
+
+        if row["signature"] == target_signature:
+            values.append(row["n"])
+            if generator is None:
+                generator = row["generator"]
+
+    if not values:
+        raise SystemExit("No rows found for target signature")
+
+    summary = {
+        "target_n": args.n,
+        "signature": target_signature,
+        "generator": generator,
+        "count": len(values),
+        "min_n": min(values),
+        "max_n": max(values),
+        "first_values": values[: args.preview],
+    }
+
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    return 0
+
+
 def _add_query_subcommands(subparsers) -> None:
     p_filter = subparsers.add_parser(
         "filter",
@@ -268,6 +309,20 @@ def _add_query_subcommands(subparsers) -> None:
         help="Maximum number of matching rows to print",
     )
     p_same_signature.set_defaults(func=cmd_same_signature)
+
+    p_signature_family = subparsers.add_parser(
+        "signature-family",
+        help="summarize the scan family having the same canonical PET signature as N",
+    )
+    p_signature_family.add_argument("jsonl_path", help="Path to scan JSONL file")
+    p_signature_family.add_argument("n", type=int, metavar="N")
+    p_signature_family.add_argument(
+        "--preview",
+        type=int,
+        default=10,
+        help="How many first matching values to include in the summary",
+    )
+    p_signature_family.set_defaults(func=cmd_signature_family)
 
 
 def register_subparser(subparsers) -> None:
