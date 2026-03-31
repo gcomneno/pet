@@ -238,6 +238,8 @@ Questo produce un dataset JSONL con:
 
 - `n`
 - `pet`
+- `generator`
+- `signature`
 - `metrics`
 - metadata di schema / formato
 
@@ -294,6 +296,29 @@ pet query same-shape docs/reports/data/scan-2-10000.jsonl 72 --limit 10
 
 Questo comando confronta la shape PET ignorando i valori primi
 e restituisce i record del dataset che hanno la stessa struttura di `N`.
+
+Trovare o riassumere la famiglia con la stessa signature canonica di un dato `N`:
+
+```bash
+pet query same-signature docs/reports/data/scan-2-10000.jsonl 72
+pet query same-signature docs/reports/data/scan-2-10000.jsonl 72 --limit 10
+pet query signature-family docs/reports/data/scan-2-10000.jsonl 72
+pet query signature-family docs/reports/data/scan-2-10000.jsonl 72 --preview 5
+```
+
+- `same-signature` restituisce i record con la stessa signature canonica di `N`
+- `signature-family` restituisce un riepilogo della famiglia strutturale:
+  - `target_n`
+  - `signature`
+  - `generator`
+  - `count`
+  - `min_n`
+  - `max_n`
+  - `first_values`
+
+Nota pratica:
+- `same-signature`, `signature-family` e i filtri su `signature`/`generator`
+  richiedono un dataset generato con lo schema corrente (`schema_version = 2`)
 
 ### 10. Analizzare una scan con atlas
 
