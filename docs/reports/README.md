@@ -107,6 +107,21 @@ For the canonical end-to-end lab path, see:
 - `docs/reports/data/scan-2-100000.jsonl` — source dataset for `atlas-2-100000.md`
 - `docs/reports/data/scan-2-1000000.jsonl` — source dataset for `atlas-2-1000000.md` and `signatures-catalog-2-1000000.md`
 
+#### Legacy layout note for committed scan datasets
+
+The following committed scan artifacts currently have legacy on-disk layouts,
+regardless of the `scan-2-*` filename pattern:
+
+- `docs/reports/data/scan-2-5000.jsonl` — legacy content, actual `schema_version = 1`
+- `docs/reports/data/scan-2-10000.jsonl` — legacy content, actual `schema_version = 1`
+- `docs/reports/data/scan-2-100000.jsonl` — legacy content, actual `schema_version = 1`
+- `docs/reports/data/scan-2-200000.jsonl` — legacy content, actual `schema_version = 1`
+- `docs/reports/data/scan-2-1000000.jsonl` — legacy content, no committed `schema_version`, no `generator` / `signature`
+
+These files remain useful as bounded historical artifacts, but workflows that
+require current schema-2 fields should regenerate them with the current
+`pet scan` command rather than relying on the filename alone.
+
 ### Local derived atlas summaries
 
 - `docs/reports/data/atlas-summary-2-100000.txt` — derived summary for `atlas-2-100000.md`
