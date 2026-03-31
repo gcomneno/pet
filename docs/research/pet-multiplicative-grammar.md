@@ -7,7 +7,7 @@ This note records a small structural grammar for PET in the **multiplicative dom
 It does **not** solve exact PET computation for large integers without factorization.
 It does **not** provide a general rule for additive exponent collision (`e1 + e2`).
 
-What it does provide is a compact set of local structural operators that appear to govern how PET behaves under multiplication.
+What it does provide is a compact set of local structural operators that appear to govern how PET behaves under multiplication and exact division.
 
 ---
 
@@ -22,6 +22,8 @@ Two regimes must be kept separate:
 
 For coprime factors, PET composition appears to be a canonical multiset union of branches.
 For shared primes, multiplication acts as a local update of an existing branch.
+
+The same grammar also admits a natural inverse in the case of **exact division**.
 
 ---
 
@@ -132,6 +134,81 @@ This turns general multiplication into a sequence of local branch operations.
 
 ---
 
+## Inverse operator 1: `detach_branch(S, branch)`
+
+### Meaning
+
+Remove a branch whose exponent drops from `1` to `0`.
+
+### Effect
+
+Remove the corresponding root branch of shape:
+
+```text
+[]
+```
+
+from the signature `S`, then canonicalize.
+
+### Arithmetic interpretation
+
+This corresponds to exact division by a prime `p` whose current exponent is `1`.
+
+---
+
+## Inverse operator 2: `decrement_branch(S, branch)`
+
+### Meaning
+
+Decrease by one the exponent represented by an existing branch.
+
+### Effect
+
+If the current branch corresponds to exponent `k > 1`, replace:
+
+```text
+sig(k) -> sig(k-1)
+```
+
+leaving all other branches unchanged, then canonicalize.
+
+### Arithmetic interpretation
+
+This corresponds to exact division by a prime `p` that is already present with exponent greater than `1`.
+
+---
+
+## Inverse operator 3: `prime_divide(S, p)`
+
+### Meaning
+
+Local exact division by a prime `p`.
+
+### Effect
+
+- if the exponent of `p` is `1`: apply `detach_branch(S, branch_of_p)`
+- if the exponent of `p` is greater than `1`: apply `decrement_branch(S, branch_of_p)`
+
+### Interpretation
+
+This is the local inverse of `prime_multiply(S, p)` in the exact-divisibility regime.
+
+---
+
+## Derived inverse operator: `divide_by_factor(S, m)`
+
+If:
+
+```text
+m = ∏ p_i^a_i
+```
+
+and the division is exact, then dividing by `m` can be understood as a sequence of local `prime_divide` updates, one for each prime factor `p_i`, repeated `a_i` times.
+
+This turns exact division into a sequence of local branch-removal or branch-decrement operations.
+
+---
+
 ## Inverse structural operator: `partition_signature(S)`
 
 In the coprime regime, partitioning a signature into blocks corresponds to structural coprime decomposition.
@@ -155,7 +232,9 @@ This grammar captures:
 - canonical union of coprime PET components
 - local branch creation for new primes
 - local branch update for existing primes
-- decomposition of multiplicative structure into branch-level operations
+- local branch removal under exact division
+- local branch decrement under exact division
+- decomposition of multiplication and exact division into branch-level operations
 
 ---
 
@@ -180,7 +259,10 @@ In the multiplicative domain, it also admits a local transformation grammar:
 
 - new prime -> attach branch
 - existing prime -> bump branch
+- exact division on exponent-1 branch -> detach branch
+- exact division on deeper branch -> decrement branch
 - coprime composition -> union
 - general multiplication -> sequence of local updates
+- exact division -> sequence of local inverse updates
 
 This appears to be the first solid layer of PET "musculature".
