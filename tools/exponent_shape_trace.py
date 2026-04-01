@@ -30,19 +30,23 @@ def exponent_info(e: int) -> dict:
     }
 
 
-def build_trace(limit: int) -> dict:
+def build_trace(start: int, limit: int) -> dict:
+    if start < 1:
+        raise ValueError("start must be >= 1")
     if limit < 1:
         raise ValueError("limit must be >= 1")
+    if start > limit:
+        raise ValueError("start must be <= limit")
 
-    exponents = [exponent_info(e) for e in range(1, limit + 1)]
+    exponents = [exponent_info(e) for e in range(start, limit + 1)]
 
     transitions = []
     signature_changed_count = 0
     generator_changed_count = 0
 
-    for e in range(1, limit):
-        before = exponents[e - 1]
-        after = exponents[e]
+    for i in range(len(exponents) - 1):
+        before = exponents[i]
+        after = exponents[i + 1]
         signature_changed = before["signature"] != after["signature"]
         generator_changed = before["generator"] != after["generator"]
 
@@ -67,6 +71,7 @@ def build_trace(limit: int) -> dict:
     transition_count = len(transitions)
 
     return {
+        "start": start,
         "limit": limit,
         "summary": {
             "transition_count": transition_count,
@@ -82,18 +87,27 @@ def build_trace(limit: int) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Emit exponent PET shape trace for e = 1..N."
+        description="Emit exponent PET shape trace for e = N1..N2."
     )
-    parser.add_argument("limit", type=int, help="Maximum exponent N (>= 1)")
+    parser.add_argument("n1", type=int, help="Start exponent, or maximum exponent if n2 is omitted")
+    parser.add_argument("n2", type=int, nargs="?", help="Maximum exponent (optional)")
     parser.add_argument("--json", action="store_true", help="Emit JSON")
     args = parser.parse_args()
 
     try:
-        report = build_trace(args.limit)
+        if args.n2 is None:
+            start = 1
+            limit = args.n1
+        else:
+            start = args.n1
+            limit = args.n2
+
+        report = build_trace(start, limit)
 
         if args.json:
             print(json.dumps(report, ensure_ascii=False, indent=2))
         else:
+            print(f"start = {report['start']}")
             print(f"limit = {report['limit']}")
             print(f"summary = {report['summary']}")
             print("exponents:")
