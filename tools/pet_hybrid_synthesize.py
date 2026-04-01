@@ -82,17 +82,21 @@ def _score_candidate(
     candidate_root_generator: int,
     modeled_branch_count: int,
     modeled_shapes: list[list],
+    *,
+    status_bonus: int = 0,
 ) -> tuple[int, dict[str, int]]:
     modeled_depth_penalty = sum(_shape_depth(sig) for sig in modeled_shapes)
     score = (
         candidate_root_generator
         + modeled_branch_count * 1000
         + modeled_depth_penalty * 10000
+        + status_bonus
     )
     return score, {
         "generator_term": candidate_root_generator,
         "modeled_branch_term": modeled_branch_count * 1000,
         "modeled_depth_term": modeled_depth_penalty * 10000,
+        "status_bonus_term": status_bonus,
     }
 
 
@@ -121,6 +125,7 @@ def _candidate_record(
     modeled_shapes: list[list],
     known_root_generator_lower_bound: int,
     notes: list[str],
+    status_bonus: int = 0,
 ) -> dict[str, Any]:
     candidate_root_children = _canonicalize_signatures(candidate_root_children)
     candidate_root_generator = _root_generator_from_children(candidate_root_children)
@@ -128,6 +133,7 @@ def _candidate_record(
         candidate_root_generator=candidate_root_generator,
         modeled_branch_count=modeled_branch_count,
         modeled_shapes=modeled_shapes,
+        status_bonus=status_bonus,
     )
 
     return {
@@ -157,6 +163,7 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
     schema = require_field(bridge, "schema")
     target = require_field(bridge, "target")
     hard_constraints = require_field(bridge, "hard_constraints")
+    soft_constraints = require_field(bridge, "soft_constraints")
     synthesis_hints = require_field(bridge, "synthesis_hints")
 
     target_n = require_field(target, "n")
@@ -175,6 +182,8 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
     residual_root_children_lower_bound = require_field(
         synthesis_hints, "residual_root_children_lower_bound"
     )
+    residual_info = require_field(soft_constraints, "residual_info")
+    residual_status = residual_info.get("status")
 
     if not isinstance(known_root_children, list):
         raise TypeError("known_root_children must be a list")
@@ -279,13 +288,36 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
                 )
             )
 
+        if residual_status == "perfect-power-composite-base":
+            modeled_shapes = [[[], []]]
+            composite_power_children = list(known_root_children) + modeled_shapes
+            candidates.append(
+                _candidate_record(
+                    candidate_kind="composite-power-base-completion",
+                    exact_root_anatomy_used=False,
+                    fully_factored_target=bool(fully_factored),
+                    residual_modeling_required=bool(residual_modeling_required),
+                    known_branch_count=known_count,
+                    modeled_branch_count=len(modeled_shapes),
+                    candidate_root_children=composite_power_children,
+                    modeled_shapes=modeled_shapes,
+                    known_root_generator_lower_bound=known_root_generator_lower_bound,
+                    status_bonus=-15000,
+                    notes=[
+                        "status-specific completion for perfect-power-composite-base residuals",
+                        "modeled residual is represented as one root branch whose exponent has composite-base shape",
+                        "ranking includes a semantic bonus for matching the residual status",
+                    ],
+                )
+            )
+
     candidates.sort(key=lambda c: (c["score"], c["candidate_root_generator"], c["candidate_kind"]))
 
     for rank, candidate in enumerate(candidates, start=1):
         candidate["rank"] = rank
 
     return {
-        "schema": "pet-hybrid-synthesis-v2",
+        "schema": "pet-hybrid-synthesis-v4",
         "bridge_schema": schema,
         "target_n": target_n,
         "candidate_count": len(candidates),
