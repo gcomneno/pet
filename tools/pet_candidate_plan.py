@@ -122,6 +122,10 @@ def build_plan(report: dict[str, Any], rank: int) -> dict[str, Any]:
         "start": 1,
         "step_count": len(steps),
         "steps": steps,
+        "constructive_plan": {
+            "start": 1,
+            "steps": steps,
+        },
         "final_n": current,
         "matches_candidate_root_generator": (
             current == candidate.get("candidate_root_generator")

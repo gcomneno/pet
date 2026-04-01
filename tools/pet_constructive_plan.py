@@ -24,8 +24,8 @@ def exp_signature(exp: int):
 
 
 def apply_step(current: int, step: dict, index: int) -> dict:
-    if current < 2:
-        raise ValueError("current must be >= 2")
+    if current < 1:
+        raise ValueError("current must be >= 1")
 
     if not isinstance(step, dict):
         raise TypeError(f"step #{index}: step must be an object")
@@ -42,7 +42,7 @@ def apply_step(current: int, step: dict, index: int) -> dict:
     if not is_prime(prime):
         raise ValueError(f"step #{index}: {prime} is not prime")
 
-    before_map = factor_map(current)
+    before_map = {} if current == 1 else factor_map(current)
     already_present = prime in before_map
 
     if op == "attach" and already_present:
@@ -62,6 +62,7 @@ def apply_step(current: int, step: dict, index: int) -> dict:
 
     branch_before = None if exp_before == 0 else exp_signature(exp_before)
     branch_after = exp_signature(exp_after)
+    before_signature = None if current == 1 else shape_signature_dict(current)["signature"]
 
     return {
         "index": index,
@@ -73,7 +74,7 @@ def apply_step(current: int, step: dict, index: int) -> dict:
         "exp_after": exp_after,
         "branch_before": branch_before,
         "branch_after": branch_after,
-        "before_signature": shape_signature_dict(current)["signature"],
+        "before_signature": before_signature,
         "after_signature": shape_signature_dict(after)["signature"],
     }
 
@@ -106,8 +107,8 @@ def execute_plan(plan: dict) -> dict:
 
     if not isinstance(start, int):
         raise TypeError("plan.start must be an int")
-    if start < 2:
-        raise ValueError("plan.start must be >= 2")
+    if start < 1:
+        raise ValueError("plan.start must be >= 1")
 
     if not isinstance(steps, list):
         raise TypeError("plan.steps must be a list")
