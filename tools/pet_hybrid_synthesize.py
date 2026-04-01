@@ -85,7 +85,44 @@ def require_field(obj: dict[str, Any], name: str) -> Any:
     return obj[name]
 
 
-def build_candidate(bridge: dict[str, Any]) -> dict[str, Any]:
+def _candidate_record(
+    *,
+    bridge_schema: str,
+    target_n: int,
+    candidate_kind: str,
+    exact_root_anatomy_used: bool,
+    fully_factored_target: bool,
+    residual_modeling_required: bool,
+    known_branch_count: int,
+    modeled_branch_count: int,
+    candidate_root_children: list[list],
+    known_root_generator_lower_bound: int,
+    notes: list[str],
+) -> dict[str, Any]:
+    candidate_root_children = _canonicalize_signatures(candidate_root_children)
+    candidate_root_generator = _root_generator_from_children(candidate_root_children)
+
+    return {
+        "candidate_kind": candidate_kind,
+        "exact_root_anatomy_used": bool(exact_root_anatomy_used),
+        "fully_factored_target": bool(fully_factored_target),
+        "residual_modeling_required": bool(residual_modeling_required),
+        "known_branch_count": known_branch_count,
+        "modeled_branch_count": modeled_branch_count,
+        "candidate_root_children": candidate_root_children,
+        "candidate_root_generator": candidate_root_generator,
+        "known_root_generator_lower_bound": known_root_generator_lower_bound,
+        "generator_matches_known_lower_bound": (
+            candidate_root_generator == known_root_generator_lower_bound
+        ),
+        "generator_meets_known_lower_bound": (
+            candidate_root_generator >= known_root_generator_lower_bound
+        ),
+        "notes": notes,
+    }
+
+
+def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
     schema = require_field(bridge, "schema")
     target = require_field(bridge, "target")
     hard_constraints = require_field(bridge, "hard_constraints")
@@ -110,92 +147,164 @@ def build_candidate(bridge: dict[str, Any]) -> dict[str, Any]:
 
     if not isinstance(known_root_children, list):
         raise TypeError("known_root_children must be a list")
+    if not isinstance(known_root_generator_lower_bound, int):
+        raise TypeError("known_root_generator_lower_bound must be an int")
+
+    candidates: list[dict[str, Any]] = []
 
     if exact_root_anatomy:
         if not isinstance(exact_root_children, list):
             raise TypeError("exact_root_children must be a list when exact_root_anatomy is true")
 
-        candidate_root_children = _canonicalize_signatures(exact_root_children)
-        candidate_root_generator = (
-            exact_root_generator
-            if exact_root_generator is not None
-            else _root_generator_from_children(candidate_root_children)
+        exact_children = _canonicalize_signatures(exact_root_children)
+        candidate = _candidate_record(
+            bridge_schema=schema,
+            target_n=target_n,
+            candidate_kind="exact-root-anatomy",
+            exact_root_anatomy_used=True,
+            fully_factored_target=bool(fully_factored),
+            residual_modeling_required=bool(residual_modeling_required),
+            known_branch_count=len(exact_children),
+            modeled_branch_count=0,
+            candidate_root_children=exact_children,
+            known_root_generator_lower_bound=known_root_generator_lower_bound,
+            notes=[
+                "candidate comes directly from exact root anatomy in the bridge payload",
+                "no modeled residual completion was needed",
+            ],
         )
-
-        known_branch_count = len(candidate_root_children)
-        modeled_branch_count = 0
-        candidate_kind = "exact-root-anatomy"
+        if exact_root_generator is not None:
+            candidate["exact_root_generator_from_bridge"] = exact_root_generator
+            candidate["generator_matches_exact_root_generator"] = (
+                candidate["candidate_root_generator"] == exact_root_generator
+            )
+        candidates.append(candidate)
     else:
         if not isinstance(residual_root_children_lower_bound, int):
             raise TypeError("residual_root_children_lower_bound must be an int")
         if residual_root_children_lower_bound < 0:
             raise ValueError("residual_root_children_lower_bound must be >= 0")
 
-        candidate_root_children = _canonicalize_signatures(
-            list(known_root_children) + ([[]] * residual_root_children_lower_bound)
-        )
-        candidate_root_generator = _root_generator_from_children(candidate_root_children)
+        known_count = len(known_root_children)
+        k = residual_root_children_lower_bound
 
-        known_branch_count = len(known_root_children)
-        modeled_branch_count = residual_root_children_lower_bound
-        candidate_kind = "minimal-lower-bound-completion"
+        # 1. Minimal leaf completion
+        candidates.append(
+            _candidate_record(
+                bridge_schema=schema,
+                target_n=target_n,
+                candidate_kind="minimal-leaf-completion",
+                exact_root_anatomy_used=False,
+                fully_factored_target=bool(fully_factored),
+                residual_modeling_required=bool(residual_modeling_required),
+                known_branch_count=known_count,
+                modeled_branch_count=k,
+                candidate_root_children=list(known_root_children) + ([[]] * k),
+                known_root_generator_lower_bound=known_root_generator_lower_bound,
+                notes=[
+                    "known branches come from probe-certified information",
+                    "modeled branches are leaf completions matching the residual lower bound",
+                ],
+            )
+        )
+
+        # 2. Grouped leaf completion
+        if k >= 2:
+            grouped_children = list(known_root_children) + [[[]]] + ([[]] * (k - 2))
+            candidates.append(
+                _candidate_record(
+                    bridge_schema=schema,
+                    target_n=target_n,
+                    candidate_kind="grouped-leaf-completion",
+                    exact_root_anatomy_used=False,
+                    fully_factored_target=bool(fully_factored),
+                    residual_modeling_required=bool(residual_modeling_required),
+                    known_branch_count=known_count,
+                    modeled_branch_count=k - 1,
+                    candidate_root_children=grouped_children,
+                    known_root_generator_lower_bound=known_root_generator_lower_bound,
+                    notes=[
+                        "two modeled leaf contributions are grouped into one shallow structured branch",
+                        "this is a synthetic completion strategy, not recovered residual anatomy",
+                    ],
+                )
+            )
+
+        # 3. Prime-power-style completion
+        if k >= 1:
+            pp_children = list(known_root_children) + [[[[]]]] + ([[]] * (k - 1))
+            candidates.append(
+                _candidate_record(
+                    bridge_schema=schema,
+                    target_n=target_n,
+                    candidate_kind="prime-power-style-completion",
+                    exact_root_anatomy_used=False,
+                    fully_factored_target=bool(fully_factored),
+                    residual_modeling_required=bool(residual_modeling_required),
+                    known_branch_count=known_count,
+                    modeled_branch_count=k,
+                    candidate_root_children=pp_children,
+                    known_root_generator_lower_bound=known_root_generator_lower_bound,
+                    notes=[
+                        "residual completion prefers one deeper modeled branch over purely flat branching",
+                        "this is a synthetic prime-power-style hypothesis, not recovered factorization",
+                    ],
+                )
+            )
 
     return {
-        "schema": "pet-hybrid-synthesis-v0",
+        "schema": "pet-hybrid-synthesis-v1",
         "bridge_schema": schema,
         "target_n": target_n,
-        "candidate_kind": candidate_kind,
-        "exact_root_anatomy_used": bool(exact_root_anatomy),
-        "fully_factored_target": bool(fully_factored),
-        "residual_modeling_required": bool(residual_modeling_required),
-        "known_branch_count": known_branch_count,
-        "modeled_branch_count": modeled_branch_count,
-        "candidate_root_children": candidate_root_children,
-        "candidate_root_generator": candidate_root_generator,
-        "known_root_generator_lower_bound": known_root_generator_lower_bound,
-        "generator_matches_known_lower_bound": (
-            candidate_root_generator == known_root_generator_lower_bound
-        ),
-        "generator_meets_known_lower_bound": (
-            candidate_root_generator >= known_root_generator_lower_bound
-        ),
-        "notes": [
-            "known branches come from probe-certified information",
-            "modeled branches are lower-bound completions, not recovered factors",
-        ],
+        "candidate_count": len(candidates),
+        "candidates": candidates,
     }
 
 
-def render_human(candidate: dict[str, Any]) -> str:
+def render_human(report: dict[str, Any]) -> str:
     lines = []
-    lines.append(f"schema = {candidate['schema']}")
-    lines.append(f"bridge_schema = {candidate['bridge_schema']}")
-    lines.append(f"target_n = {candidate['target_n']}")
-    lines.append(f"candidate_kind = {candidate['candidate_kind']}")
-    lines.append(f"exact_root_anatomy_used = {candidate['exact_root_anatomy_used']}")
-    lines.append(f"fully_factored_target = {candidate['fully_factored_target']}")
-    lines.append(f"residual_modeling_required = {candidate['residual_modeling_required']}")
-    lines.append(f"known_branch_count = {candidate['known_branch_count']}")
-    lines.append(f"modeled_branch_count = {candidate['modeled_branch_count']}")
-    lines.append(f"candidate_root_children = {candidate['candidate_root_children']}")
-    lines.append(f"candidate_root_generator = {candidate['candidate_root_generator']}")
-    lines.append(
-        f"known_root_generator_lower_bound = {candidate['known_root_generator_lower_bound']}"
-    )
-    lines.append(
-        f"generator_matches_known_lower_bound = {candidate['generator_matches_known_lower_bound']}"
-    )
-    lines.append(
-        f"generator_meets_known_lower_bound = {candidate['generator_meets_known_lower_bound']}"
-    )
-    for note in candidate["notes"]:
-        lines.append(f"note: {note}")
-    return "\n".join(lines)
+    lines.append(f"schema = {report['schema']}")
+    lines.append(f"bridge_schema = {report['bridge_schema']}")
+    lines.append(f"target_n = {report['target_n']}")
+    lines.append(f"candidate_count = {report['candidate_count']}")
+    lines.append("")
+
+    for i, candidate in enumerate(report["candidates"], start=1):
+        lines.append(f"[candidate {i}] kind = {candidate['candidate_kind']}")
+        lines.append(f"exact_root_anatomy_used = {candidate['exact_root_anatomy_used']}")
+        lines.append(f"fully_factored_target = {candidate['fully_factored_target']}")
+        lines.append(f"residual_modeling_required = {candidate['residual_modeling_required']}")
+        lines.append(f"known_branch_count = {candidate['known_branch_count']}")
+        lines.append(f"modeled_branch_count = {candidate['modeled_branch_count']}")
+        lines.append(f"candidate_root_children = {candidate['candidate_root_children']}")
+        lines.append(f"candidate_root_generator = {candidate['candidate_root_generator']}")
+        lines.append(
+            f"known_root_generator_lower_bound = {candidate['known_root_generator_lower_bound']}"
+        )
+        lines.append(
+            f"generator_matches_known_lower_bound = {candidate['generator_matches_known_lower_bound']}"
+        )
+        lines.append(
+            f"generator_meets_known_lower_bound = {candidate['generator_meets_known_lower_bound']}"
+        )
+        if "exact_root_generator_from_bridge" in candidate:
+            lines.append(
+                f"exact_root_generator_from_bridge = {candidate['exact_root_generator_from_bridge']}"
+            )
+            lines.append(
+                "generator_matches_exact_root_generator = "
+                f"{candidate['generator_matches_exact_root_generator']}"
+            )
+        for note in candidate["notes"]:
+            lines.append(f"note: {note}")
+        lines.append("")
+
+    return "\n".join(lines).rstrip()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build a minimal hybrid PET candidate from a bridge payload."
+        description="Build one or more hybrid PET candidates from a bridge payload."
     )
     parser.add_argument("bridge", help="Path to pet_hybrid_bridge JSON payload")
     parser.add_argument("--json", action="store_true", help="Emit JSON")
@@ -203,12 +312,12 @@ def main() -> int:
 
     try:
         bridge = load_bridge(Path(args.bridge))
-        candidate = build_candidate(bridge)
+        report = build_candidates(bridge)
 
         if args.json:
-            print(json.dumps(candidate, ensure_ascii=False, indent=2))
+            print(json.dumps(report, ensure_ascii=False, indent=2))
         else:
-            print(render_human(candidate))
+            print(render_human(report))
 
         return 0
     except Exception as exc:
