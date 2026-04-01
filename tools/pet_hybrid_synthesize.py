@@ -72,6 +72,30 @@ def _root_generator_from_children(children: list[list]) -> int:
     return result
 
 
+def _shape_depth(sig: list) -> int:
+    if not sig:
+        return 1
+    return 1 + max(_shape_depth(child) for child in sig)
+
+
+def _score_candidate(
+    candidate_root_generator: int,
+    modeled_branch_count: int,
+    modeled_shapes: list[list],
+) -> tuple[int, dict[str, int]]:
+    modeled_depth_penalty = sum(_shape_depth(sig) for sig in modeled_shapes)
+    score = (
+        candidate_root_generator
+        + modeled_branch_count * 1000
+        + modeled_depth_penalty * 10000
+    )
+    return score, {
+        "generator_term": candidate_root_generator,
+        "modeled_branch_term": modeled_branch_count * 1000,
+        "modeled_depth_term": modeled_depth_penalty * 10000,
+    }
+
+
 def load_bridge(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
@@ -87,8 +111,6 @@ def require_field(obj: dict[str, Any], name: str) -> Any:
 
 def _candidate_record(
     *,
-    bridge_schema: str,
-    target_n: int,
     candidate_kind: str,
     exact_root_anatomy_used: bool,
     fully_factored_target: bool,
@@ -96,11 +118,17 @@ def _candidate_record(
     known_branch_count: int,
     modeled_branch_count: int,
     candidate_root_children: list[list],
+    modeled_shapes: list[list],
     known_root_generator_lower_bound: int,
     notes: list[str],
 ) -> dict[str, Any]:
     candidate_root_children = _canonicalize_signatures(candidate_root_children)
     candidate_root_generator = _root_generator_from_children(candidate_root_children)
+    score, score_terms = _score_candidate(
+        candidate_root_generator=candidate_root_generator,
+        modeled_branch_count=modeled_branch_count,
+        modeled_shapes=modeled_shapes,
+    )
 
     return {
         "candidate_kind": candidate_kind,
@@ -109,6 +137,7 @@ def _candidate_record(
         "residual_modeling_required": bool(residual_modeling_required),
         "known_branch_count": known_branch_count,
         "modeled_branch_count": modeled_branch_count,
+        "modeled_shapes": modeled_shapes,
         "candidate_root_children": candidate_root_children,
         "candidate_root_generator": candidate_root_generator,
         "known_root_generator_lower_bound": known_root_generator_lower_bound,
@@ -118,6 +147,8 @@ def _candidate_record(
         "generator_meets_known_lower_bound": (
             candidate_root_generator >= known_root_generator_lower_bound
         ),
+        "score": score,
+        "score_terms": score_terms,
         "notes": notes,
     }
 
@@ -158,8 +189,6 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
 
         exact_children = _canonicalize_signatures(exact_root_children)
         candidate = _candidate_record(
-            bridge_schema=schema,
-            target_n=target_n,
             candidate_kind="exact-root-anatomy",
             exact_root_anatomy_used=True,
             fully_factored_target=bool(fully_factored),
@@ -167,6 +196,7 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
             known_branch_count=len(exact_children),
             modeled_branch_count=0,
             candidate_root_children=exact_children,
+            modeled_shapes=[],
             known_root_generator_lower_bound=known_root_generator_lower_bound,
             notes=[
                 "candidate comes directly from exact root anatomy in the bridge payload",
@@ -188,18 +218,17 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
         known_count = len(known_root_children)
         k = residual_root_children_lower_bound
 
-        # 1. Minimal leaf completion
+        modeled_shapes = [[]] * k
         candidates.append(
             _candidate_record(
-                bridge_schema=schema,
-                target_n=target_n,
                 candidate_kind="minimal-leaf-completion",
                 exact_root_anatomy_used=False,
                 fully_factored_target=bool(fully_factored),
                 residual_modeling_required=bool(residual_modeling_required),
                 known_branch_count=known_count,
                 modeled_branch_count=k,
-                candidate_root_children=list(known_root_children) + ([[]] * k),
+                candidate_root_children=list(known_root_children) + modeled_shapes,
+                modeled_shapes=modeled_shapes,
                 known_root_generator_lower_bound=known_root_generator_lower_bound,
                 notes=[
                     "known branches come from probe-certified information",
@@ -208,20 +237,19 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
             )
         )
 
-        # 2. Grouped leaf completion
         if k >= 2:
-            grouped_children = list(known_root_children) + [[[]]] + ([[]] * (k - 2))
+            modeled_shapes = [[[]]] + ([[]] * (k - 2))
+            grouped_children = list(known_root_children) + modeled_shapes
             candidates.append(
                 _candidate_record(
-                    bridge_schema=schema,
-                    target_n=target_n,
                     candidate_kind="grouped-leaf-completion",
                     exact_root_anatomy_used=False,
                     fully_factored_target=bool(fully_factored),
                     residual_modeling_required=bool(residual_modeling_required),
                     known_branch_count=known_count,
-                    modeled_branch_count=k - 1,
+                    modeled_branch_count=len(modeled_shapes),
                     candidate_root_children=grouped_children,
+                    modeled_shapes=modeled_shapes,
                     known_root_generator_lower_bound=known_root_generator_lower_bound,
                     notes=[
                         "two modeled leaf contributions are grouped into one shallow structured branch",
@@ -230,20 +258,19 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
                 )
             )
 
-        # 3. Prime-power-style completion
         if k >= 1:
-            pp_children = list(known_root_children) + [[[[]]]] + ([[]] * (k - 1))
+            modeled_shapes = [[[[]]]] + ([[]] * (k - 1))
+            pp_children = list(known_root_children) + modeled_shapes
             candidates.append(
                 _candidate_record(
-                    bridge_schema=schema,
-                    target_n=target_n,
                     candidate_kind="prime-power-style-completion",
                     exact_root_anatomy_used=False,
                     fully_factored_target=bool(fully_factored),
                     residual_modeling_required=bool(residual_modeling_required),
                     known_branch_count=known_count,
-                    modeled_branch_count=k,
+                    modeled_branch_count=len(modeled_shapes),
                     candidate_root_children=pp_children,
+                    modeled_shapes=modeled_shapes,
                     known_root_generator_lower_bound=known_root_generator_lower_bound,
                     notes=[
                         "residual completion prefers one deeper modeled branch over purely flat branching",
@@ -252,8 +279,13 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
                 )
             )
 
+    candidates.sort(key=lambda c: (c["score"], c["candidate_root_generator"], c["candidate_kind"]))
+
+    for rank, candidate in enumerate(candidates, start=1):
+        candidate["rank"] = rank
+
     return {
-        "schema": "pet-hybrid-synthesis-v1",
+        "schema": "pet-hybrid-synthesis-v2",
         "bridge_schema": schema,
         "target_n": target_n,
         "candidate_count": len(candidates),
@@ -270,12 +302,15 @@ def render_human(report: dict[str, Any]) -> str:
     lines.append("")
 
     for i, candidate in enumerate(report["candidates"], start=1):
-        lines.append(f"[candidate {i}] kind = {candidate['candidate_kind']}")
+        lines.append(f"[candidate {i}] rank = {candidate['rank']} kind = {candidate['candidate_kind']}")
+        lines.append(f"score = {candidate['score']}")
+        lines.append(f"score_terms = {candidate['score_terms']}")
         lines.append(f"exact_root_anatomy_used = {candidate['exact_root_anatomy_used']}")
         lines.append(f"fully_factored_target = {candidate['fully_factored_target']}")
         lines.append(f"residual_modeling_required = {candidate['residual_modeling_required']}")
         lines.append(f"known_branch_count = {candidate['known_branch_count']}")
         lines.append(f"modeled_branch_count = {candidate['modeled_branch_count']}")
+        lines.append(f"modeled_shapes = {candidate['modeled_shapes']}")
         lines.append(f"candidate_root_children = {candidate['candidate_root_children']}")
         lines.append(f"candidate_root_generator = {candidate['candidate_root_generator']}")
         lines.append(
@@ -304,7 +339,7 @@ def render_human(report: dict[str, Any]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build one or more hybrid PET candidates from a bridge payload."
+        description="Build and rank one or more hybrid PET candidates from a bridge payload."
     )
     parser.add_argument("bridge", help="Path to pet_hybrid_bridge JSON payload")
     parser.add_argument("--json", action="store_true", help="Emit JSON")
