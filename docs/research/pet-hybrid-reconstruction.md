@@ -367,5 +367,69 @@ So the current state is:
 - candidate ranking
 - targeted search for examples by residual status
 
-What still does **not** exist is a status-specialized synthesizer.
-For example, `perfect-power-composite-base` is currently handled by the same generic completion strategies used for other unresolved residual types.
+A first status-specialized synthesis behavior now exists.
+
+In particular:
+
+- `perfect-power-composite-base` is handled by a dedicated candidate
+- ranking can apply a semantic bonus when that candidate matches the residual status
+
+What still does **not** exist is a convincing specialized strategy for every residual class.
+In particular, `composite-non-prime-power` is still handled in practice by the generic strategies, because the specialized attempts explored so far have not been competitive.
+
+## Residual status behavior in the current prototype
+
+The current hybrid prototype does not react in the same way to every residual status.
+
+### `prime-power-by-sympy`
+
+This status can be found with sufficiently small schedules and sufficiently large prime-power factors.
+However, in the current workflow it often already yields:
+
+- `exact_root_anatomy = true`
+
+even when:
+
+- `fully_factored = false`
+
+So this status is important, but it does not necessarily require a dedicated synthesis strategy.
+In practice, it often behaves like a semantically closed case for root-level PET reconstruction.
+
+### `perfect-power-composite-base`
+
+This is currently the most useful open structured residual for hybrid synthesis.
+
+It is valuable because:
+
+- the target does not fully close
+- the residual is not merely an arbitrary composite unknown
+- the residual still carries a recognizable structural class
+
+For this reason, the current synthesizer includes a dedicated status-aware candidate and a semantic ranking bonus for:
+
+- `composite-power-base-completion`
+
+This is the first residual status for which a synthesis-specialized strategy has proved worthwhile.
+
+### `composite-non-prime-power`
+
+This status remains open and important, but the current prototype does not yet have a convincing specialized synthesis strategy for it.
+
+A dedicated attempt was explored, but the modeled shapes tested so far were too structurally expensive and were not competitive with the existing generic strategies.
+
+So the current practical conclusion is:
+
+- keep the generic strategies
+- do not force a weak status-specialized completion yet
+
+## Provisional synthesis of the status landscape
+
+At the current stage of the project, the residual statuses behave roughly as follows:
+
+- `prime-power-by-sympy` → often root-closed already
+- `perfect-power-composite-base` → best current target for status-aware synthesis
+- `composite-non-prime-power` → still open research territory
+
+This distinction matters because not every interesting residual status justifies the same architectural response.
+Some statuses require dedicated synthesis logic.
+Others mainly require accurate probing and interpretation.
