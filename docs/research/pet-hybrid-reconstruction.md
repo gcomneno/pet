@@ -277,15 +277,95 @@ What this workflow *can* claim is much narrower and much more honest:
 This is not exact inversion.
 It is constrained structural reconstruction under explicit uncertainty.
 
-## Status
+## Worked example: a `perfect-power-composite-base` residual
 
-This is currently a research specification only.
+A useful hybrid example is provided by the target
 
-Relevant existing tools:
+- `N = 212262408`
+- construction label: `2*(101*102)^2`
+
+Using a bounded probe with a very small schedule, this target does **not** close exactly, but its unresolved residual is still classified in a more informative way than a generic composite unknown.
+
+### Phase A — probe
+
+A search with `tools/find_probe_status_examples.py` produced this target as an example with:
+
+- `residual_info.status = "perfect-power-composite-base"`
+- `fully_factored = false`
+- `exact_root_anatomy = false`
+
+The probe also extracted certified known factors:
+
+- `2^3`
+- `3^2`
+
+So the hybrid workflow begins from a situation where:
+
+- part of the target is known exactly
+- the residual is not closed
+- the residual is nevertheless recognized as a perfect power with composite base
+
+This is more structured than the generic status:
+
+- `composite-non-prime-power`
+
+and therefore provides a better stress test for the bridge and synthesis stages.
+
+### Phase B — bridge interpretation
+
+For this target, the bridge payload separates:
+
+- hard constraints coming from the known factors
+- soft uncertainty attached to the unresolved perfect-power composite residual
+
+The important point is that the workflow still does **not** claim to have recovered the exact hidden factorization of that residual.
+
+Instead, it records that the unresolved mass has a more structured shape than an arbitrary composite residue.
+
+### Phase C — synthesis and ranking
+
+The current synthesizer still applies generic completion strategies rather than a status-specific strategy for `perfect-power-composite-base`.
+
+That is acceptable for now.
+
+The important fact is that the hybrid pipeline remains operational:
+
+1. the probe extracts partial certified structure
+2. the bridge preserves uncertainty without collapsing it into fake exactness
+3. the synthesizer produces ranked forward-compatible candidates
+4. the target can be studied as a constrained reconstruction problem rather than an all-or-nothing inversion problem
+
+### Why this example matters
+
+This example shows that the hybrid workflow is not limited to only two trivial extremes:
+
+- targets that fully close under the probe
+- targets with only a generic unresolved composite residue
+
+It also works on an intermediate case where the residual is still unresolved but already carries a recognizable structural class.
+
+That is an important milestone because it shows that the pipeline can react not only to “known” versus “unknown”, but also to *different kinds of unknown*.
+
+## Updated status
+
+This is no longer only a research specification.
+
+Relevant tools now present in the repo:
 
 - `tools/partial_signature_probe.py`
+- `tools/pet_hybrid_bridge.py`
+- `tools/pet_hybrid_synthesize.py`
+- `tools/find_probe_status_examples.py`
 - `tools/pet_constructive_plan.py`
 - `tools/exponent_shape_trace.py`
 
-No integrated bridge tool exists yet.
-The next concrete step would be to define a tiny machine-readable bridge payload and a first prototype that turns probe output into one or more forward constructive candidate plans.
+So the current state is:
+
+- bounded probe of target integers
+- machine-readable bridge payload
+- forward candidate synthesis
+- candidate ranking
+- targeted search for examples by residual status
+
+What still does **not** exist is a status-specialized synthesizer.
+For example, `perfect-power-composite-base` is currently handled by the same generic completion strategies used for other unresolved residual types.
