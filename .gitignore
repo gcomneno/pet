@@ -29,3 +29,4 @@ docs/reports/data/
 .mypy_cache
 .pytest_cache
 
+tmp/
