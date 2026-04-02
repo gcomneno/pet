@@ -134,6 +134,35 @@ Operational reading:
 
 This further supports *not* adding a dedicated `composite-non-prime-power` synthesis strategy yet.
 
+## Stable-before-closure window inside the CNPP ladder
+
+A second empirical observation appears on the focused 16-case CNPP ladder followed across schedules
+`10, 13, 17, 19, 23, 89, 191`.
+
+For every target in that ladder that ever appears as `composite-non-prime-power`, the top-1 synthesis
+candidate eventually becomes stable *before* exact closure.
+
+Operationally, this means:
+
+- `probe -> partial PET decomposition` may remain open for several schedules
+- `synth -> PET reconstruction candidate` can already stop changing earlier
+- exact closure can still happen later
+
+This should be read as a pipeline-level empirical regularity, not as a general PET theorem.
+
+Inside the current 16-case ladder:
+
+- `11/11` targets that enter `composite-non-prime-power` show a non-empty stable-before-closure window
+- in `9/11` cases the stable window is only one observed CNPP schedule point
+- the persistent cases are currently:
+  - `3928638`, with stable top-1 root generator `420` from schedule `10` through `23`, before exact closure at `89`
+  - `20086291530`, with stable top-1 root generator `1260` from schedule `10` through `89`, before exact closure at `191`
+
+So the strongest current reading is not that there is a broad new persistent CNPP regime, but that:
+
+- stable-before-closure appears ubiquitous in the observed CNPP ladder
+- long persistent stable windows are real but rare
+
 ## Current recommendation
 
 Do **not** add a dedicated synthesis strategy for `composite-non-prime-power` yet.
