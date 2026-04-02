@@ -64,6 +64,28 @@ Within this basin, the observed top-ranked candidate is stably:
 
 This is the strongest current empirical regularity in the difficult-case region.
 
+
+### 5. Probe threshold law inside `composite-non-prime-power`
+
+A stronger empirical regularity now appears inside the `composite-non-prime-power` basin.
+
+Across the currently checked cases, if a target remains `composite-non-prime-power` at schedule `s`
+and then first closes to `unit` at schedule `t`, the observed law is:
+
+- `t = smallest_prime_factor(penultimate_residual)`
+
+where `penultimate_residual` means the residual seen at schedule `t - 1`.
+
+Observed scope so far:
+- checked on varied `composite-non-prime-power` cases from the repo scans and additional fresh scans
+- includes semiprime penultimate residuals and multiplicity-heavy penultimate residuals
+- no counterexample observed in the current checked set
+
+Interpretation discipline:
+- this is currently an empirical law of the bounded probe behavior
+- it should **not** yet be stated as a general PET theorem
+- it is still useful as a strong predictive rule for the current probe/status boundary behavior
+
 ## Negative results / non-rules
 
 The scans also ruled out several naive explanations.
@@ -89,6 +111,28 @@ That is:
 - some cases close semantically as prime powers
 - some rare cases close semantically as composite-base perfect powers
 - many difficult cases remain in the broader `composite-non-prime-power` basin
+
+## Budget-drain observation inside `composite-non-prime-power`
+
+A further empirical observation is that the observed `composite-non-prime-power` basin drains rapidly as the probe schedule increases.
+
+On the tracked difficult-case set used for focused follow-up:
+
+- schedule `10`  -> `19/19` cases still in `composite-non-prime-power`
+- schedule `13`  -> `10/19`
+- schedule `17`  -> `5/19`
+- schedule `19`  -> `3/19`
+- schedule `23`  -> `2/19`
+- schedule `89`  -> `1/19`
+- schedule `191` -> `0/19`
+
+Operational reading:
+
+- the basin is real and important at tight bounded budgets
+- but much of it is drained by additional arithmetic progress in the probe
+- so the current dominance of `grouped-leaf-completion` should be read mainly as a strong low-budget reconstruction regularity, not yet as evidence for a separate mature synthesis regime
+
+This further supports *not* adding a dedicated `composite-non-prime-power` synthesis strategy yet.
 
 ## Current recommendation
 
