@@ -193,6 +193,39 @@ def build_summary(results: list[dict]) -> dict:
     return summary
 
 
+
+def build_status_summary(results: list[dict]) -> dict:
+    summary: dict[str, dict] = {}
+    for row in results:
+        status = row.get("status") or "null"
+        bucket = summary.setdefault(
+            status,
+            {
+                "cases": 0,
+                "validated": 0,
+                "no_candidate": 0,
+                "planner_failed": 0,
+                "executor_failed": 0,
+                "mismatch": 0,
+                "failed": 0,
+                "families": {},
+            },
+        )
+        bucket["cases"] += 1
+        outcome = row["outcome"]
+        if outcome in bucket:
+            bucket[outcome] += 1
+        else:
+            bucket["failed"] += 1
+
+        family = row["family"]
+        bucket["families"][family] = bucket["families"].get(family, 0) + 1
+
+    for bucket in summary.values():
+        bucket["families"] = dict(sorted(bucket["families"].items()))
+    return dict(sorted(summary.items()))
+
+
 def main() -> int:
     args = parse_args()
 
@@ -240,12 +273,9 @@ def main() -> int:
 
         outcome = determine_outcome(synth, plan, exec_payload, error)
 
-        results.append(
+        row = dict(case)
+        row.update(
             {
-                "target": target,
-                "family": case["family"],
-                "label": case.get("label"),
-                "probe_schedule": schedule,
                 "status": residual_info.get("status"),
                 "probe_stop_reason": None if probe is None else probe.get("stop_reason"),
                 "probe_closure_kind": None if probe is None else probe.get("closure_kind"),
@@ -269,11 +299,13 @@ def main() -> int:
                 "error": error,
             }
         )
+        results.append(row)
 
     payload = {
         "schema": "pet-hybrid-eval-v0",
         "case_count": len(cases),
         "summary_by_family": build_summary(results),
+        "summary_by_status": build_status_summary(results),
         "results": results,
     }
 
