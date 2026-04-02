@@ -422,6 +422,15 @@ So the current practical conclusion is:
 - keep the generic strategies
 - do not force a weak status-specialized completion yet
 
+Within the current prototype, this status also does not behave as a single uniform regime.
+The main observed patterns are:
+
+- cases that close quickly as probe budget increases
+- cases where the top-ranked reconstruction candidate keeps moving before closure
+- cases where the top-ranked reconstruction candidate stabilizes before exact closure
+
+So the main current need here is still better characterization of internal CNPP behavior, not immediate strategy expansion.
+
 ## Provisional synthesis of the status landscape
 
 At the current stage of the project, the residual statuses behave roughly as follows:
