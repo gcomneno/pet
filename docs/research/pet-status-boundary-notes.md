@@ -163,6 +163,16 @@ So the strongest current reading is not that there is a broad new persistent CNP
 - stable-before-closure appears ubiquitous in the observed CNPP ladder
 - long persistent stable windows are real but rare
 
+A useful early discriminant also appears on the current CNPP ladder already by comparing schedules `10` and `13`.
+
+Within the observed ladder:
+
+- if a case is already `unit` at schedule `13`, it falls in the quick-closure regime
+- if a case is still `composite-non-prime-power` at schedule `13` and the top-1 root generator changed from schedule `10`, it falls in the mobile-before-closure regime
+- if a case is still `composite-non-prime-power` at schedule `13` and the top-1 root generator stayed unchanged from schedule `10`, it falls in the persistent-stable-before-closure regime
+
+This is a useful empirical discriminant for the current ladder, not yet a general rule.
+
 ## Current recommendation
 
 Do **not** add a dedicated synthesis strategy for `composite-non-prime-power` yet.
