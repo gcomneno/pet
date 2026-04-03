@@ -97,3 +97,36 @@ def test_persistent_cnpp_cases_show_stable_top1_before_exact_closure() -> None:
         assert closed["top1_kind"] == "exact-root-anatomy"
         assert closed["top1_root_generator"] == case["closure_root_generator"]
         assert closed["top1_root_generator"] != stable_root
+
+
+REGIME_CASES = [
+    {"target": 3094, "label": "quick-closure"},
+    {"target": 14586, "label": "quick-closure"},
+    {"target": 30030, "label": "quick-closure"},
+    {"target": 72930, "label": "quick-closure"},
+    {"target": 510510, "label": "quick-closure"},
+    {"target": 293930, "label": "mobile-before-closure"},
+    {"target": 9699690, "label": "mobile-before-closure"},
+    {"target": 223092870, "label": "mobile-before-closure"},
+    {"target": 6469693230, "label": "mobile-before-closure"},
+    {"target": 3928638, "label": "persistent-stable-before-closure"},
+    {"target": 20086291530, "label": "persistent-stable-before-closure"},
+]
+
+
+def classify_from_schedule_10_13(target: int) -> str:
+    row10 = run_top1(target, 10)
+    row13 = run_top1(target, 13)
+
+    if row13["status"] == "unit":
+        return "quick-closure"
+
+    assert row13["status"] == "composite-non-prime-power"
+    if row10["top1_root_generator"] == row13["top1_root_generator"]:
+        return "persistent-stable-before-closure"
+    return "mobile-before-closure"
+
+
+def test_cnpp_regime_discriminant_from_schedule_10_to_13_on_current_ladder() -> None:
+    for case in REGIME_CASES:
+        assert classify_from_schedule_10_13(case["target"]) == case["label"]
