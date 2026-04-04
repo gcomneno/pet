@@ -1,3 +1,5 @@
+"""Utilities for classifying pathwise rewrite failures."""
+
 #!/usr/bin/env python3
 from __future__ import annotations
 
@@ -8,7 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from pet.core import encode, decode, shape_generator
+from pet.core import decode, encode, shape_generator
 from tools.pathwise_one_step_probe import (
     get_subtree,
     apply_rw,
@@ -19,10 +21,12 @@ from tools.prune_absorption_check import child_generators, nearest_candidates
 
 
 def all_ancestor_paths_inclusive(path):
+    """Return all ancestor paths from root to the given path."""
     return [path[:i] for i in range(len(path) + 1)]
 
 
 def first_bad_ancestor(tree, rewritten_path):
+    """Return the first ancestor on the rewritten path that becomes non-canonical."""
     for anc in reversed(all_ancestor_paths_inclusive(rewritten_path)):
         node = tree if anc == () else get_subtree(tree, anc)
         gs = child_generators(node)
@@ -32,6 +36,7 @@ def first_bad_ancestor(tree, rewritten_path):
 
 
 def pathwise_ceiling_trace(tree0, tree1, rewritten_path):
+    """Return before/after local canonicity data along the rewritten path."""
     trace = []
 
     for anc in all_ancestor_paths_inclusive(rewritten_path):
@@ -51,6 +56,7 @@ def pathwise_ceiling_trace(tree0, tree1, rewritten_path):
 
 
 def first_bad_path_from_trace(trace):
+    """Return the first non-canonical path found in a pathwise trace."""
     for item in trace:
         if not item["locally_canonical"]:
             return item["path"]
@@ -58,6 +64,7 @@ def first_bad_path_from_trace(trace):
 
 
 def first_violation_from_trace(trace):
+    """Return the first local ceiling inversion found in a pathwise trace."""
     for item in trace:
         gs = item["after"]
         for i in range(len(gs) - 1):
@@ -72,6 +79,7 @@ def first_violation_from_trace(trace):
 
 
 def local_ceiling_violations(gs):
+    """Return all local ceiling inversions in a generator list."""
     out = []
     for i in range(len(gs) - 1):
         if gs[i] < gs[i + 1]:
@@ -86,6 +94,7 @@ def local_ceiling_violations(gs):
 
 
 def classify_pathwise_rewrite(tree0, tree1, rewritten_path):
+    """Classify a rewritten path by local/global failure location."""
     local1 = tree1 if rewritten_path == () else get_subtree(tree1, rewritten_path)
     trace = pathwise_ceiling_trace(tree0, tree1, rewritten_path)
     first_bad_path = first_bad_path_from_trace(trace)
@@ -109,6 +118,7 @@ def classify_pathwise_rewrite(tree0, tree1, rewritten_path):
 
 
 def root_failure_signature(tree0, tree1, rewritten_path):
+    """Return a compact diagnostic signature for a root failure case."""
     info = classify_pathwise_rewrite(tree0, tree1, rewritten_path)
 
     if info["first_bad_path"] is None:
@@ -124,6 +134,37 @@ def root_failure_signature(tree0, tree1, rewritten_path):
         "violation_count_at_bad_path": len(local_ceiling_violations(bad_after)),
         "first_violation": info["first_violation"],
     }
+
+
+def score_pathwise_move(tree0, tree1, rewritten_path, info=None):
+    """Return a lexicographic score for comparing one-step pathwise rewrites.
+
+    Higher is better. Priority order:
+    1. no failure > embedded_ancestor > root
+    2. smaller first violation is better
+    3. larger numeric growth is better
+    """
+
+    if info is None:
+        info = classify_pathwise_rewrite(tree0, tree1, rewritten_path)
+
+    if info["failure_kind"] is None:
+        tier = 3
+    elif info["failure_kind"] == "embedded_ancestor":
+        tier = 2
+    else:
+        tier = 1
+
+    violation_penalty = 0
+    if info["first_violation"] is not None:
+        violation_penalty = (
+            info["first_violation"]["right"] - info["first_violation"]["left"]
+        )
+
+    growth = decode(tree1) - decode(tree0)
+
+    return (tier, -violation_penalty, growth)
+
 
 def main():
     parser = argparse.ArgumentParser(
