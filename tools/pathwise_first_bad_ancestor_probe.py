@@ -57,6 +57,20 @@ def first_bad_path_from_trace(trace):
     return None
 
 
+def first_violation_from_trace(trace):
+    for item in trace:
+        gs = item["after"]
+        for i in range(len(gs) - 1):
+            if gs[i] < gs[i + 1]:
+                return {
+                    "path": item["path"],
+                    "index": i,
+                    "left": gs[i],
+                    "right": gs[i + 1],
+                }
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
