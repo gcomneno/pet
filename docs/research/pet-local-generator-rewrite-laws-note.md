@@ -379,8 +379,8 @@ More generally, in the bounded root-failure family currently locked in tests:
 - the first violation is a single local ceiling inversion at the root
 
 What is not yet verified as a replayed bounded fact is the embedded case:
-- under the current tooling, bounded scans have so far exhibited root failures only
-- no reproduced `embedded_ancestor` witness has yet been extracted automatically
+- under the current tooling, the current bounded one-step automatic scans have so far exhibited root failures only
+- however, an `embedded_ancestor` witness is now reproducible via an explicit canonical embedding construction rather than by the current automatic scan
 
 So the non-root formulation remains a research direction suggested by the embedding analysis,
 not yet a settled empirical law.
