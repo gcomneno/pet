@@ -345,6 +345,10 @@ Observed canonical witnesses:
 - embedding `[576, 36]`, with an internal one-step constructive rewrite inside the embedded `36`
 - embedding `[10000, 900]`, with an internal one-step constructive rewrite inside the embedded `900`
 
+Important note:
+the embedded witness notation above should be read as a targeted canonical embedding description,
+not as a claim that the current `encode(h)` dump literally exposes `36` or `900` as an immediately readable subtree label with the current tooling.
+
 Minimal standalone witness details:
 - initial root child generators: `[2, 2]`
 - rewritten local child generators: `[1] -> [2]`
