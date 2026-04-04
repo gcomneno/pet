@@ -166,6 +166,105 @@ def score_pathwise_move(tree0, tree1, rewritten_path, info=None):
     return (tier, -violation_penalty, growth)
 
 
+def choose_best_pathwise_move(tree0, limit=2000):
+    """Choose the best local-ok one-step rewrite under the current pathwise score."""
+    pool = [1] + sorted({shape_generator(n) for n in range(2, limit + 1)})
+
+    best = None
+    best_score = None
+
+    for path in all_paths_including_root(tree0):
+        node = tree0 if path == () else get_subtree(tree0, path)
+        gs = child_generators(node)
+
+        for child_idx, old_g in enumerate(gs):
+            for new_g in nearest_candidates(gs, child_idx, pool):
+                if new_g <= old_g:
+                    continue
+
+                tree1 = apply_rw(tree0, path, child_idx, new_g)
+                local1 = tree1 if path == () else get_subtree(tree1, path)
+
+                if not is_locally_canonical(local1):
+                    continue
+
+                info = classify_pathwise_rewrite(tree0, tree1, path)
+                score = score_pathwise_move(tree0, tree1, path, info)
+
+                if best_score is None or score > best_score:
+                    best_score = score
+                    best = {
+                        "path": path,
+                        "child_idx": child_idx,
+                        "old_g": old_g,
+                        "new_g": new_g,
+                        "tree1": tree1,
+                        "info": info,
+                        "score": score,
+                    }
+
+    return best
+
+
+def choose_best_pathwise_move_toward_target(tree0, target, limit=2000):
+    """Choose the best local-ok one-step rewrite toward a numeric target."""
+    pool = [1] + sorted({shape_generator(n) for n in range(2, limit + 1)})
+
+    best = None
+    best_key = None
+
+    for path in all_paths_including_root(tree0):
+        node = tree0 if path == () else get_subtree(tree0, path)
+        gs = child_generators(node)
+
+        for child_idx, old_g in enumerate(gs):
+            for new_g in nearest_candidates(gs, child_idx, pool):
+                if new_g <= old_g:
+                    continue
+
+                tree1 = apply_rw(tree0, path, child_idx, new_g)
+                local1 = tree1 if path == () else get_subtree(tree1, path)
+                if not is_locally_canonical(local1):
+                    continue
+
+                info = classify_pathwise_rewrite(tree0, tree1, path)
+                new_h = decode(tree1)
+
+                if info["failure_kind"] is None:
+                    tier = 3
+                elif info["failure_kind"] == "embedded_ancestor":
+                    tier = 2
+                else:
+                    tier = 1
+
+                violation_penalty = 0
+                if info["first_violation"] is not None:
+                    violation_penalty = (
+                        info["first_violation"]["right"] - info["first_violation"]["left"]
+                    )
+
+                key = (
+                    -abs(new_h - target),
+                    tier,
+                    -violation_penalty,
+                )
+
+                if best_key is None or key > best_key:
+                    best_key = key
+                    best = {
+                        "path": path,
+                        "child_idx": child_idx,
+                        "old_g": old_g,
+                        "new_g": new_g,
+                        "tree1": tree1,
+                        "new_h": new_h,
+                        "info": info,
+                        "score": key,
+                    }
+
+    return best
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
