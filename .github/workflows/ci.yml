@@ -29,7 +29,7 @@ jobs:
         run: pip install -e .
 
       - name: Install test dependencies
-        run: pip install pytest
+        run: pip install pytest sympy
 
       - name: Run tests
         run: pytest -q
