@@ -31,6 +31,25 @@ def first_bad_ancestor(tree, rewritten_path):
     return None, None
 
 
+def pathwise_ceiling_trace(tree0, tree1, rewritten_path):
+    trace = []
+
+    for anc in all_ancestor_paths_inclusive(rewritten_path):
+        node0 = tree0 if anc == () else get_subtree(tree0, anc)
+        node1 = tree1 if anc == () else get_subtree(tree1, anc)
+
+        trace.append(
+            {
+                "path": anc,
+                "before": child_generators(node0),
+                "after": child_generators(node1),
+                "locally_canonical": is_locally_canonical(node1),
+            }
+        )
+
+    return trace
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
