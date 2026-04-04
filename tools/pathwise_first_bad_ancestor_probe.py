@@ -71,6 +71,20 @@ def first_violation_from_trace(trace):
     return None
 
 
+def local_ceiling_violations(gs):
+    out = []
+    for i in range(len(gs) - 1):
+        if gs[i] < gs[i + 1]:
+            out.append(
+                {
+                    "index": i,
+                    "left": gs[i],
+                    "right": gs[i + 1],
+                }
+            )
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
