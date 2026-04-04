@@ -265,6 +265,49 @@ def choose_best_pathwise_move_toward_target(tree0, target, limit=2000):
     return best
 
 
+def greedy_pathwise_build_toward_target(tree0, target, step_limit=5, limit=2000):
+    """Greedily apply target-aware one-step rewrites while distance improves."""
+    cur = tree0
+    history = []
+
+    for _ in range(step_limit):
+        before_h = decode(cur)
+        before_d = abs(before_h - target)
+
+        best = choose_best_pathwise_move_toward_target(cur, target=target, limit=limit)
+        if best is None:
+            break
+
+        after_h = best["new_h"]
+        after_d = abs(after_h - target)
+
+        if after_d >= before_d:
+            break
+
+        history.append(
+            {
+                "path": best["path"],
+                "child_idx": best["child_idx"],
+                "old_g": best["old_g"],
+                "new_g": best["new_g"],
+                "score": best["score"],
+                "info": best["info"],
+                "distance_before": before_d,
+                "distance_after": after_d,
+                "new_h": after_h,
+            }
+        )
+
+        cur = best["tree1"]
+
+    return {
+        "start_h": decode(tree0),
+        "final_h": decode(cur),
+        "target": target,
+        "history": history,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
