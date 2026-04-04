@@ -341,10 +341,20 @@ Additional canonical embeddings show that, in one-step ancestor-only obstruction
 the first violated ceiling need not occur at the root.
 
 Observed canonical witnesses:
+- minimal standalone witness: `36 -> 324`, via a one-step internal constructive rewrite at path `(1,)`
 - embedding `[576, 36]`, with an internal one-step constructive rewrite inside the embedded `36`
 - embedding `[10000, 900]`, with an internal one-step constructive rewrite inside the embedded `900`
 
-In both cases:
+Minimal standalone witness details:
+- initial root child generators: `[2, 2]`
+- rewritten local child generators: `[1] -> [2]`
+- resulting root child generators: `[2, 4]`
+- the rewritten local node remains locally canonical
+- but the full tree becomes globally non-canonical
+
+So local admissibility at the rewritten node is not sufficient for global canonicity.
+
+In the embedded witnesses above:
 - the starting tree is globally canonical
 - the rewritten local node remains locally canonical
 - the resulting tree becomes globally non-canonical
