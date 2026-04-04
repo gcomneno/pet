@@ -50,6 +50,13 @@ def pathwise_ceiling_trace(tree0, tree1, rewritten_path):
     return trace
 
 
+def first_bad_path_from_trace(trace):
+    for item in trace:
+        if not item["locally_canonical"]:
+            return item["path"]
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
