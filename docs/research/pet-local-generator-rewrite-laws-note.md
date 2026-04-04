@@ -378,12 +378,14 @@ More generally, in the bounded root-failure family currently locked in tests:
 - the first bad path is the root
 - the first violation is a single local ceiling inversion at the root
 
-What is not yet verified as a replayed bounded fact is the embedded case:
+What is currently verified about the embedded case is:
+
 - under the current tooling, the current bounded one-step automatic scans have so far exhibited root failures only
 - however, an `embedded_ancestor` witness is now reproducible via an explicit canonical embedding construction rather than by the current automatic scan
+- in the bounded cases now locked in tests, the same local rewrite shifts from `root` failure to `embedded_ancestor` exactly when the higher ancestor absorbs the growth and the first lower ancestor does not
 
-So the non-root formulation remains a research direction suggested by the embedding analysis,
-not yet a settled empirical law.
+So the non-root formulation is now a bounded empirical fact with explicit canonical embeddings,
+but not yet a settled general law for arbitrary constructive chains.
 
 ## Current picture
 
