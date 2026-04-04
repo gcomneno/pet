@@ -85,6 +85,28 @@ def local_ceiling_violations(gs):
     return out
 
 
+def classify_pathwise_rewrite(tree0, tree1, rewritten_path):
+    local1 = tree1 if rewritten_path == () else get_subtree(tree1, rewritten_path)
+    trace = pathwise_ceiling_trace(tree0, tree1, rewritten_path)
+    first_bad_path = first_bad_path_from_trace(trace)
+    first_violation = first_violation_from_trace(trace)
+
+    if first_bad_path is None:
+        failure_kind = None
+    elif first_bad_path == ():
+        failure_kind = "root"
+    else:
+        failure_kind = "embedded_ancestor"
+
+    return {
+        "local_ok": is_locally_canonical(local1),
+        "trace": trace,
+        "first_bad_path": first_bad_path,
+        "first_violation": first_violation,
+        "failure_kind": failure_kind,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
