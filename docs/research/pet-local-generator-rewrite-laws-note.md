@@ -359,17 +359,25 @@ Minimal standalone witness details:
 So local admissibility at the rewritten node is not sufficient for global canonicity.
 
 In the embedded witnesses above:
-- the starting tree is globally canonical
-- the rewritten local node remains locally canonical
-- the resulting tree becomes globally non-canonical
-- the first bad parent is the embedded ancestor `(1,)`, not the root
+- the notation is conceptual and describes a targeted canonical embedding scenario
+- it should not yet be read as a fully replayed witness under the current tooling
+- so these examples motivate the possibility of a non-root first bad ancestor, but do not yet establish it as a reproduced bounded fact
 
 So the more accurate working rule is:
 
-the first failure occurs at the first ancestor on the rewritten path whose ceiling is exceeded.
+the first failure should occur at the first ancestor on the rewritten path whose ceiling is exceeded.
 
-When the rewritten object is studied as a standalone root, that first bad ancestor often coincides with the root.
-But this is an artifact of the embedding, not a general property of ancestor-only obstruction.
+What is currently verified is the standalone-root case:
+- for the minimal witness `36 -> 324`, the rewritten local node remains locally canonical
+- the first bad ancestor is the root
+- this is measured directly by the current one-step bounded probe
+
+What is not yet verified as a replayed bounded fact is the embedded case:
+- under the current tooling, bounded scans have so far exhibited root failures only
+- no reproduced `embedded_ancestor` witness has yet been extracted automatically
+
+So the non-root formulation remains a research direction suggested by the embedding analysis,
+not yet a settled empirical law.
 
 ## Current picture
 
