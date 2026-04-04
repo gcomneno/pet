@@ -107,6 +107,24 @@ def classify_pathwise_rewrite(tree0, tree1, rewritten_path):
     }
 
 
+
+def root_failure_signature(tree0, tree1, rewritten_path):
+    info = classify_pathwise_rewrite(tree0, tree1, rewritten_path)
+
+    if info["first_bad_path"] is None:
+        bad_after = []
+    else:
+        bad_after = next(
+            item["after"] for item in info["trace"] if item["path"] == info["first_bad_path"]
+        )
+
+    return {
+        "local_ok": info["local_ok"],
+        "first_bad_path": info["first_bad_path"],
+        "violation_count_at_bad_path": len(local_ceiling_violations(bad_after)),
+        "first_violation": info["first_violation"],
+    }
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
