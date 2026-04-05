@@ -443,6 +443,34 @@ def compare_builders_toward_target(tree0, target, step_limit=5, limit=2000):
     }
 
 
+def summarize_build_result(result):
+    """Return a compact summary for a builder result."""
+    steps = []
+    for step in result["history"]:
+        steps.append(
+            {
+                "path": step["path"],
+                "child_idx": step["child_idx"],
+                "old_g": step["old_g"],
+                "new_g": step["new_g"],
+                "new_h": step["new_h"],
+                "distance_before": step["distance_before"],
+                "distance_after": step["distance_after"],
+            }
+        )
+
+    return {
+        "start_h": result["start_h"],
+        "target": result["target"],
+        "final_h": result["final_h"],
+        "initial_distance": abs(result["start_h"] - result["target"]),
+        "final_distance": abs(result["final_h"] - result["target"]),
+        "step_count": len(result["history"]),
+        "stop_reason": result["stop_reason"],
+        "steps": steps,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
