@@ -415,6 +415,34 @@ def lookahead_pathwise_build_toward_target(tree0, target, step_limit=5, limit=20
     }
 
 
+def compare_builders_toward_target(tree0, target, step_limit=5, limit=2000):
+    """Compare greedy and two-step lookahead builders on the same target."""
+    greedy = greedy_pathwise_build_toward_target(
+        tree0, target=target, step_limit=step_limit, limit=limit
+    )
+    lookahead = lookahead_pathwise_build_toward_target(
+        tree0, target=target, step_limit=step_limit, limit=limit
+    )
+
+    return {
+        "target": target,
+        "greedy": {
+            "start_h": greedy["start_h"],
+            "final_h": greedy["final_h"],
+            "final_distance": abs(greedy["final_h"] - target),
+            "step_count": len(greedy["history"]),
+            "stop_reason": greedy["stop_reason"],
+        },
+        "lookahead": {
+            "start_h": lookahead["start_h"],
+            "final_h": lookahead["final_h"],
+            "final_distance": abs(lookahead["final_h"] - target),
+            "step_count": len(lookahead["history"]),
+            "stop_reason": lookahead["stop_reason"],
+        },
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
