@@ -519,6 +519,15 @@ def choose_best_seed_toward_target(
         if entry["seed"] == best["seed_n"]
     )
 
+    selection_summary = {
+        "best_seed": best["seed_n"],
+        "best_seed_source": best_seed_entry.get("source"),
+        "best_seed_priority_key": best_seed_entry.get("priority_key"),
+        "initial_distance": best["initial_distance"],
+        "final_distance": best["final_distance"],
+        "improvement": best["initial_distance"] - best["final_distance"],
+    }
+
     return {
         "target": target,
         "builder": builder,
@@ -526,6 +535,7 @@ def choose_best_seed_toward_target(
         "best_seed_entry": best_seed_entry,
         "best_result": best,
         "candidates": candidates,
+        "selection_summary": selection_summary,
     }
 
 def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
