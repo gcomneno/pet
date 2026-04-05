@@ -557,6 +557,66 @@ def auto_build_toward_target(
     }
 
 
+def plateau_tolerant_lookahead_build_toward_target(
+    tree0, target, step_limit=5, limit=2000
+):
+    """Build toward a target using two-step plans, allowing neutral first steps
+    only when the full two-step plan improves the final distance.
+    """
+    cur = tree0
+    history = []
+    stop_reason = "no_improving_plan"
+
+    for _ in range(step_limit):
+        before_h = decode(cur)
+        before_d = abs(before_h - target)
+
+        plan = choose_best_two_step_pathwise_move_toward_target(
+            cur, target=target, limit=limit
+        )
+        if plan is None:
+            stop_reason = "no_candidate"
+            break
+
+        first = plan["steps"][0]
+        first_h = decode(first["tree1"])
+        first_d = abs(first_h - target)
+        plan_final_d = plan["final_distance"]
+
+        if plan_final_d >= before_d:
+            stop_reason = "no_improving_plan"
+            break
+
+        history.append(
+            {
+                "path": first["path"],
+                "child_idx": first["child_idx"],
+                "old_g": first["old_g"],
+                "new_g": first["new_g"],
+                "score": first["score"],
+                "info": first["info"],
+                "distance_before": before_d,
+                "distance_after": first_d,
+                "new_h": first_h,
+                "plan_final_h": plan["final_h"],
+                "plan_final_distance": plan_final_d,
+                "plan_step_count": len(plan["steps"]),
+            }
+        )
+
+        cur = first["tree1"]
+    else:
+        stop_reason = "step_limit"
+
+    return {
+        "start_h": decode(tree0),
+        "final_h": decode(cur),
+        "target": target,
+        "history": history,
+        "stop_reason": stop_reason,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
