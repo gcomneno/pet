@@ -477,12 +477,13 @@ def choose_best_seed_toward_target(
     """Run a builder from multiple seeds and return the best result."""
     candidates = []
 
-    normalized_seed_ns = [
-        item["seed"] if isinstance(item, dict) else item
+    normalized_seed_entries = [
+        item if isinstance(item, dict) else {"seed": item}
         for item in seed_ns
     ]
 
-    for seed_n in normalized_seed_ns:
+    for entry in normalized_seed_entries:
+        seed_n = entry["seed"]
         tree0 = encode(seed_n)
 
         if builder == "greedy":
@@ -498,18 +499,34 @@ def choose_best_seed_toward_target(
 
         summary = summarize_build_result(result)
         summary["seed_n"] = seed_n
+        summary["seed_source"] = entry.get("source")
+        summary["seed_source_rank"] = entry.get("source_rank")
+        summary["seed_distance_to_target"] = entry.get("distance_to_target")
+        summary["seed_priority_key"] = entry.get("priority_key")
         candidates.append(summary)
 
-    best = min(candidates, key=lambda item: item["final_distance"])
+    candidates.sort(
+        key=lambda item: (
+            item["final_distance"],
+            item.get("seed_priority_key")
+            if item.get("seed_priority_key") is not None
+            else (999, 999999999, 999999999, 999999999),
+        )
+    )
+    best = candidates[0]
+    best_seed_entry = next(
+        entry for entry in normalized_seed_entries
+        if entry["seed"] == best["seed_n"]
+    )
 
     return {
         "target": target,
         "builder": builder,
         "best_seed": best["seed_n"],
+        "best_seed_entry": best_seed_entry,
         "best_result": best,
         "candidates": candidates,
     }
-
 
 def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
     """Return a small bounded top-down seed family around the target.
