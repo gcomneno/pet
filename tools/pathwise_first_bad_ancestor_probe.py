@@ -314,6 +314,52 @@ def greedy_pathwise_build_toward_target(tree0, target, step_limit=5, limit=2000)
     }
 
 
+def choose_best_two_step_pathwise_move_toward_target(tree0, target, limit=2000):
+    """Choose the best one- or two-step local-ok rewrite plan toward a numeric target."""
+    first = choose_best_pathwise_move_toward_target(tree0, target=target, limit=limit)
+    if first is None:
+        return None
+
+    best_plan = {
+        "first_move": {
+            "path": first["path"],
+            "child_idx": first["child_idx"],
+            "old_g": first["old_g"],
+            "new_g": first["new_g"],
+            "info": first["info"],
+            "score": first["score"],
+        },
+        "steps": [first],
+        "final_h": first["new_h"],
+        "final_distance": abs(first["new_h"] - target),
+    }
+
+    second = choose_best_pathwise_move_toward_target(
+        first["tree1"], target=target, limit=limit
+    )
+
+    if second is None:
+        return best_plan
+
+    second_distance = abs(second["new_h"] - target)
+    if second_distance <= best_plan["final_distance"]:
+        return {
+            "first_move": {
+                "path": first["path"],
+                "child_idx": first["child_idx"],
+                "old_g": first["old_g"],
+                "new_g": first["new_g"],
+                "info": first["info"],
+                "score": first["score"],
+            },
+            "steps": [first, second],
+            "final_h": second["new_h"],
+            "final_distance": second_distance,
+        }
+
+    return best_plan
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
