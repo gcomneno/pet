@@ -530,6 +530,7 @@ def choose_best_seed_toward_target(
             item["final_distance"],
             chooser_policy_rank(item),
             item.get("seed_distance_to_target", 999999999),
+            -item.get("step_count", 0),
             item["seed_n"],
         )
     )
@@ -730,6 +731,7 @@ def auto_build_toward_target(
             item["final_distance"],
             auto_build_policy_rank(item),
             item.get("seed_distance_to_target", 999999999),
+            -item.get("step_count", 0),
             item["seed_n"],
         ),
     )
