@@ -654,9 +654,9 @@ def auto_build_toward_target(
     }
 
     selection_summary = {
-        "best_seed": selection["best_seed"],
-        "best_seed_source": best_seed_entry["source"],
-        "best_seed_priority_key": best_seed_entry["priority_key"],
+        "best_seed": enriched_best_result["seed_n"],
+        "best_seed_source": enriched_best_result["seed_source"],
+        "best_seed_priority_key": enriched_best_result["seed_priority_key"],
         "initial_distance": enriched_best_result["initial_distance"],
         "final_distance": enriched_best_result["final_distance"],
         "improvement": (
