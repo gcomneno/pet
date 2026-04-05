@@ -524,6 +524,39 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
     return out
 
 
+def auto_build_toward_target(
+    target,
+    pool_limit=2000,
+    top_k=12,
+    builder="lookahead",
+    step_limit=5,
+    limit=2000,
+):
+    """Run the full bounded bottom-up pipeline toward a target."""
+    seed_family = propose_seed_family_for_target(
+        target=target,
+        pool_limit=pool_limit,
+        top_k=top_k,
+    )
+
+    selection = choose_best_seed_toward_target(
+        target=target,
+        seed_ns=seed_family,
+        builder=builder,
+        step_limit=step_limit,
+        limit=limit,
+    )
+
+    return {
+        "target": target,
+        "builder": builder,
+        "seed_family": seed_family,
+        "best_seed": selection["best_seed"],
+        "best_result": selection["best_result"],
+        "candidates": selection["candidates"],
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
