@@ -333,7 +333,12 @@ def _residual_lower_bound_children(residual_info: dict[str, Any]) -> list[list]:
     return [[] for _ in range(residual_info["root_children_lower_bound"])]
 
 
-def _factor_step(residual_before: int, limit: int) -> tuple[str, dict[int, int], list[tuple[int, int]], int]:
+def _factor_step(
+    residual_before: int,
+    limit: int,
+    *,
+    allow_pollard_rho: bool = True,
+) -> tuple[str, dict[int, int], list[tuple[int, int]], int]:
     _trace(
         f"factor_step:start digits={len(str(residual_before))} "
         f"bits={residual_before.bit_length()} limit={limit}"
@@ -363,6 +368,9 @@ def _factor_step(residual_before: int, limit: int) -> tuple[str, dict[int, int],
         "composite-non-prime-power",
         "perfect-power-composite-base",
     }:
+        return "factorint", stage_raw, stage_known, residual_after
+
+    if not allow_pollard_rho:
         return "factorint", stage_raw, stage_known, residual_after
 
     _trace("pollard_rho:start")
@@ -443,6 +451,9 @@ def _analyze_residual_recursive(
     remaining_schedule: list[int],
     known_factor_map: dict[int, int],
     stages: list[dict[str, Any]],
+    *,
+    allow_pollard_rho: bool = True,
+    allow_small_residual_exact: bool = True,
 ) -> tuple[int, str]:
     _trace(
         f"recurse:start digits={len(str(residual))} "
@@ -453,30 +464,35 @@ def _analyze_residual_recursive(
         return residual, _stop_reason_from_residual(residual, budget_exhausted=False)
 
     if not remaining_schedule:
-        exact_small = _factor_small_residual_exact(residual)
-        if exact_small is not None:
-            stage_raw, stage_known, residual_after = exact_small
-            if stage_known:
-                _merge_factor_lists(known_factor_map, stage_known)
+        if allow_small_residual_exact:
+            exact_small = _factor_small_residual_exact(residual)
+            if exact_small is not None:
+                stage_raw, stage_known, residual_after = exact_small
+                if stage_known:
+                    _merge_factor_lists(known_factor_map, stage_known)
 
-            stage = _make_stage(
-                stage_source="small-residual-exact",
-                limit=SMALL_RESIDUAL_EXACT_LIMIT,
-                residual_before=residual,
-                stage_raw=stage_raw,
-                stage_known=stage_known,
-                residual_after=residual_after,
-                known_factor_map=known_factor_map,
-            )
-            stages.append(stage)
-            _trace(f"recurse:stop reason={_stop_reason_from_residual(residual_after, budget_exhausted=False)}")
-            return residual_after, _stop_reason_from_residual(residual_after, budget_exhausted=False)
+                stage = _make_stage(
+                    stage_source="small-residual-exact",
+                    limit=SMALL_RESIDUAL_EXACT_LIMIT,
+                    residual_before=residual,
+                    stage_raw=stage_raw,
+                    stage_known=stage_known,
+                    residual_after=residual_after,
+                    known_factor_map=known_factor_map,
+                )
+                stages.append(stage)
+                _trace(f"recurse:stop reason={_stop_reason_from_residual(residual_after, budget_exhausted=False)}")
+                return residual_after, _stop_reason_from_residual(residual_after, budget_exhausted=False)
 
         return residual, _stop_reason_from_residual(residual, budget_exhausted=True)
 
     limit = remaining_schedule[0]
     residual_before = residual
-    stage_source, stage_raw, stage_known, residual_after = _factor_step(residual_before, limit)
+    stage_source, stage_raw, stage_known, residual_after = _factor_step(
+        residual_before,
+        limit,
+        allow_pollard_rho=allow_pollard_rho,
+    )
 
     if stage_known:
         _merge_factor_lists(known_factor_map, stage_known)
@@ -505,6 +521,8 @@ def _analyze_residual_recursive(
             remaining_schedule[1:],
             known_factor_map,
             stages,
+            allow_pollard_rho=allow_pollard_rho,
+            allow_small_residual_exact=allow_small_residual_exact,
         )
 
     _trace(f"recurse:stop reason={_stop_reason_from_residual(residual, budget_exhausted=False)}")
@@ -513,10 +531,18 @@ def _analyze_residual_recursive(
         remaining_schedule[1:],
         known_factor_map,
         stages,
+        allow_pollard_rho=allow_pollard_rho,
+        allow_small_residual_exact=allow_small_residual_exact,
     )
 
 
-def build_report(n: int, schedule: list[int]) -> dict[str, Any]:
+def build_report(
+    n: int,
+    schedule: list[int],
+    *,
+    allow_pollard_rho: bool = True,
+    allow_small_residual_exact: bool = True,
+) -> dict[str, Any]:
     known_factor_map: dict[int, int] = {}
     stages: list[dict[str, Any]] = []
 
@@ -525,6 +551,8 @@ def build_report(n: int, schedule: list[int]) -> dict[str, Any]:
         remaining_schedule=schedule,
         known_factor_map=known_factor_map,
         stages=stages,
+        allow_pollard_rho=allow_pollard_rho,
+        allow_small_residual_exact=allow_small_residual_exact,
     )
 
     final_known_children = _known_root_children(known_factor_map)
@@ -562,6 +590,8 @@ def build_report(n: int, schedule: list[int]) -> dict[str, Any]:
     return {
         "n": n,
         "schedule": schedule,
+        "allow_pollard_rho": allow_pollard_rho,
+        "allow_small_residual_exact": allow_small_residual_exact,
         "stages": stages,
         "stop_reason": stop_reason,
         "closure_kind": closure_kind,
@@ -673,6 +703,16 @@ def main() -> int:
         default="100,1000,10000",
         help="Comma-separated factorint limits, e.g. 100,1000,10000",
     )
+    parser.add_argument(
+        "--no-pollard-rho",
+        action="store_true",
+        help="Disable pollard-rho fallback (experimental)",
+    )
+    parser.add_argument(
+        "--no-small-residual-exact",
+        action="store_true",
+        help="Disable exact closure of small residuals at exhausted schedule (experimental)",
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON")
     args = parser.parse_args()
 
@@ -680,7 +720,12 @@ def main() -> int:
         raise SystemExit("N must be >= 1")
 
     schedule = parse_schedule(args.schedule)
-    report = build_report(args.n, schedule)
+    report = build_report(
+        args.n,
+        schedule,
+        allow_pollard_rho=not args.no_pollard_rho,
+        allow_small_residual_exact=not args.no_small_residual_exact,
+    )
 
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
