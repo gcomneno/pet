@@ -472,7 +472,7 @@ def summarize_build_result(result):
 
 
 def choose_best_seed_toward_target(
-    target, seed_ns, builder="lookahead", step_limit=5, limit=2000
+    target, seed_ns, builder="lookahead", step_limit=5, limit=2000, policy="balanced"
 ):
     """Run a builder from multiple seeds and return the best result."""
     candidates = []
@@ -530,6 +530,7 @@ def choose_best_seed_toward_target(
 
     return {
         "target": target,
+        "policy": policy,
         "builder": builder,
         "best_seed": best["seed_n"],
         "best_seed_entry": best_seed_entry,
