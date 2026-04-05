@@ -507,19 +507,31 @@ def choose_best_seed_toward_target(
 
 
 def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
-    """Return a small bounded family of candidate seed integers near the target."""
+    """Return a small bounded top-down seed family around the target.
+
+    Poor-but-honest v0:
+    - reserve some candidates below the target
+    - reserve some candidates above the target
+    - fill remaining slots by absolute closeness
+    """
     pool = sorted({shape_generator(n) for n in range(2, pool_limit + 1)})
     ranked = sorted(pool, key=lambda n: (abs(n - target), n))
+    below = [n for n in ranked if n < target]
+    above = [n for n in ranked if n > target]
 
     out = []
     seen = set()
-    for n in ranked:
-        if n in seen:
-            continue
-        seen.add(n)
-        out.append(n)
-        if len(out) >= top_k:
-            break
+
+    side_quota = min(2, top_k // 2)
+
+    for bucket in (below[:side_quota], above[:side_quota], ranked):
+        for n in bucket:
+            if n in seen:
+                continue
+            seen.add(n)
+            out.append(n)
+            if len(out) >= top_k:
+                return out
 
     return out
 
