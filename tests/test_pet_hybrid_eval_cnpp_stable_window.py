@@ -65,13 +65,6 @@ def run_top1(target: int, schedule: int | str) -> dict:
 
 CASES = [
     {
-        "target": 3928638,
-        "stable_schedules": [10, 13, 17, 19, 23],
-        "stable_root_generator": 2310,
-        "closure_schedule": 89,
-        "closure_root_generator": 2310,
-    },
-    {
         "target": 20086291530,
         "stable_schedules": [10, 13, 17, 19, 23, 89],
         "stable_root_generator": 4620,
@@ -104,11 +97,11 @@ REGIME_CASES = [
     {"target": 30030, "label": "quick-closure"},
     {"target": 72930, "label": "quick-closure"},
     {"target": 510510, "label": "quick-closure"},
-    {"target": 293930, "label": "mobile-before-closure"},
-    {"target": 9699690, "label": "mobile-before-closure"},
-    {"target": 223092870, "label": "mobile-before-closure"},
-    {"target": 6469693230, "label": "mobile-before-closure"},
-    {"target": 3928638, "label": "persistent-stable-before-closure"},
+    {"target": 293930, "label": "quick-closure"},
+    {"target": 9699690, "label": "quick-closure"},
+    {"target": 223092870, "label": "quick-closure"},
+    {"target": 6469693230, "label": "quick-closure"},
+    {"target": 3928638, "label": "quick-closure"},
     {"target": 20086291530, "label": "persistent-stable-before-closure"},
 ]
 
@@ -125,7 +118,6 @@ HARD_CNPP_CASES = [
         "stable_root_generator": {"100": 30, "100,1000": 30, "100,1000,10000": 30, "100,1000,10000,100000": 30},
     },
 ]
-
 
 def classify_from_schedule_10_13(target: int) -> str:
     row10 = run_top1(target, 10)
@@ -152,3 +144,4 @@ def test_hard_cnpp_monsters_keep_minimal_top1_on_current_ladder() -> None:
             assert row["status"] == "composite-non-prime-power"
             assert row["top1_kind"] == "minimal-leaf-completion"
             assert row["top1_root_generator"] == case["stable_root_generator"][schedule]
+

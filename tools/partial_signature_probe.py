@@ -14,6 +14,9 @@ from sympy.ntheory.factor_ import perfect_power, pollard_rho
 from pet.core import shape_signature_dict
 
 
+SMALL_RESIDUAL_EXACT_LIMIT = 10**8
+
+
 def _trace(msg: str) -> None:
     print(f"[trace] {msg}", file=sys.stderr, flush=True)
 
@@ -69,6 +72,20 @@ def _root_generator_from_children(children: list[list]) -> int:
 def _factorint_bounded(n: int, limit: int) -> dict[int, int]:
     raw = factorint(n, limit=limit)
     return {int(k): int(v) for k, v in raw.items()}
+
+
+def _factor_small_residual_exact(
+    residual: int,
+) -> tuple[dict[int, int], list[tuple[int, int]], int] | None:
+    if residual <= 1 or residual > SMALL_RESIDUAL_EXACT_LIMIT:
+        return None
+
+    raw = _factorint_bounded(residual, SMALL_RESIDUAL_EXACT_LIMIT)
+    stage_known, residual_after = _split_known_and_residual(raw)
+    if residual_after != 1:
+        return None
+
+    return raw, stage_known, residual_after
 
 
 def _split_known_and_residual(factors: dict[int, int]) -> tuple[list[tuple[int, int]], int]:
@@ -436,6 +453,25 @@ def _analyze_residual_recursive(
         return residual, _stop_reason_from_residual(residual, budget_exhausted=False)
 
     if not remaining_schedule:
+        exact_small = _factor_small_residual_exact(residual)
+        if exact_small is not None:
+            stage_raw, stage_known, residual_after = exact_small
+            if stage_known:
+                _merge_factor_lists(known_factor_map, stage_known)
+
+            stage = _make_stage(
+                stage_source="small-residual-exact",
+                limit=SMALL_RESIDUAL_EXACT_LIMIT,
+                residual_before=residual,
+                stage_raw=stage_raw,
+                stage_known=stage_known,
+                residual_after=residual_after,
+                known_factor_map=known_factor_map,
+            )
+            stages.append(stage)
+            _trace(f"recurse:stop reason={_stop_reason_from_residual(residual_after, budget_exhausted=False)}")
+            return residual_after, _stop_reason_from_residual(residual_after, budget_exhausted=False)
+
         return residual, _stop_reason_from_residual(residual, budget_exhausted=True)
 
     limit = remaining_schedule[0]
