@@ -622,12 +622,14 @@ def auto_build_toward_target(
     builder="lookahead",
     step_limit=5,
     limit=2000,
+    policy="balanced",
 ):
     """Run the full bounded bottom-up pipeline toward a target."""
     seed_family = propose_seed_family_for_target(
         target=target,
         pool_limit=pool_limit,
         top_k=top_k,
+        policy=policy,
     )
 
     selection = choose_best_seed_toward_target(
@@ -686,6 +688,7 @@ def auto_build_toward_target(
 
     return {
         "target": target,
+        "policy": policy,
         "builder": builder,
         "seed_family": seed_family,
         "best_seed": best_candidate["seed_n"],
