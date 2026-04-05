@@ -505,12 +505,32 @@ def choose_best_seed_toward_target(
         summary["seed_priority_key"] = entry.get("priority_key")
         candidates.append(summary)
 
+    def chooser_policy_rank(item):
+        source = item.get("seed_source")
+        if policy == "scale_first":
+            rank_map = {
+                "scale_anchor": 0,
+                "below": 1,
+                "above": 2,
+                "fill": 3,
+                None: 999,
+            }
+        else:
+            rank_map = {
+                "below": 0,
+                "above": 1,
+                "scale_anchor": 2,
+                "fill": 3,
+                None: 999,
+            }
+        return rank_map.get(source, 999)
+
     candidates.sort(
         key=lambda item: (
             item["final_distance"],
-            item.get("seed_priority_key")
-            if item.get("seed_priority_key") is not None
-            else (999, 999999999, 999999999, 999999999),
+            chooser_policy_rank(item),
+            item.get("seed_distance_to_target", 999999999),
+            item["seed_n"],
         )
     )
     best = candidates[0]
