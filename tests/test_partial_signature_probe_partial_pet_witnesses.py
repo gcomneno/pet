@@ -133,3 +133,45 @@ def test_refines_v0_monotonicity_across_partial_only_budgets() -> None:
             assert refines_v0(curr, prev) is True
             assert refines_v0(prev, curr) is False
 
+
+def test_refines_v0_accepts_residual_status_specialization_witness() -> None:
+    n = 2 * (91 ** 2)
+
+    b1 = build_report(
+        n,
+        [1],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b2 = build_report(
+        n,
+        [2],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b100 = build_report(
+        n,
+        [100],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+
+    assert b1["exact_root_anatomy"] is False
+    assert b1["known_root_children"] == []
+    assert b1["residual_info"]["status"] == "composite-non-prime-power"
+    assert b1["root_generator_lower_bound"] == 6
+
+    assert b2["exact_root_anatomy"] is False
+    assert b2["known_root_children"] == [[]]
+    assert b2["known_root_generator_lower_bound"] == 2
+    assert b2["residual_info"]["status"] == "perfect-power-composite-base"
+    assert b2["root_generator_lower_bound"] == 30
+
+    assert b100["exact_root_anatomy"] is True
+    assert b100["exact_root_children"] == [[], [[]], [[]]]
+    assert b100["exact_root_generator"] == 180
+
+    assert refines_v0(b2, b1) is True
+    assert refines_v0(b1, b2) is False
+    assert refines_v0(b100, b2) is True
+
