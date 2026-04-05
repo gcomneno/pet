@@ -477,7 +477,12 @@ def choose_best_seed_toward_target(
     """Run a builder from multiple seeds and return the best result."""
     candidates = []
 
-    for seed_n in seed_ns:
+    normalized_seed_ns = [
+        item["seed"] if isinstance(item, dict) else item
+        for item in seed_ns
+    ]
+
+    for seed_n in normalized_seed_ns:
         tree0 = encode(seed_n)
 
         if builder == "greedy":
