@@ -589,6 +589,17 @@ def auto_build_toward_target(
         "seed_source": best_seed_entry["source"],
     }
 
+    selection_summary = {
+        "best_seed": selection["best_seed"],
+        "best_seed_source": best_seed_entry["source"],
+        "initial_distance": enriched_best_result["initial_distance"],
+        "final_distance": enriched_best_result["final_distance"],
+        "improvement": (
+            enriched_best_result["initial_distance"]
+            - enriched_best_result["final_distance"]
+        ),
+    }
+
     return {
         "target": target,
         "builder": builder,
@@ -597,6 +608,7 @@ def auto_build_toward_target(
         "best_seed_entry": best_seed_entry,
         "best_result": enriched_best_result,
         "candidates": enriched_candidates,
+        "selection_summary": selection_summary,
     }
 
 
