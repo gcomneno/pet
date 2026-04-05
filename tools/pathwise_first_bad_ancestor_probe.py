@@ -538,16 +538,17 @@ def choose_best_seed_toward_target(
         "selection_summary": selection_summary,
     }
 
-def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
+def propose_seed_family_for_target(target, pool_limit=2000, top_k=12, policy="balanced"):
     """Return a small bounded top-down seed family around the target.
 
-    Poor-but-honest v1:
-    - reserve some candidates below the target
-    - reserve some candidates above the target
-    - include a simple scale-anchor family
-    - fill remaining slots by absolute closeness
-    - expose explicit ranking metadata
+    Policies:
+    - balanced: below -> above -> scale_anchor -> fill
+    - scale_first: below -> above -> scale_anchor -> fill, but with scale anchors
+      ranked ahead of fill candidates in priority metadata
     """
+    if policy not in {"balanced", "scale_first"}:
+        raise ValueError("policy must be 'balanced' or 'scale_first'")
+
     pool = sorted({shape_generator(n) for n in range(2, pool_limit + 1)})
     ranked = sorted(pool, key=lambda n: (abs(n - target), n))
     below = [n for n in ranked if n < target]
@@ -565,12 +566,20 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
         if lower_scale <= n <= upper_scale and n not in reserved
     ]
 
-    source_rank_map = {
-        "below": 0,
-        "above": 1,
-        "scale_anchor": 2,
-        "fill": 3,
-    }
+    if policy == "balanced":
+        source_rank_map = {
+            "below": 0,
+            "above": 1,
+            "scale_anchor": 2,
+            "fill": 3,
+        }
+    else:
+        source_rank_map = {
+            "below": 0,
+            "above": 1,
+            "scale_anchor": 2,
+            "fill": 3,
+        }
 
     out = []
     seen = set()
