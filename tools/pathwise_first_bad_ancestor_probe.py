@@ -509,11 +509,12 @@ def choose_best_seed_toward_target(
 def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
     """Return a small bounded top-down seed family around the target.
 
-    Poor-but-honest v0:
+    Poor-but-honest v1:
     - reserve some candidates below the target
     - reserve some candidates above the target
     - include a simple scale-anchor family
     - fill remaining slots by absolute closeness
+    - expose explicit ranking metadata
     """
     pool = sorted({shape_generator(n) for n in range(2, pool_limit + 1)})
     ranked = sorted(pool, key=lambda n: (abs(n - target), n))
@@ -532,8 +533,16 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
         if lower_scale <= n <= upper_scale and n not in reserved
     ]
 
+    source_rank_map = {
+        "below": 0,
+        "above": 1,
+        "scale_anchor": 2,
+        "fill": 3,
+    }
+
     out = []
     seen = set()
+    insertion_index = 0
 
     for source, bucket in (
         ("below", reserved_below),
@@ -545,11 +554,25 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
             if n in seen:
                 continue
             seen.add(n)
-            out.append({"seed": n, "source": source})
+            out.append(
+                {
+                    "seed": n,
+                    "source": source,
+                    "source_rank": source_rank_map[source],
+                    "distance_to_target": abs(n - target),
+                    "priority_key": (
+                        source_rank_map[source],
+                        abs(n - target),
+                        n,
+                        insertion_index,
+                    ),
+                }
+            )
+            insertion_index += 1
             if len(out) >= top_k:
-                return out
+                return sorted(out, key=lambda item: item["priority_key"])
 
-    return out
+    return sorted(out, key=lambda item: item["priority_key"])
 
 def auto_build_toward_target(
     target,
