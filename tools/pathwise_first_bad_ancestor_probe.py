@@ -360,6 +360,61 @@ def choose_best_two_step_pathwise_move_toward_target(tree0, target, limit=2000):
     return best_plan
 
 
+def lookahead_pathwise_build_toward_target(tree0, target, step_limit=5, limit=2000):
+    """Build greedily toward a target using the first move of a two-step plan."""
+    cur = tree0
+    history = []
+    stop_reason = "no_improving_move"
+
+    for _ in range(step_limit):
+        before_h = decode(cur)
+        before_d = abs(before_h - target)
+
+        plan = choose_best_two_step_pathwise_move_toward_target(
+            cur, target=target, limit=limit
+        )
+        if plan is None:
+            stop_reason = "no_candidate"
+            break
+
+        first = plan["steps"][0]
+        after_h = decode(first["tree1"])
+        after_d = abs(after_h - target)
+
+        if after_d >= before_d:
+            stop_reason = "no_improving_move"
+            break
+
+        history.append(
+            {
+                "path": first["path"],
+                "child_idx": first["child_idx"],
+                "old_g": first["old_g"],
+                "new_g": first["new_g"],
+                "score": first["score"],
+                "info": first["info"],
+                "distance_before": before_d,
+                "distance_after": after_d,
+                "new_h": after_h,
+                "plan_final_h": plan["final_h"],
+                "plan_final_distance": plan["final_distance"],
+                "plan_step_count": len(plan["steps"]),
+            }
+        )
+
+        cur = first["tree1"]
+    else:
+        stop_reason = "step_limit"
+
+    return {
+        "start_h": decode(tree0),
+        "final_h": decode(cur),
+        "target": target,
+        "history": history,
+        "stop_reason": stop_reason,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
