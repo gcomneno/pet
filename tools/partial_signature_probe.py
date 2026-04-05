@@ -5,6 +5,7 @@ import sys
 import time
 import argparse
 import json
+from collections import Counter
 from math import prod
 from typing import Any
 
@@ -29,6 +30,16 @@ def _freeze(x: Any):
 
 def _canonicalize_signatures(sigs: list[list]) -> list[list]:
     return sorted(sigs, key=_freeze)
+
+
+def _signature_multiset(sigs: list[list]) -> Counter:
+    return Counter(_freeze(sig) for sig in _canonicalize_signatures(sigs))
+
+
+def _multiset_inclusion(left: list[list], right: list[list]) -> bool:
+    left_counts = _signature_multiset(left)
+    right_counts = _signature_multiset(right)
+    return all(count <= right_counts.get(sig, 0) for sig, count in left_counts.items())
 
 
 def _first_primes(count: int) -> list[int]:
@@ -265,6 +276,75 @@ def _classify_residual(residual: int) -> dict[str, Any]:
             "so it contributes at least two root children",
         ],
     }
+
+
+def _residual_status_refines_v0(status2: str, status1: str) -> bool:
+    if status2 == status1:
+        return True
+    return (
+        status2 == "perfect-power-composite-base"
+        and status1 == "composite-non-prime-power"
+    )
+
+
+def _residual_compatible_with_status_v0(
+    exact_children: list[list],
+    known_children: list[list],
+    status: str,
+) -> bool:
+    exact_counts = _signature_multiset(exact_children)
+    known_counts = _signature_multiset(known_children)
+    residual_size = sum(
+        exact_counts.get(sig, 0) - known_counts.get(sig, 0) for sig in exact_counts
+    )
+
+    if status == "unit":
+        return residual_size == 0
+    if status == "prime-by-sympy":
+        return residual_size == 1
+    if status == "prime-power-by-sympy":
+        return residual_size == 1
+    if status == "composite-non-prime-power":
+        return residual_size >= 2
+    if status == "perfect-power-composite-base":
+        return residual_size >= 2
+    return False
+
+
+def refines_v0(p2: dict[str, Any], p1: dict[str, Any]) -> bool:
+    k1 = _canonicalize_signatures(p1["known_root_children"])
+    k2 = _canonicalize_signatures(p2["known_root_children"])
+
+    if not _multiset_inclusion(k1, k2):
+        return False
+
+    if p2["known_root_generator_lower_bound"] < p1["known_root_generator_lower_bound"]:
+        return False
+
+    if p2["root_generator_lower_bound"] < p1["root_generator_lower_bound"]:
+        return False
+
+    exact1 = bool(p1["exact_root_anatomy"])
+    exact2 = bool(p2["exact_root_anatomy"])
+
+    if exact1:
+        if not exact2:
+            return False
+        e1 = _canonicalize_signatures(p1["exact_root_children"] or [])
+        e2 = _canonicalize_signatures(p2["exact_root_children"] or [])
+        return e2 == e1
+
+    status1 = p1["residual_info"]["status"]
+
+    if not exact2:
+        status2 = p2["residual_info"]["status"]
+        return _residual_status_refines_v0(status2, status1)
+
+    e2 = _canonicalize_signatures(p2["exact_root_children"] or [])
+    if not _multiset_inclusion(k1, e2):
+        return False
+
+    return _residual_compatible_with_status_v0(e2, k1, status1)
 
 
 def _last_split_kind_from_stage(

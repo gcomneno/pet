@@ -1,4 +1,4 @@
-from tools.partial_signature_probe import build_report
+from tools.partial_signature_probe import build_report, refines_v0
 
 
 def test_partial_pet_witness_on_2pow4_times_balanced_semiprime() -> None:
@@ -80,3 +80,31 @@ def test_partial_pet_witness_on_2pow4_3sq_5sq_times_balanced_semiprime() -> None
         child in truth["exact_root_children"]
         for child in partial["known_root_children"]
     )
+
+
+def test_refines_v0_monotonicity_on_partial_pet_witnesses() -> None:
+    cases = [
+        (15808432, [2], [1000, 10000, 100000]),
+        (142275888, [3], [1000, 10000, 100000]),
+        (3556897200, [5], [1000, 10000, 100000]),
+    ]
+
+    for n, low_schedule, high_schedule in cases:
+        low = build_report(
+            n,
+            low_schedule,
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        high = build_report(
+            n,
+            high_schedule,
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+
+        assert refines_v0(high, low) is True
+        assert refines_v0(low, high) is False
+        assert refines_v0(low, low) is True
+        assert refines_v0(high, high) is True
+
