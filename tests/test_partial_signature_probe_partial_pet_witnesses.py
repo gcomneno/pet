@@ -261,3 +261,51 @@ def test_refines_v0_witness_families_repeat_on_multiple_semiprimes() -> None:
                 assert refines_v0(later, earlier) is True
                 assert refines_v0(earlier, later) is False
 
+
+def test_refines_v0_r4_family_repeats_on_multiple_squared_semiprimes() -> None:
+    cases = [
+        (2 * (101 * 103) ** 2),
+        (2 * (101 * 107) ** 2),
+        (2 * (101 * 109) ** 2),
+        (2 * (101 * 113) ** 2),
+        (2 * (101 * 127) ** 2),
+    ]
+
+    for n in cases:
+        b1 = build_report(
+            n,
+            [1],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b2 = build_report(
+            n,
+            [2],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b1000 = build_report(
+            n,
+            [1000],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+
+        assert b1["exact_root_anatomy"] is False
+        assert b1["residual_info"]["status"] == "composite-non-prime-power"
+
+        assert b2["exact_root_anatomy"] is False
+        assert b2["known_root_children"] == [[]]
+        assert b2["known_root_generator_lower_bound"] == 2
+        assert b2["residual_info"]["status"] == "perfect-power-composite-base"
+        assert b2["root_generator_lower_bound"] == 30
+
+        assert b1000["exact_root_anatomy"] is True
+        assert b1000["exact_root_children"] == [[], [[]], [[]]]
+        assert b1000["exact_root_generator"] == 180
+
+        assert refines_v0(b2, b1) is True
+        assert refines_v0(b1, b2) is False
+        assert refines_v0(b1000, b2) is True
+        assert refines_v0(b2, b1000) is False
+
