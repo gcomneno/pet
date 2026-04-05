@@ -269,6 +269,7 @@ def greedy_pathwise_build_toward_target(tree0, target, step_limit=5, limit=2000)
     """Greedily apply target-aware one-step rewrites while distance improves."""
     cur = tree0
     history = []
+    stop_reason = "no_improving_move"
 
     for _ in range(step_limit):
         before_h = decode(cur)
@@ -276,12 +277,14 @@ def greedy_pathwise_build_toward_target(tree0, target, step_limit=5, limit=2000)
 
         best = choose_best_pathwise_move_toward_target(cur, target=target, limit=limit)
         if best is None:
+            stop_reason = "no_candidate"
             break
 
         after_h = best["new_h"]
         after_d = abs(after_h - target)
 
         if after_d >= before_d:
+            stop_reason = "no_improving_move"
             break
 
         history.append(
@@ -299,12 +302,15 @@ def greedy_pathwise_build_toward_target(tree0, target, step_limit=5, limit=2000)
         )
 
         cur = best["tree1"]
+    else:
+        stop_reason = "step_limit"
 
     return {
         "start_h": decode(tree0),
         "final_h": decode(cur),
         "target": target,
         "history": history,
+        "stop_reason": stop_reason,
     }
 
 
