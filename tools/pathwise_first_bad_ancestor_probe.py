@@ -512,6 +512,7 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
     Poor-but-honest v0:
     - reserve some candidates below the target
     - reserve some candidates above the target
+    - include a simple scale-anchor family
     - fill remaining slots by absolute closeness
     """
     pool = sorted({shape_generator(n) for n in range(2, pool_limit + 1)})
@@ -519,22 +520,36 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
     below = [n for n in ranked if n < target]
     above = [n for n in ranked if n > target]
 
+    side_quota = min(2, top_k // 2)
+    reserved_below = below[:side_quota]
+    reserved_above = above[:side_quota]
+    reserved = set(reserved_below) | set(reserved_above)
+
+    lower_scale = max(2, target // 2)
+    upper_scale = min(pool_limit, target * 2)
+    scale_anchor = [
+        n for n in ranked
+        if lower_scale <= n <= upper_scale and n not in reserved
+    ]
+
     out = []
     seen = set()
 
-    side_quota = min(2, top_k // 2)
-
-    for bucket in (below[:side_quota], above[:side_quota], ranked):
+    for source, bucket in (
+        ("below", reserved_below),
+        ("above", reserved_above),
+        ("scale_anchor", scale_anchor[:1]),
+        ("fill", ranked),
+    ):
         for n in bucket:
             if n in seen:
                 continue
             seen.add(n)
-            out.append(n)
+            out.append({"seed": n, "source": source})
             if len(out) >= top_k:
                 return out
 
     return out
-
 
 def auto_build_toward_target(
     target,
@@ -553,7 +568,7 @@ def auto_build_toward_target(
 
     selection = choose_best_seed_toward_target(
         target=target,
-        seed_ns=seed_family,
+        seed_ns=[item["seed"] for item in seed_family],
         builder=builder,
         step_limit=step_limit,
         limit=limit,

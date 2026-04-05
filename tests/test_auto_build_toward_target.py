@@ -35,7 +35,8 @@ def test_auto_build_toward_target_best_seed_belongs_to_seed_family():
         limit=100,
     )
 
-    assert report["best_seed"] in report["seed_family"]
+    family_seeds = [item["seed"] for item in report["seed_family"]]
+    assert report["best_seed"] in family_seeds
 
 
 def test_auto_build_toward_target_best_result_is_best_among_candidates():
