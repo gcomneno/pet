@@ -506,6 +506,24 @@ def choose_best_seed_toward_target(
     }
 
 
+def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
+    """Return a small bounded family of candidate seed integers near the target."""
+    pool = sorted({shape_generator(n) for n in range(2, pool_limit + 1)})
+    ranked = sorted(pool, key=lambda n: (abs(n - target), n))
+
+    out = []
+    seen = set()
+    for n in ranked:
+        if n in seen:
+            continue
+        seen.add(n)
+        out.append(n)
+        if len(out) >= top_k:
+            break
+
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
