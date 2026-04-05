@@ -574,11 +574,16 @@ def auto_build_toward_target(
         limit=limit,
     )
 
+    best_seed_entry = next(
+        item for item in seed_family if item["seed"] == selection["best_seed"]
+    )
+
     return {
         "target": target,
         "builder": builder,
         "seed_family": seed_family,
         "best_seed": selection["best_seed"],
+        "best_seed_entry": best_seed_entry,
         "best_result": selection["best_result"],
         "candidates": selection["candidates"],
     }
