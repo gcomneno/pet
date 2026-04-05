@@ -83,6 +83,7 @@ def _score_candidate(
     modeled_branch_count: int,
     modeled_shapes: list[list],
     *,
+    compression_penalty: int = 0,
     status_bonus: int = 0,
 ) -> tuple[int, dict[str, int]]:
     modeled_depth_penalty = sum(_shape_depth(sig) for sig in modeled_shapes)
@@ -90,12 +91,14 @@ def _score_candidate(
         candidate_root_generator
         + modeled_branch_count * 1000
         + modeled_depth_penalty * 10000
+        + compression_penalty
         + status_bonus
     )
     return score, {
         "generator_term": candidate_root_generator,
         "modeled_branch_term": modeled_branch_count * 1000,
         "modeled_depth_term": modeled_depth_penalty * 10000,
+        "compression_penalty_term": compression_penalty,
         "status_bonus_term": status_bonus,
     }
 
@@ -125,6 +128,7 @@ def _candidate_record(
     modeled_shapes: list[list],
     known_root_generator_lower_bound: int,
     notes: list[str],
+    compression_penalty: int = 0,
     status_bonus: int = 0,
 ) -> dict[str, Any]:
     candidate_root_children = _canonicalize_signatures(candidate_root_children)
@@ -133,6 +137,7 @@ def _candidate_record(
         candidate_root_generator=candidate_root_generator,
         modeled_branch_count=modeled_branch_count,
         modeled_shapes=modeled_shapes,
+        compression_penalty=compression_penalty,
         status_bonus=status_bonus,
     )
 
@@ -260,6 +265,7 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
                     candidate_root_children=grouped_children,
                     modeled_shapes=modeled_shapes,
                     known_root_generator_lower_bound=known_root_generator_lower_bound,
+                    compression_penalty=5000 * (k - len(modeled_shapes)),
                     notes=[
                         "two modeled leaf contributions are grouped into one shallow structured branch",
                         "this is a synthetic completion strategy, not recovered residual anatomy",

@@ -472,12 +472,18 @@ def summarize_build_result(result):
 
 
 def choose_best_seed_toward_target(
-    target, seed_ns, builder="lookahead", step_limit=5, limit=2000
+    target, seed_ns, builder="lookahead", step_limit=5, limit=2000, policy="balanced"
 ):
     """Run a builder from multiple seeds and return the best result."""
     candidates = []
 
-    for seed_n in seed_ns:
+    normalized_seed_entries = [
+        item if isinstance(item, dict) else {"seed": item}
+        for item in seed_ns
+    ]
+
+    for entry in normalized_seed_entries:
+        seed_n = entry["seed"]
         tree0 = encode(seed_n)
 
         if builder == "greedy":
@@ -493,36 +499,149 @@ def choose_best_seed_toward_target(
 
         summary = summarize_build_result(result)
         summary["seed_n"] = seed_n
+        summary["seed_source"] = entry.get("source")
+        summary["seed_source_rank"] = entry.get("source_rank")
+        summary["seed_distance_to_target"] = entry.get("distance_to_target")
+        summary["seed_priority_key"] = entry.get("priority_key")
         candidates.append(summary)
 
-    best = min(candidates, key=lambda item: item["final_distance"])
+    def chooser_policy_rank(item):
+        source = item.get("seed_source")
+        if policy == "scale_first":
+            rank_map = {
+                "scale_anchor": 0,
+                "below": 1,
+                "above": 2,
+                "fill": 3,
+                None: 999,
+            }
+        else:
+            rank_map = {
+                "below": 0,
+                "above": 1,
+                "scale_anchor": 2,
+                "fill": 3,
+                None: 999,
+            }
+        return rank_map.get(source, 999)
+
+    candidates.sort(
+        key=lambda item: (
+            item["final_distance"],
+            chooser_policy_rank(item),
+            item.get("seed_distance_to_target", 999999999),
+            -item.get("step_count", 0),
+            item["seed_n"],
+        )
+    )
+    best = candidates[0]
+    best_seed_entry = next(
+        entry for entry in normalized_seed_entries
+        if entry["seed"] == best["seed_n"]
+    )
+
+    selection_summary = {
+        "best_seed": best["seed_n"],
+        "best_seed_source": best_seed_entry.get("source"),
+        "best_seed_priority_key": best_seed_entry.get("priority_key"),
+        "initial_distance": best["initial_distance"],
+        "final_distance": best["final_distance"],
+        "improvement": best["initial_distance"] - best["final_distance"],
+    }
 
     return {
         "target": target,
+        "policy": policy,
         "builder": builder,
         "best_seed": best["seed_n"],
+        "best_seed_entry": best_seed_entry,
         "best_result": best,
         "candidates": candidates,
+        "selection_summary": selection_summary,
     }
 
+def propose_seed_family_for_target(target, pool_limit=2000, top_k=12, policy="balanced"):
+    """Return a small bounded top-down seed family around the target.
 
-def propose_seed_family_for_target(target, pool_limit=2000, top_k=12):
-    """Return a small bounded family of candidate seed integers near the target."""
+    Policies:
+    - balanced: below -> above -> scale_anchor -> fill
+    - scale_first: below -> above -> scale_anchor -> fill, but with scale anchors
+      ranked ahead of fill candidates in priority metadata
+    """
+    if policy not in {"balanced", "scale_first"}:
+        raise ValueError("policy must be 'balanced' or 'scale_first'")
+
     pool = sorted({shape_generator(n) for n in range(2, pool_limit + 1)})
     ranked = sorted(pool, key=lambda n: (abs(n - target), n))
+    below = [n for n in ranked if n < target]
+    above = [n for n in ranked if n > target]
+
+    side_quota = min(2, top_k // 2)
+    reserved_below = below[:side_quota]
+    reserved_above = above[:side_quota]
+    reserved = set(reserved_below) | set(reserved_above)
+
+    if policy == "scale_first":
+        lower_scale = max(2, target // 4)
+        upper_scale = min(pool_limit, target * 2)
+    else:
+        lower_scale = max(2, target // 2)
+        upper_scale = min(pool_limit, target * 2)
+    scale_anchor = [
+        n for n in ranked
+        if lower_scale <= n <= upper_scale and n not in reserved
+    ]
+
+    if policy == "balanced":
+        source_rank_map = {
+            "below": 0,
+            "above": 1,
+            "scale_anchor": 2,
+            "fill": 3,
+        }
+    else:
+        source_rank_map = {
+            "below": 0,
+            "scale_anchor": 1,
+            "above": 2,
+            "fill": 3,
+        }
 
     out = []
     seen = set()
-    for n in ranked:
-        if n in seen:
-            continue
-        seen.add(n)
-        out.append(n)
-        if len(out) >= top_k:
-            break
+    insertion_index = 0
 
-    return out
+    scale_quota = 1 if policy == "balanced" else 2
 
+    for source, bucket in (
+        ("below", reserved_below),
+        ("above", reserved_above),
+        ("scale_anchor", scale_anchor[:scale_quota]),
+        ("fill", ranked),
+    ):
+        for n in bucket:
+            if n in seen:
+                continue
+            seen.add(n)
+            out.append(
+                {
+                    "seed": n,
+                    "source": source,
+                    "source_rank": source_rank_map[source],
+                    "distance_to_target": abs(n - target),
+                    "priority_key": (
+                        source_rank_map[source],
+                        abs(n - target),
+                        n,
+                        insertion_index,
+                    ),
+                }
+            )
+            insertion_index += 1
+            if len(out) >= top_k:
+                return sorted(out, key=lambda item: item["priority_key"])
+
+    return sorted(out, key=lambda item: item["priority_key"])
 
 def auto_build_toward_target(
     target,
@@ -531,29 +650,141 @@ def auto_build_toward_target(
     builder="lookahead",
     step_limit=5,
     limit=2000,
+    policy="balanced",
 ):
     """Run the full bounded bottom-up pipeline toward a target."""
-    seed_family = propose_seed_family_for_target(
-        target=target,
-        pool_limit=pool_limit,
-        top_k=top_k,
+    if policy not in {"balanced", "scale_first", "auto"}:
+        raise ValueError("policy must be 'balanced', 'scale_first' or 'auto'")
+
+    def run_with_policy(resolved_policy):
+        seed_family = propose_seed_family_for_target(
+            target=target,
+            pool_limit=pool_limit,
+            top_k=top_k,
+            policy=resolved_policy,
+        )
+
+        selection = choose_best_seed_toward_target(
+            target=target,
+            seed_ns=seed_family,
+            builder=builder,
+            step_limit=step_limit,
+            limit=limit,
+            policy=resolved_policy,
+        )
+
+        seed_entry_by_n = {item["seed"]: item for item in seed_family}
+        enriched_candidates = [
+            {
+                **item,
+                "seed_source": seed_entry_by_n[item["seed_n"]]["source"],
+                "seed_source_rank": seed_entry_by_n[item["seed_n"]]["source_rank"],
+                "seed_distance_to_target": seed_entry_by_n[item["seed_n"]]["distance_to_target"],
+                "seed_priority_key": seed_entry_by_n[item["seed_n"]]["priority_key"],
+            }
+            for item in selection["candidates"]
+        ]
+
+        best_seed_entry = next(
+            item for item in seed_family if item["seed"] == selection["best_seed"]
+        )
+
+        enriched_best_result = {
+            **selection["best_result"],
+            "seed_source": best_seed_entry["source"],
+            "seed_source_rank": best_seed_entry["source_rank"],
+            "seed_distance_to_target": best_seed_entry["distance_to_target"],
+            "seed_priority_key": best_seed_entry["priority_key"],
+        }
+
+        selection_summary = {
+            "best_seed": enriched_best_result["seed_n"],
+            "best_seed_source": enriched_best_result["seed_source"],
+            "best_seed_priority_key": enriched_best_result["seed_priority_key"],
+            "initial_distance": enriched_best_result["initial_distance"],
+            "final_distance": enriched_best_result["final_distance"],
+            "improvement": (
+                enriched_best_result["initial_distance"]
+                - enriched_best_result["final_distance"]
+            ),
+        }
+
+        def auto_build_policy_rank(item):
+            source = item.get("seed_source")
+            if resolved_policy == "scale_first":
+                rank_map = {
+                    "scale_anchor": 0,
+                    "below": 1,
+                    "above": 2,
+                    "fill": 3,
+                    None: 999,
+                }
+            else:
+                rank_map = {
+                    "below": 0,
+                    "above": 1,
+                    "scale_anchor": 2,
+                    "fill": 3,
+                    None: 999,
+                }
+            return rank_map.get(source, 999)
+
+        enriched_candidates = sorted(
+            enriched_candidates,
+            key=lambda item: (
+                item["final_distance"],
+                auto_build_policy_rank(item),
+                item.get("seed_distance_to_target", 999999999),
+                -item.get("step_count", 0),
+                item["seed_n"],
+            ),
+        )
+
+        best_candidate = enriched_candidates[0]
+
+        return {
+            "target": target,
+            "policy": resolved_policy,
+            "builder": builder,
+            "seed_family": seed_family,
+            "best_seed": best_candidate["seed_n"],
+            "best_seed_entry": next(item for item in seed_family if item["seed"] == best_candidate["seed_n"]),
+            "best_result": {
+                **enriched_best_result,
+                "seed_n": best_candidate["seed_n"],
+                "seed_source": best_candidate["seed_source"],
+                "seed_source_rank": best_candidate["seed_source_rank"],
+                "seed_distance_to_target": best_candidate["seed_distance_to_target"],
+                "seed_priority_key": best_candidate["seed_priority_key"],
+                "final_distance": best_candidate["final_distance"],
+            },
+            "candidates": enriched_candidates,
+            "selection_summary": selection_summary,
+        }
+
+    if policy != "auto":
+        return run_with_policy(policy)
+
+    scale_first_report = run_with_policy("scale_first")
+    candidates = scale_first_report["candidates"]
+    best_static_final = min(
+        item["final_distance"]
+        for item in candidates
+        if item["step_count"] == 0
+    )
+    should_use_scale_first = any(
+        item["seed_source"] == "scale_anchor"
+        and item["step_count"] > 0
+        and (item["initial_distance"] - item["final_distance"]) > 0
+        and item["final_distance"] <= best_static_final
+        for item in candidates
     )
 
-    selection = choose_best_seed_toward_target(
-        target=target,
-        seed_ns=seed_family,
-        builder=builder,
-        step_limit=step_limit,
-        limit=limit,
-    )
-
+    chosen = scale_first_report if should_use_scale_first else run_with_policy("balanced")
     return {
-        "target": target,
-        "builder": builder,
-        "seed_family": seed_family,
-        "best_seed": selection["best_seed"],
-        "best_result": selection["best_result"],
-        "candidates": selection["candidates"],
+        **chosen,
+        "policy": "auto",
+        "resolved_policy": "scale_first" if should_use_scale_first else "balanced",
     }
 
 
