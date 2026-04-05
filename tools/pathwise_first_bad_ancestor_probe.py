@@ -597,9 +597,15 @@ def auto_build_toward_target(
         limit=limit,
     )
 
-    seed_source_by_n = {item["seed"]: item["source"] for item in seed_family}
+    seed_entry_by_n = {item["seed"]: item for item in seed_family}
     enriched_candidates = [
-        {**item, "seed_source": seed_source_by_n.get(item["seed_n"])}
+        {
+            **item,
+            "seed_source": seed_entry_by_n[item["seed_n"]]["source"],
+            "seed_source_rank": seed_entry_by_n[item["seed_n"]]["source_rank"],
+            "seed_distance_to_target": seed_entry_by_n[item["seed_n"]]["distance_to_target"],
+            "seed_priority_key": seed_entry_by_n[item["seed_n"]]["priority_key"],
+        }
         for item in selection["candidates"]
     ]
 
