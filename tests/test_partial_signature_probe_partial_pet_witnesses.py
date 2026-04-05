@@ -231,3 +231,33 @@ def test_refines_v0_monotonicity_holds_for_all_budget_pairs() -> None:
             for later in reports[i + 1:]:
                 assert refines_v0(later, earlier) is True
                 assert refines_v0(earlier, later) is False
+
+
+def test_refines_v0_witness_families_repeat_on_multiple_semiprimes() -> None:
+    cases = [
+        (166448, [[1], [2]]),
+        (172912, [[1], [2]]),
+        (1498032, [[1], [2], [3]]),
+        (1556208, [[1], [2], [3]]),
+        (37450800, [[1], [2], [3], [5]]),
+        (38905200, [[1], [2], [3], [5]]),
+    ]
+
+    for n, schedules in cases:
+        reports = [
+            build_report(
+                n,
+                schedule,
+                allow_pollard_rho=False,
+                allow_small_residual_exact=False,
+            )
+            for schedule in schedules
+        ]
+
+        assert all(report["exact_root_anatomy"] is False for report in reports)
+
+        for i, earlier in enumerate(reports):
+            for later in reports[i + 1:]:
+                assert refines_v0(later, earlier) is True
+                assert refines_v0(earlier, later) is False
+
