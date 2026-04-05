@@ -574,6 +574,12 @@ def auto_build_toward_target(
         limit=limit,
     )
 
+    seed_source_by_n = {item["seed"]: item["source"] for item in seed_family}
+    enriched_candidates = [
+        {**item, "seed_source": seed_source_by_n.get(item["seed_n"])}
+        for item in selection["candidates"]
+    ]
+
     best_seed_entry = next(
         item for item in seed_family if item["seed"] == selection["best_seed"]
     )
@@ -585,7 +591,7 @@ def auto_build_toward_target(
         "best_seed": selection["best_seed"],
         "best_seed_entry": best_seed_entry,
         "best_result": selection["best_result"],
-        "candidates": selection["candidates"],
+        "candidates": enriched_candidates,
     }
 
 
