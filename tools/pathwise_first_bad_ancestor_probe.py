@@ -471,6 +471,41 @@ def summarize_build_result(result):
     }
 
 
+def choose_best_seed_toward_target(
+    target, seed_ns, builder="lookahead", step_limit=5, limit=2000
+):
+    """Run a builder from multiple seeds and return the best result."""
+    candidates = []
+
+    for seed_n in seed_ns:
+        tree0 = encode(seed_n)
+
+        if builder == "greedy":
+            result = greedy_pathwise_build_toward_target(
+                tree0, target=target, step_limit=step_limit, limit=limit
+            )
+        elif builder == "lookahead":
+            result = lookahead_pathwise_build_toward_target(
+                tree0, target=target, step_limit=step_limit, limit=limit
+            )
+        else:
+            raise ValueError("builder must be 'greedy' or 'lookahead'")
+
+        summary = summarize_build_result(result)
+        summary["seed_n"] = seed_n
+        candidates.append(summary)
+
+    best = min(candidates, key=lambda item: item["final_distance"])
+
+    return {
+        "target": target,
+        "builder": builder,
+        "best_seed": best["seed_n"],
+        "best_result": best,
+        "candidates": candidates,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bounded one-step probe for first bad ancestor in local-ok/global-fail rewrites."
