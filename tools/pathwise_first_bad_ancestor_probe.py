@@ -616,6 +616,9 @@ def auto_build_toward_target(
     enriched_best_result = {
         **selection["best_result"],
         "seed_source": best_seed_entry["source"],
+        "seed_source_rank": best_seed_entry["source_rank"],
+        "seed_distance_to_target": best_seed_entry["distance_to_target"],
+        "seed_priority_key": best_seed_entry["priority_key"],
     }
 
     selection_summary = {
@@ -638,13 +641,23 @@ def auto_build_toward_target(
         ),
     )
 
+    best_candidate = enriched_candidates[0]
+
     return {
         "target": target,
         "builder": builder,
         "seed_family": seed_family,
-        "best_seed": selection["best_seed"],
-        "best_seed_entry": best_seed_entry,
-        "best_result": enriched_best_result,
+        "best_seed": best_candidate["seed_n"],
+        "best_seed_entry": next(item for item in seed_family if item["seed"] == best_candidate["seed_n"]),
+        "best_result": {
+            **enriched_best_result,
+            "seed_n": best_candidate["seed_n"],
+            "seed_source": best_candidate["seed_source"],
+            "seed_source_rank": best_candidate["seed_source_rank"],
+            "seed_distance_to_target": best_candidate["seed_distance_to_target"],
+            "seed_priority_key": best_candidate["seed_priority_key"],
+            "final_distance": best_candidate["final_distance"],
+        },
         "candidates": enriched_candidates,
         "selection_summary": selection_summary,
     }
