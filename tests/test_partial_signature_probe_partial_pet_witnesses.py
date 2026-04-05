@@ -309,3 +309,63 @@ def test_refines_v0_r4_family_repeats_on_multiple_squared_semiprimes() -> None:
         assert refines_v0(b1000, b2) is True
         assert refines_v0(b2, b1000) is False
 
+
+def test_refines_v0_strong_gap_witness_with_nonempty_known_children() -> None:
+    n = 104030
+
+    b1 = build_report(
+        n,
+        [1],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b2 = build_report(
+        n,
+        [2],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b5 = build_report(
+        n,
+        [5],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    truth = build_report(
+        n,
+        [1000, 10000, 100000],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+
+    assert b1["exact_root_anatomy"] is False
+    assert b1["known_root_children"] == []
+    assert b1["residual_info"]["status"] == "composite-non-prime-power"
+    assert b1["root_generator_lower_bound"] == 6
+
+    assert b2["exact_root_anatomy"] is False
+    assert b2["known_root_children"] == [[]]
+    assert b2["known_root_generator_lower_bound"] == 2
+    assert b2["residual_info"]["status"] == "composite-non-prime-power"
+    assert b2["root_generator_lower_bound"] == 30
+
+    assert b5["exact_root_anatomy"] is False
+    assert b5["known_root_children"] == [[], []]
+    assert b5["known_root_generator_lower_bound"] == 6
+    assert b5["residual_info"]["status"] == "composite-non-prime-power"
+    assert b5["root_generator_lower_bound"] == 210
+
+    assert truth["exact_root_anatomy"] is True
+    assert truth["exact_root_children"] == [[], [], [], []]
+    assert truth["exact_root_generator"] == 210
+
+    assert b2["known_root_children"] != []
+    assert b2["root_generator_lower_bound"] < truth["exact_root_generator"]
+
+    assert refines_v0(b2, b1) is True
+    assert refines_v0(b1, b2) is False
+    assert refines_v0(b5, b2) is True
+    assert refines_v0(b2, b5) is False
+    assert refines_v0(truth, b5) is True
+    assert refines_v0(b5, truth) is False
+
