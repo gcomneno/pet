@@ -108,3 +108,28 @@ def test_refines_v0_monotonicity_on_partial_pet_witnesses() -> None:
         assert refines_v0(low, low) is True
         assert refines_v0(high, high) is True
 
+
+def test_refines_v0_monotonicity_across_partial_only_budgets() -> None:
+    cases = [
+        (15808432, [[1], [2]]),
+        (142275888, [[1], [2], [3]]),
+        (3556897200, [[1], [2], [3], [5]]),
+    ]
+
+    for n, schedules in cases:
+        reports = [
+            build_report(
+                n,
+                schedule,
+                allow_pollard_rho=False,
+                allow_small_residual_exact=False,
+            )
+            for schedule in schedules
+        ]
+
+        assert all(report["exact_root_anatomy"] is False for report in reports)
+
+        for prev, curr in zip(reports, reports[1:]):
+            assert refines_v0(curr, prev) is True
+            assert refines_v0(prev, curr) is False
+
