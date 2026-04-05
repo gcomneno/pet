@@ -577,8 +577,8 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12, policy="ba
     else:
         source_rank_map = {
             "below": 0,
-            "above": 1,
-            "scale_anchor": 2,
+            "scale_anchor": 1,
+            "above": 2,
             "fill": 3,
         }
 
