@@ -207,3 +207,27 @@ def test_non_exact_partial_pet_uses_only_open_residual_statuses() -> None:
         if report["exact_root_anatomy"] is False:
             assert report["residual_info"]["status"] in allowed_open_statuses
 
+
+def test_refines_v0_monotonicity_holds_for_all_budget_pairs() -> None:
+    cases = [
+        (15808432, [[1], [2]]),
+        (142275888, [[1], [2], [3]]),
+        (3556897200, [[1], [2], [3], [5]]),
+        (2 * (91 ** 2), [[1], [2], [100]]),
+    ]
+
+    for n, schedules in cases:
+        reports = [
+            build_report(
+                n,
+                schedule,
+                allow_pollard_rho=False,
+                allow_small_residual_exact=False,
+            )
+            for schedule in schedules
+        ]
+
+        for i, earlier in enumerate(reports):
+            for later in reports[i + 1:]:
+                assert refines_v0(later, earlier) is True
+                assert refines_v0(earlier, later) is False
