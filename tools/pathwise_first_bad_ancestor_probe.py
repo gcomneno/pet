@@ -630,6 +630,14 @@ def auto_build_toward_target(
         ),
     }
 
+    enriched_candidates = sorted(
+        enriched_candidates,
+        key=lambda item: (
+            item["final_distance"],
+            item["seed_priority_key"],
+        ),
+    )
+
     return {
         "target": target,
         "builder": builder,
