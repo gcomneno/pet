@@ -175,3 +175,35 @@ def test_refines_v0_accepts_residual_status_specialization_witness() -> None:
     assert refines_v0(b1, b2) is False
     assert refines_v0(b100, b2) is True
 
+
+def test_non_exact_partial_pet_uses_only_open_residual_statuses() -> None:
+    cases = [
+        (15808432, [1]),
+        (15808432, [2]),
+        (142275888, [1]),
+        (142275888, [2]),
+        (142275888, [3]),
+        (3556897200, [1]),
+        (3556897200, [2]),
+        (3556897200, [3]),
+        (3556897200, [5]),
+        (2 * (91 ** 2), [1]),
+        (2 * (91 ** 2), [2]),
+    ]
+
+    allowed_open_statuses = {
+        "composite-non-prime-power",
+        "perfect-power-composite-base",
+    }
+
+    for n, schedule in cases:
+        report = build_report(
+            n,
+            schedule,
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+
+        if report["exact_root_anatomy"] is False:
+            assert report["residual_info"]["status"] in allowed_open_statuses
+
