@@ -580,8 +580,12 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12, policy="ba
     reserved_above = above[:side_quota]
     reserved = set(reserved_below) | set(reserved_above)
 
-    lower_scale = max(2, target // 2)
-    upper_scale = min(pool_limit, target * 2)
+    if policy == "scale_first":
+        lower_scale = max(2, target // 4)
+        upper_scale = min(pool_limit, target * 2)
+    else:
+        lower_scale = max(2, target // 2)
+        upper_scale = min(pool_limit, target * 2)
     scale_anchor = [
         n for n in ranked
         if lower_scale <= n <= upper_scale and n not in reserved
@@ -606,10 +610,12 @@ def propose_seed_family_for_target(target, pool_limit=2000, top_k=12, policy="ba
     seen = set()
     insertion_index = 0
 
+    scale_quota = 1 if policy == "balanced" else 2
+
     for source, bucket in (
         ("below", reserved_below),
         ("above", reserved_above),
-        ("scale_anchor", scale_anchor[:1]),
+        ("scale_anchor", scale_anchor[:scale_quota]),
         ("fill", ranked),
     ):
         for n in bucket:
@@ -655,10 +661,11 @@ def auto_build_toward_target(
 
     selection = choose_best_seed_toward_target(
         target=target,
-        seed_ns=[item["seed"] for item in seed_family],
+        seed_ns=seed_family,
         builder=builder,
         step_limit=step_limit,
         limit=limit,
+        policy=policy,
     )
 
     seed_entry_by_n = {item["seed"]: item for item in seed_family}
@@ -697,11 +704,33 @@ def auto_build_toward_target(
         ),
     }
 
+    def auto_build_policy_rank(item):
+        source = item.get("seed_source")
+        if policy == "scale_first":
+            rank_map = {
+                "scale_anchor": 0,
+                "below": 1,
+                "above": 2,
+                "fill": 3,
+                None: 999,
+            }
+        else:
+            rank_map = {
+                "below": 0,
+                "above": 1,
+                "scale_anchor": 2,
+                "fill": 3,
+                None: 999,
+            }
+        return rank_map.get(source, 999)
+
     enriched_candidates = sorted(
         enriched_candidates,
         key=lambda item: (
             item["final_distance"],
-            item["seed_priority_key"],
+            auto_build_policy_rank(item),
+            item.get("seed_distance_to_target", 999999999),
+            item["seed_n"],
         ),
     )
 
