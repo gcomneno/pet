@@ -658,6 +658,39 @@ con `q,r,s` primi distinti grandi. In questa famiglia il pattern osservato è ti
 
 Il punto sostanziale è che qui compare una `PartialPET` aperta con due figli nonleaf già noti, ancora strettamente sotto la chiusura esatta: è un esempio più vicino all'obiettivo di sintesi strutturale compressiva rispetto ai casi con un solo ramo nonleaf.
 
+Un passo ulteriore emerge con il witness:
+
+- `1001808900 = 2^2 * 3^2 * 5^2 * 101 * 103 * 107`
+
+sempre nel regime:
+
+- `allow_pollard_rho=False`
+- `allow_small_residual_exact=False`
+
+Su questo input si osserva la catena:
+
+- `[1]` -> stato aperto, `K = []`, `kg = 1`, `rg = 6`
+- `[2]` -> stato aperto, `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> stato aperto, `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[5]` -> stato aperto, `K = [[[]], [[]], [[]]]`, `kg = 900`, `rg = 69300`
+- `[101]` -> stato aperto, `K = [[], [[]], [[]], [[]]]`, `kg = 6300`, `rg = 900900`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]], [[]]]`, `exact_root_generator = 900900`
+
+Il punto nuovo è che allo stato `[5]` la `PartialPET` aperta contiene già tre figli nonleaf noti, resta ancora aperta, e mantiene un gap stretto ma reale rispetto alla chiusura esatta.
+
+Anche questo comportamento si ripete su una famiglia del tipo:
+
+- `2^2 * 3^2 * 5^2 * q * r * s`
+
+con `q,r,s` primi distinti grandi. In tale famiglia il pattern osservato è tipicamente:
+
+- `[1]` -> `K = []`, `rg = 6`
+- `[2]` -> `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[5]` -> `K = [[[]], [[]], [[]]]`, `kg = 900`, `rg = 69300`
+- `[q]` -> `K = [[], [[]], [[]], [[]]]`, `kg = 6300`, `rg = 900900`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]], [[]]]`, `exact_root_generator = 900900`
+
 Inoltre compare una famiglia più profonda:
 
 - `2^2 * q * r * s * t * u`
