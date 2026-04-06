@@ -726,6 +726,43 @@ con `q,r,s` primi distinti grandi. In tale famiglia il pattern osservato è tipi
 - `[q]` -> `K = [[], [[]], [[]], [[]], [[]]]`, `kg = 485100`, `rg = 107207100`
 - chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]], [[]], [[]]]`, `exact_root_generator = 107207100`
 
+Un passo ancora ulteriore emerge con il witness:
+
+- `5939724968100 = 2^2 * 3^2 * 5^2 * 7^2 * 11^2 * 101 * 103 * 107`
+
+sempre nel regime:
+
+- `allow_pollard_rho=False`
+- `allow_small_residual_exact=False`
+
+Su questo input si osserva la catena:
+
+- `[1]` -> stato aperto, `K = []`, `kg = 1`, `rg = 6`
+- `[2]` -> stato aperto, `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> stato aperto, `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[5]` -> stato aperto, `K = [[[]], [[]], [[]]]`, `kg = 900`, `rg = 69300`
+- `[7]` -> stato aperto, `K = [[[]], [[]], [[]], [[]]]`, `kg = 44100`, `rg = 6306300`
+- `[11]` -> stato aperto, `K = [[[]], [[]], [[]], [[]], [[]]]`, `kg = 5336100`, `rg = 1179278100`
+- `[101]` -> stato aperto, `K = [[], [[]], [[]], [[]], [[]], [[]]]`, `kg = 69369300`, `rg = 22406283900`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]], [[]], [[]], [[]]]`, `exact_root_generator = 22406283900`
+
+Il punto nuovo è che allo stato `[11]` la `PartialPET` aperta contiene già cinque figli nonleaf noti, resta ancora aperta, e rimane strettamente sotto la chiusura esatta.
+
+Anche questo comportamento si ripete su una famiglia del tipo:
+
+- `2^2 * 3^2 * 5^2 * 7^2 * 11^2 * q * r * s`
+
+con `q,r,s` primi distinti grandi. In tale famiglia il pattern osservato è tipicamente:
+
+- `[1]` -> `K = []`, `rg = 6`
+- `[2]` -> `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[5]` -> `K = [[[]], [[]], [[]]]`, `kg = 900`, `rg = 69300`
+- `[7]` -> `K = [[[]], [[]], [[]], [[]]]`, `kg = 44100`, `rg = 6306300`
+- `[11]` -> `K = [[[]], [[]], [[]], [[]], [[]]]`, `kg = 5336100`, `rg = 1179278100`
+- `[q]` -> `K = [[], [[]], [[]], [[]], [[]], [[]]]`, `kg = 69369300`, `rg = 22406283900`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]], [[]], [[]], [[]]]`, `exact_root_generator = 22406283900`
+
 Inoltre compare una famiglia più profonda:
 
 - `2^2 * q * r * s * t * u`
