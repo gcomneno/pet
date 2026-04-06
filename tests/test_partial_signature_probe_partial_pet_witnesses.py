@@ -2001,3 +2001,225 @@ def test_refines_v0_structural_open_three_nonleaf_family_repeats() -> None:
         assert refines_v0(truth, bq) is True
         assert refines_v0(bq, truth) is False
 
+def test_refines_v0_structural_open_witness_with_four_nonleaf_known_children() -> None:
+    n = 49088636100  # 2^2 * 3^2 * 5^2 * 7^2 * 101 * 103 * 107
+
+    b1 = build_report(
+        n,
+        [1],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b2 = build_report(
+        n,
+        [2],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b3 = build_report(
+        n,
+        [3],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b5 = build_report(
+        n,
+        [5],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b7 = build_report(
+        n,
+        [7],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    b101 = build_report(
+        n,
+        [101],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+    truth = build_report(
+        n,
+        [1000, 10000, 100000],
+        allow_pollard_rho=False,
+        allow_small_residual_exact=False,
+    )
+
+    assert b1["exact_root_anatomy"] is False
+    assert b1["known_root_children"] == []
+    assert b1["root_generator_lower_bound"] == 6
+
+    assert b2["exact_root_anatomy"] is False
+    assert b2["known_root_children"] == [[[]]]
+    assert b2["known_root_generator_lower_bound"] == 4
+    assert b2["residual_info"]["status"] == "composite-non-prime-power"
+    assert b2["root_generator_lower_bound"] == 60
+
+    assert b3["exact_root_anatomy"] is False
+    assert b3["known_root_children"] == [[[]], [[]]]
+    assert b3["known_root_generator_lower_bound"] == 36
+    assert b3["residual_info"]["status"] == "composite-non-prime-power"
+    assert b3["root_generator_lower_bound"] == 1260
+
+    assert b5["exact_root_anatomy"] is False
+    assert b5["known_root_children"] == [[[]], [[]], [[]]]
+    assert b5["known_root_generator_lower_bound"] == 900
+    assert b5["residual_info"]["status"] == "composite-non-prime-power"
+    assert b5["root_generator_lower_bound"] == 69300
+
+    assert b7["exact_root_anatomy"] is False
+    assert b7["known_root_children"] == [[[]], [[]], [[]], [[]]]
+    assert b7["known_root_generator_lower_bound"] == 44100
+    assert b7["residual_info"]["status"] == "composite-non-prime-power"
+    assert b7["root_generator_lower_bound"] == 6306300
+
+    assert b101["exact_root_anatomy"] is False
+    assert b101["known_root_children"] == [[], [[]], [[]], [[]], [[]]]
+    assert b101["known_root_generator_lower_bound"] == 485100
+    assert b101["residual_info"]["status"] == "composite-non-prime-power"
+    assert b101["root_generator_lower_bound"] == 107207100
+
+    assert truth["exact_root_anatomy"] is True
+    assert truth["exact_root_children"] == [[], [], [], [[]], [[]], [[]], [[]]]
+    assert truth["exact_root_generator"] == 107207100
+
+    assert b2["root_generator_lower_bound"] < truth["exact_root_generator"]
+    assert b3["root_generator_lower_bound"] < truth["exact_root_generator"]
+    assert b5["root_generator_lower_bound"] < truth["exact_root_generator"]
+    assert b7["root_generator_lower_bound"] < truth["exact_root_generator"]
+    assert b101["root_generator_lower_bound"] == truth["exact_root_generator"]
+
+    assert refines_v0(b2, b1) is True
+    assert refines_v0(b1, b2) is False
+    assert refines_v0(b3, b2) is True
+    assert refines_v0(b2, b3) is False
+    assert refines_v0(b5, b3) is True
+    assert refines_v0(b3, b5) is False
+    assert refines_v0(b7, b5) is True
+    assert refines_v0(b5, b7) is False
+    assert refines_v0(b101, b7) is True
+    assert refines_v0(b7, b101) is False
+    assert refines_v0(truth, b101) is True
+    assert refines_v0(b101, truth) is False
+
+def test_refines_v0_structural_open_four_nonleaf_family_repeats() -> None:
+    cases = [
+        (49088636100, 101),
+        (50006180700, 101),
+        (51841269900, 101),
+        (58264082100, 101),
+        (51948168300, 101),
+        (53854523100, 101),
+        (60526764900, 101),
+        (54861149700, 101),
+        (61658106300, 101),
+        (63920789100, 101),
+        (52976844900, 103),
+        (54920949300, 103),
+        (61725314700, 103),
+        (55947509100, 103),
+        (62879058900, 103),
+        (65186547300, 103),
+        (58120227900, 107),
+        (65320964100, 107),
+        (67718063700, 107),
+        (68983821900, 109),
+    ]
+
+    for n, first_tail in cases:
+        b1 = build_report(
+            n,
+            [1],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b2 = build_report(
+            n,
+            [2],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b3 = build_report(
+            n,
+            [3],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b5 = build_report(
+            n,
+            [5],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b7 = build_report(
+            n,
+            [7],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        bq = build_report(
+            n,
+            [first_tail],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        truth = build_report(
+            n,
+            [1000, 10000, 100000],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+
+        assert b1["exact_root_anatomy"] is False
+        assert b1["known_root_children"] == []
+        assert b1["root_generator_lower_bound"] == 6
+
+        assert b2["exact_root_anatomy"] is False
+        assert b2["known_root_children"] == [[[]]]
+        assert b2["known_root_generator_lower_bound"] == 4
+        assert b2["residual_info"]["status"] == "composite-non-prime-power"
+        assert b2["root_generator_lower_bound"] == 60
+
+        assert b3["exact_root_anatomy"] is False
+        assert b3["known_root_children"] == [[[]], [[]]]
+        assert b3["known_root_generator_lower_bound"] == 36
+        assert b3["residual_info"]["status"] == "composite-non-prime-power"
+        assert b3["root_generator_lower_bound"] == 1260
+
+        assert b5["exact_root_anatomy"] is False
+        assert b5["known_root_children"] == [[[]], [[]], [[]]]
+        assert b5["known_root_generator_lower_bound"] == 900
+        assert b5["residual_info"]["status"] == "composite-non-prime-power"
+        assert b5["root_generator_lower_bound"] == 69300
+
+        assert b7["exact_root_anatomy"] is False
+        assert b7["known_root_children"] == [[[]], [[]], [[]], [[]]]
+        assert b7["known_root_generator_lower_bound"] == 44100
+        assert b7["residual_info"]["status"] == "composite-non-prime-power"
+        assert b7["root_generator_lower_bound"] == 6306300
+
+        assert bq["exact_root_anatomy"] is False
+        assert bq["known_root_children"] == [[], [[]], [[]], [[]], [[]]]
+        assert bq["known_root_generator_lower_bound"] == 485100
+        assert bq["residual_info"]["status"] == "composite-non-prime-power"
+        assert bq["root_generator_lower_bound"] == 107207100
+
+        assert truth["exact_root_anatomy"] is True
+        assert truth["exact_root_children"] == [[], [], [], [[]], [[]], [[]], [[]]]
+        assert truth["exact_root_generator"] == 107207100
+
+        assert refines_v0(b2, b1) is True
+        assert refines_v0(b1, b2) is False
+        assert refines_v0(b3, b2) is True
+        assert refines_v0(b2, b3) is False
+        assert refines_v0(b5, b3) is True
+        assert refines_v0(b3, b5) is False
+        assert refines_v0(b7, b5) is True
+        assert refines_v0(b5, b7) is False
+        assert refines_v0(bq, b7) is True
+        assert refines_v0(b7, bq) is False
+        assert refines_v0(truth, bq) is True
+        assert refines_v0(bq, truth) is False
+
