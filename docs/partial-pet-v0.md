@@ -763,6 +763,10 @@ con `q,r,s` primi distinti grandi. In tale famiglia il pattern osservato è tipi
 - `[q]` -> `K = [[], [[]], [[]], [[]], [[]], [[]]]`, `kg = 69369300`, `rg = 22406283900`
 - chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]], [[]], [[]], [[]]]`, `exact_root_generator = 22406283900`
 
+A questo punto il quadro empirico è già sostanziale: nel regime v0 corrente esistono witness e famiglie ripetute che realizzano stati aperti con 1, 2, 3, 4 e 5 figli nonleaf noti, sempre con raffinamento monotono e con gap reale rispetto alla chiusura esatta negli stati intermedi. Operativamente, questo basta a mostrare che la `PartialPET` v0 può già agire come sintesi strutturale non banale e compressiva; ulteriori estensioni alla scala successiva sono lavoro incrementale, non più necessarie per stabilire il punto concettuale.
+
+A questo punto il quadro empirico è già sostanziale: nel regime v0 corrente esistono witness e famiglie ripetute che realizzano stati aperti con 1, 2, 3, 4 e 5 figli nonleaf noti, sempre con raffinamento monotono e con gap reale rispetto alla chiusura esatta negli stati intermedi. Operativamente, questo basta a mostrare che la `PartialPET` v0 può già agire come sintesi strutturale non banale e compressiva; ulteriori estensioni alla scala successiva sono lavoro incrementale, non più necessarie per stabilire il punto concettuale.
+
 Inoltre compare una famiglia più profonda:
 
 - `2^2 * q * r * s * t * u`
