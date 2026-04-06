@@ -1483,6 +1483,98 @@ def test_refines_v0_structural_open_witness_with_nonleaf_known_child() -> None:
     assert refines_v0(b101, truth) is False
 
 
+def test_refines_v0_structural_open_two_nonleaf_family_repeats() -> None:
+    cases = [
+        (40072356, 101),
+        (40821372, 101),
+        (42319404, 101),
+        (47562516, 101),
+        (42406668, 101),
+        (43962876, 101),
+        (49409604, 101),
+        (44784612, 101),
+        (50333148, 101),
+        (52180236, 101),
+        (43246404, 103),
+        (44833428, 103),
+        (50388012, 103),
+        (45671436, 103),
+        (51329844, 103),
+        (53213508, 103),
+        (47445084, 107),
+        (53323236, 107),
+        (55280052, 107),
+        (56313324, 109),
+    ]
+
+    for n, first_tail in cases:
+        b1 = build_report(
+            n,
+            [1],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b2 = build_report(
+            n,
+            [2],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        b3 = build_report(
+            n,
+            [3],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        bq = build_report(
+            n,
+            [first_tail],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        truth = build_report(
+            n,
+            [1000, 10000, 100000],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+
+        assert b1["exact_root_anatomy"] is False
+        assert b1["known_root_children"] == []
+        assert b1["root_generator_lower_bound"] == 6
+
+        assert b2["exact_root_anatomy"] is False
+        assert b2["known_root_children"] == [[[]]]
+        assert b2["known_root_generator_lower_bound"] == 4
+        assert b2["residual_info"]["status"] == "composite-non-prime-power"
+        assert b2["root_generator_lower_bound"] == 60
+
+        assert b3["exact_root_anatomy"] is False
+        assert b3["known_root_children"] == [[[]], [[]]]
+        assert b3["known_root_generator_lower_bound"] == 36
+        assert b3["residual_info"]["status"] == "composite-non-prime-power"
+        assert b3["root_generator_lower_bound"] == 1260
+
+        assert bq["exact_root_anatomy"] is False
+        assert bq["known_root_children"] == [[], [[]], [[]]]
+        assert bq["known_root_generator_lower_bound"] == 180
+        assert bq["residual_info"]["status"] == "composite-non-prime-power"
+        assert bq["root_generator_lower_bound"] == 13860
+
+        assert truth["exact_root_anatomy"] is True
+        assert truth["exact_root_children"] == [[], [], [], [[]], [[]]]
+        assert truth["exact_root_generator"] == 13860
+
+        assert refines_v0(b2, b1) is True
+        assert refines_v0(b1, b2) is False
+        assert refines_v0(b3, b2) is True
+        assert refines_v0(b2, b3) is False
+        assert refines_v0(bq, b3) is True
+        assert refines_v0(b3, bq) is False
+        assert refines_v0(truth, bq) is True
+        assert refines_v0(bq, truth) is False
+
+
 def test_refines_v0_structural_open_nonleaf_witness_family_repeats() -> None:
     cases = [
         (4452484, 101),
