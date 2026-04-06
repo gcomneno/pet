@@ -535,6 +535,58 @@ In particolare, in tutti e tre i witness osservati finora:
 
 Questo rende i witness attuali particolarmente adatti come primi casi positivi di monotonicità.
 
+### 10.5bis Catena squarefree profonda e legge primoriale osservata
+
+Le osservazioni più recenti mostrano che il fenomeno non si limita più a pochi witness isolati.
+
+Nel regime sperimentale:
+
+- `allow_pollard_rho=False`
+- `allow_small_residual_exact=False`
+
+su input squarefree costruiti come prodotto di molti primi distinti, emerge una catena monotona profonda in cui ogni nuovo primo noto aggiunge un nuovo ramo root-level e fa crescere i lower bound del generator secondo una legge estremamente regolare.
+
+Sul witness profondo:
+
+- `n = 2·3·5·7·11·13·17·19·23·29·31`
+
+con schedule:
+
+- `[1]`
+- `[2]`
+- `[3]`
+- `[5]`
+- `[7]`
+- `[11]`
+- `[13]`
+- `[17]`
+- `[19]`
+- `[23]`
+
+si osserva operativamente che, a profondità `d`:
+
+- `known_root_children` ha cardinalità `d`
+- `known_root_generator_lower_bound = primorial(d)` per `d >= 1`
+- `root_generator_lower_bound = primorial(d+2)`
+
+dove `primorial(k)` indica il prodotto dei primi `k` primi.
+
+In particolare la catena osservata è:
+
+- `6 -> 30 -> 210 -> 2310 -> 30030 -> 510510 -> 9699690 -> 223092870 -> 6469693230 -> 200560490130`
+
+e la chiusura esatta finale restituisce:
+
+- `exact_root_children` con 11 foglie root-level
+- `exact_root_generator = 200560490130`
+
+Questa non va ancora letta come teorema generale del v0, ma come forte evidenza sperimentale di una legge strutturale stabile su famiglie squarefree profonde.
+
+Operativamente, questo rafforza due idee centrali del v0:
+
+1. la `PartialPET` può accumulare informazione strutturale non banale molto prima della chiusura esatta
+2. la crescita dei lower bound del generator può seguire una traiettoria monotona altamente regolare e certificabile
+
 ---
 
 ### 10.6 Cosa sarebbe una violazione seria
