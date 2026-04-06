@@ -18,7 +18,12 @@ from pet.core import shape_signature_dict
 SMALL_RESIDUAL_EXACT_LIMIT = 10**8
 
 
+_TRACE_ENABLED = True
+
+
 def _trace(msg: str) -> None:
+    if not _TRACE_ENABLED:
+        return
     print(f"[trace] {msg}", file=sys.stderr, flush=True)
 
 
@@ -744,9 +749,56 @@ def render_human(report: dict[str, Any]) -> str:
     )
     lines.append(f"residual = {report['residual']}")
     lines.append(f"residual_status = {report['residual_info']['status']}")
+    lines.append(f"residual_digits = {len(str(report['residual']))}")
     lines.append(f"root_generator_lower_bound = {report['root_generator_lower_bound']}")
     lines.append(f"exact_root_anatomy = {report['exact_root_anatomy']}")
     lines.append(f"fully_factored = {report['fully_factored']}")
+
+    if report["exact_root_children"] is not None:
+        lines.append(f"exact_root_children = {report['exact_root_children']}")
+        lines.append(f"exact_root_generator = {report['exact_root_generator']}")
+
+    return "\n".join(lines)
+
+
+
+def _compact_int(value: int, head: int = 24, tail: int = 24) -> str:
+    s = str(value)
+    if len(s) <= head + tail + 3:
+        return s
+    return f"{s[:head]}...{s[-tail:]}"
+
+
+def render_summary(report: dict[str, Any]) -> str:
+    lines = []
+    n_str = str(report["n"])
+    lines.append(f"digits = {len(n_str)}")
+    lines.append(f"n = {_compact_int(report['n'])}")
+    lines.append(f"schedule = {report['schedule']}")
+    lines.append("")
+
+    for stage in report["stages"]:
+        lines.append(
+            f"[{stage['limit']}] "
+            f"exact={stage['exact_root_children_if_closed_now'] is not None and stage['residual_info']['status'] == 'unit'} "
+            f"K={stage['known_root_children_so_far']} "
+            f"kg={stage['known_root_generator_lower_bound']} "
+            f"rg={stage['root_generator_lower_bound']} "
+            f"status={stage['residual_info']['status']} "
+            f"residual_digits={len(str(stage['residual_after']))}"
+        )
+
+    lines.append("")
+    lines.append(f"stop_reason = {report['stop_reason']}")
+    lines.append(f"closure_kind = {report['closure_kind']}")
+    lines.append(f"exact_root_anatomy = {report['exact_root_anatomy']}")
+    lines.append(f"known_root_children = {report['known_root_children']}")
+    lines.append(
+        f"known_root_generator_lower_bound = {report['known_root_generator_lower_bound']}"
+    )
+    lines.append(f"root_generator_lower_bound = {report['root_generator_lower_bound']}")
+    lines.append(f"residual_status = {report['residual_info']['status']}")
+    lines.append(f"residual_digits = {len(str(report['residual']))}")
 
     if report["exact_root_children"] is not None:
         lines.append(f"exact_root_children = {report['exact_root_children']}")
@@ -794,12 +846,17 @@ def main() -> int:
         help="Disable exact closure of small residuals at exhausted schedule (experimental)",
     )
     parser.add_argument("--json", action="store_true", help="Emit JSON")
+    parser.add_argument("--summary", action="store_true", help="Emit compact ladder summary")
+    parser.add_argument("--quiet", action="store_true", help="Suppress trace output")
     args = parser.parse_args()
 
     if args.n < 1:
         raise SystemExit("N must be >= 1")
 
+    global _TRACE_ENABLED
+
     schedule = parse_schedule(args.schedule)
+    _TRACE_ENABLED = not args.quiet
     report = build_report(
         args.n,
         schedule,
@@ -809,6 +866,8 @@ def main() -> int:
 
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
+    elif args.summary:
+        print(render_summary(report))
     else:
         print(render_human(report))
 

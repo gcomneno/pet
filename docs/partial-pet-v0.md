@@ -783,6 +783,37 @@ Qui il punto chiave non è il singolo numero, ma il fatto che esistano famiglie 
 
 ---
 
+### 10.5quater Demo su input gigante: sintesi strutturale senza chiusura esatta
+
+Per avvicinarsi all'obiettivo finale non basta accumulare witness piccoli: serve mostrare che il v0 produce una sintesi strutturale utile anche su input giganteschi, dove la chiusura esatta non è il punto operativo.
+
+Nel regime:
+
+- `allow_pollard_rho=False`
+- `allow_small_residual_exact=False`
+
+si può costruire un input di 370 cifre del tipo:
+
+- `n = 2^2 * 3^2 * 5^2 * 7^2 * 11^2 * q * r * s`
+
+con `q,r,s` primi enormi distinti.
+
+Su tale input il probe v0 mostra la catena:
+
+- `[1]` -> stato aperto, `K = []`, `kg = 1`, `rg = 6`
+- `[2]` -> stato aperto, `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> stato aperto, `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[5]` -> stato aperto, `K = [[[]], [[]], [[]]]`, `kg = 900`, `rg = 69300`
+- `[7]` -> stato aperto, `K = [[[]], [[]], [[]], [[]]]`, `kg = 44100`, `rg = 6306300`
+- `[11]` -> stato aperto, `K = [[[]], [[]], [[]], [[]], [[]]]`, `kg = 5336100`, `rg = 1179278100`
+
+In tutti questi stati:
+
+- `exact_root_anatomy = False`
+- `residual_status = composite-non-prime-power`
+
+Questa demo non prova ancora che il v0 sia una soluzione finale generale, ma mostra il punto essenziale: anche quando la fattorizzazione completa non viene chiusa, il probe può già restituire una sintesi strutturale canonica, monotona e non banale dell'anatomia PET root-level.
+
 ### 10.6 Cosa sarebbe una violazione seria
 
 Nel v0, costituirebbero segnali di allarme forti:
