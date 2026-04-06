@@ -591,3 +591,84 @@ def test_refines_v0_long_strong_gap_family_repeats_on_multiple_semiprimes() -> N
         assert refines_v0(truth, b5) is True
         assert refines_v0(b5, truth) is False
 
+
+def test_refines_v0_long_strong_gap_pattern_extends_across_squarefree_triples() -> None:
+    cases = [
+        (312090, [2], [3], [5]),
+        (436926, [2], [3], [7]),
+        (728210, [2], [5], [7]),
+        (1092315, [3], [5], [7]),
+        (4005155, [5], [7], [11]),
+    ]
+
+    for n, s1, s2, s3 in cases:
+        b1 = build_report(
+            n,
+            [1],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        p1 = build_report(
+            n,
+            s1,
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        p2 = build_report(
+            n,
+            s2,
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        p3 = build_report(
+            n,
+            s3,
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+        truth = build_report(
+            n,
+            [1000, 10000, 100000],
+            allow_pollard_rho=False,
+            allow_small_residual_exact=False,
+        )
+
+        assert b1["exact_root_anatomy"] is False
+        assert b1["known_root_children"] == []
+        assert b1["root_generator_lower_bound"] == 6
+
+        assert p1["exact_root_anatomy"] is False
+        assert p1["known_root_children"] == [[]]
+        assert p1["known_root_generator_lower_bound"] == 2
+        assert p1["residual_info"]["status"] == "composite-non-prime-power"
+        assert p1["root_generator_lower_bound"] == 30
+
+        assert p2["exact_root_anatomy"] is False
+        assert p2["known_root_children"] == [[], []]
+        assert p2["known_root_generator_lower_bound"] == 6
+        assert p2["residual_info"]["status"] == "composite-non-prime-power"
+        assert p2["root_generator_lower_bound"] == 210
+
+        assert p3["exact_root_anatomy"] is False
+        assert p3["known_root_children"] == [[], [], []]
+        assert p3["known_root_generator_lower_bound"] == 30
+        assert p3["residual_info"]["status"] == "composite-non-prime-power"
+        assert p3["root_generator_lower_bound"] == 2310
+
+        assert truth["exact_root_anatomy"] is True
+        assert truth["exact_root_children"] == [[], [], [], [], []]
+        assert truth["exact_root_generator"] == 2310
+
+        assert p1["root_generator_lower_bound"] < truth["exact_root_generator"]
+        assert p2["root_generator_lower_bound"] < truth["exact_root_generator"]
+        assert p3["root_generator_lower_bound"] == truth["exact_root_generator"]
+
+        assert refines_v0(p1, b1) is True
+        assert refines_v0(b1, p1) is False
+        assert refines_v0(p2, p1) is True
+        assert refines_v0(p1, p2) is False
+        assert refines_v0(p3, p2) is True
+        assert refines_v0(p2, p3) is False
+        assert refines_v0(truth, p3) is True
+        assert refines_v0(p3, truth) is False
+
