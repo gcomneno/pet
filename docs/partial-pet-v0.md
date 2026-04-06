@@ -622,6 +622,28 @@ Questo è importante perché mostra un caso in cui:
 - almeno uno stato aperto resta strettamente sotto la chiusura esatta
 - la conoscenza cresce per raffinamento senza collassare subito in un caso banale di sole foglie
 
+Un witness ancora più vicino all'obiettivo è:
+
+- `40072356 = 2^2 * 3^2 * 101 * 103 * 107`
+
+Su questo input, sempre nello stesso regime, si osserva la catena:
+
+- `[1]` -> stato aperto, `K = []`, `kg = 1`, `rg = 6`
+- `[2]` -> stato aperto, `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> stato aperto, `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[101]` -> stato aperto, `K = [[], [[]], [[]]]`, `kg = 180`, `rg = 13860`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]]]`, `exact_root_generator = 13860`
+
+Questo witness è particolarmente rilevante perché già allo stato `[3]` la `PartialPET` aperta contiene due figli nonleaf noti:
+
+- `K = [[[]], [[]]]`
+- `kg = 36`
+- `rg = 1260`
+- stato ancora aperto
+- `rg < exact_root_generator`
+
+Quindi il v0 non si limita a recuperare una singola componente strutturale non banale: esistono già witness in cui, prima della chiusura esatta, la sintesi parziale certificata conserva più di un ramo nonleaf e resta ancora strettamente incompleta.
+
 Inoltre compare una famiglia più profonda:
 
 - `2^2 * q * r * s * t * u`
