@@ -644,6 +644,20 @@ Questo witness è particolarmente rilevante perché già allo stato `[3]` la `Pa
 
 Quindi il v0 non si limita a recuperare una singola componente strutturale non banale: esistono già witness in cui, prima della chiusura esatta, la sintesi parziale certificata conserva più di un ramo nonleaf e resta ancora strettamente incompleta.
 
+Questo comportamento non è isolato: si ripete su una famiglia del tipo
+
+- `2^2 * 3^2 * q * r * s`
+
+con `q,r,s` primi distinti grandi. In questa famiglia il pattern osservato è tipicamente:
+
+- `[1]` -> `K = []`, `rg = 6`
+- `[2]` -> `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[3]` -> `K = [[[]], [[]]]`, `kg = 36`, `rg = 1260`
+- `[q]` -> `K = [[], [[]], [[]]]`, `kg = 180`, `rg = 13860`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]], [[]]]`, `exact_root_generator = 13860`
+
+Il punto sostanziale è che qui compare una `PartialPET` aperta con due figli nonleaf già noti, ancora strettamente sotto la chiusura esatta: è un esempio più vicino all'obiettivo di sintesi strutturale compressiva rispetto ai casi con un solo ramo nonleaf.
+
 Inoltre compare una famiglia più profonda:
 
 - `2^2 * q * r * s * t * u`
