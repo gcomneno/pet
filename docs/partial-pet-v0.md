@@ -587,6 +587,55 @@ Operativamente, questo rafforza due idee centrali del v0:
 1. la `PartialPET` può accumulare informazione strutturale non banale molto prima della chiusura esatta
 2. la crescita dei lower bound del generator può seguire una traiettoria monotona altamente regolare e certificabile
 
+### 10.5ter Famiglie aperte nonleaf: oltre i casi “quasi esatti”
+
+Un risultato più vicino all'obiettivo originario è l'emersione di famiglie in cui la `PartialPET` aperta contiene già un figlio root-level non banale, ma non è ancora chiusa esattamente.
+
+Nel regime:
+
+- `allow_pollard_rho=False`
+- `allow_small_residual_exact=False`
+
+la famiglia:
+
+- `2^2 * q * r * s`
+
+con `q,r,s` primi distinti grandi, mostra il seguente comportamento tipico:
+
+- con budget `[2]` si osserva una `PartialPET` aperta con `known_root_children = [[[]]]`
+- in questo stato `known_root_generator_lower_bound = 4`
+- e `root_generator_lower_bound = 60`, ancora strettamente sotto il valore esatto finale `420`
+
+Su un witness concreto:
+
+- `4452484 = 2^2 * 101 * 103 * 107`
+
+si osserva infatti:
+
+- `[2]` -> stato aperto, `K = [[[]]]`, `kg = 4`, `rg = 60`
+- `[101]` -> stato ancora aperto, `K = [[], [[]]]`, `kg = 12`, `rg = 420`
+- chiusura finale -> `exact_root_children = [[], [], [], [[]]]`, `exact_root_generator = 420`
+
+Questo è importante perché mostra un caso in cui:
+
+- la root anatomy parziale è già strutturalmente non banale
+- almeno uno stato aperto resta strettamente sotto la chiusura esatta
+- la conoscenza cresce per raffinamento senza collassare subito in un caso banale di sole foglie
+
+Inoltre compare una famiglia più profonda:
+
+- `2^2 * q * r * s * t * u`
+
+in cui la catena aperta osservata è tipicamente:
+
+- `[2]` -> `rg = 60`
+- `[q]` -> `rg = 420`
+- `[r]` -> `rg = 4620`
+- `[s]` -> `rg = 60060`
+- chiusura finale -> `exact_root_generator = 60060`
+
+Qui il punto chiave non è il singolo numero, ma il fatto che esistano famiglie ripetute in cui una `PartialPET` aperta conserva figli nonleaf e produce una crescita monotona certificata del contenuto strutturale prima della fattorizzazione completa.
+
 ---
 
 ### 10.6 Cosa sarebbe una violazione seria
