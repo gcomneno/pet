@@ -5,6 +5,7 @@ import sys
 import time
 import argparse
 import json
+from collections import Counter
 from math import prod
 from typing import Any
 
@@ -17,7 +18,12 @@ from pet.core import shape_signature_dict
 SMALL_RESIDUAL_EXACT_LIMIT = 10**8
 
 
+_TRACE_ENABLED = True
+
+
 def _trace(msg: str) -> None:
+    if not _TRACE_ENABLED:
+        return
     print(f"[trace] {msg}", file=sys.stderr, flush=True)
 
 
@@ -29,6 +35,16 @@ def _freeze(x: Any):
 
 def _canonicalize_signatures(sigs: list[list]) -> list[list]:
     return sorted(sigs, key=_freeze)
+
+
+def _signature_multiset(sigs: list[list]) -> Counter:
+    return Counter(_freeze(sig) for sig in _canonicalize_signatures(sigs))
+
+
+def _multiset_inclusion(left: list[list], right: list[list]) -> bool:
+    left_counts = _signature_multiset(left)
+    right_counts = _signature_multiset(right)
+    return all(count <= right_counts.get(sig, 0) for sig, count in left_counts.items())
 
 
 def _first_primes(count: int) -> list[int]:
@@ -267,6 +283,75 @@ def _classify_residual(residual: int) -> dict[str, Any]:
     }
 
 
+def _residual_status_refines_v0(status2: str, status1: str) -> bool:
+    if status2 == status1:
+        return True
+    return (
+        status2 == "perfect-power-composite-base"
+        and status1 == "composite-non-prime-power"
+    )
+
+
+def _residual_compatible_with_status_v0(
+    exact_children: list[list],
+    known_children: list[list],
+    status: str,
+) -> bool:
+    exact_counts = _signature_multiset(exact_children)
+    known_counts = _signature_multiset(known_children)
+    residual_size = sum(
+        exact_counts.get(sig, 0) - known_counts.get(sig, 0) for sig in exact_counts
+    )
+
+    if status == "unit":
+        return residual_size == 0
+    if status == "prime-by-sympy":
+        return residual_size == 1
+    if status == "prime-power-by-sympy":
+        return residual_size == 1
+    if status == "composite-non-prime-power":
+        return residual_size >= 2
+    if status == "perfect-power-composite-base":
+        return residual_size >= 2
+    return False
+
+
+def refines_v0(p2: dict[str, Any], p1: dict[str, Any]) -> bool:
+    k1 = _canonicalize_signatures(p1["known_root_children"])
+    k2 = _canonicalize_signatures(p2["known_root_children"])
+
+    if not _multiset_inclusion(k1, k2):
+        return False
+
+    if p2["known_root_generator_lower_bound"] < p1["known_root_generator_lower_bound"]:
+        return False
+
+    if p2["root_generator_lower_bound"] < p1["root_generator_lower_bound"]:
+        return False
+
+    exact1 = bool(p1["exact_root_anatomy"])
+    exact2 = bool(p2["exact_root_anatomy"])
+
+    if exact1:
+        if not exact2:
+            return False
+        e1 = _canonicalize_signatures(p1["exact_root_children"] or [])
+        e2 = _canonicalize_signatures(p2["exact_root_children"] or [])
+        return e2 == e1
+
+    status1 = p1["residual_info"]["status"]
+
+    if not exact2:
+        status2 = p2["residual_info"]["status"]
+        return _residual_status_refines_v0(status2, status1)
+
+    e2 = _canonicalize_signatures(p2["exact_root_children"] or [])
+    if not _multiset_inclusion(k1, e2):
+        return False
+
+    return _residual_compatible_with_status_v0(e2, k1, status1)
+
+
 def _last_split_kind_from_stage(
     stage_source: str,
     stage_raw: dict[int, int],
@@ -333,7 +418,12 @@ def _residual_lower_bound_children(residual_info: dict[str, Any]) -> list[list]:
     return [[] for _ in range(residual_info["root_children_lower_bound"])]
 
 
-def _factor_step(residual_before: int, limit: int) -> tuple[str, dict[int, int], list[tuple[int, int]], int]:
+def _factor_step(
+    residual_before: int,
+    limit: int,
+    *,
+    allow_pollard_rho: bool = True,
+) -> tuple[str, dict[int, int], list[tuple[int, int]], int]:
     _trace(
         f"factor_step:start digits={len(str(residual_before))} "
         f"bits={residual_before.bit_length()} limit={limit}"
@@ -363,6 +453,9 @@ def _factor_step(residual_before: int, limit: int) -> tuple[str, dict[int, int],
         "composite-non-prime-power",
         "perfect-power-composite-base",
     }:
+        return "factorint", stage_raw, stage_known, residual_after
+
+    if not allow_pollard_rho:
         return "factorint", stage_raw, stage_known, residual_after
 
     _trace("pollard_rho:start")
@@ -443,6 +536,9 @@ def _analyze_residual_recursive(
     remaining_schedule: list[int],
     known_factor_map: dict[int, int],
     stages: list[dict[str, Any]],
+    *,
+    allow_pollard_rho: bool = True,
+    allow_small_residual_exact: bool = True,
 ) -> tuple[int, str]:
     _trace(
         f"recurse:start digits={len(str(residual))} "
@@ -453,30 +549,35 @@ def _analyze_residual_recursive(
         return residual, _stop_reason_from_residual(residual, budget_exhausted=False)
 
     if not remaining_schedule:
-        exact_small = _factor_small_residual_exact(residual)
-        if exact_small is not None:
-            stage_raw, stage_known, residual_after = exact_small
-            if stage_known:
-                _merge_factor_lists(known_factor_map, stage_known)
+        if allow_small_residual_exact:
+            exact_small = _factor_small_residual_exact(residual)
+            if exact_small is not None:
+                stage_raw, stage_known, residual_after = exact_small
+                if stage_known:
+                    _merge_factor_lists(known_factor_map, stage_known)
 
-            stage = _make_stage(
-                stage_source="small-residual-exact",
-                limit=SMALL_RESIDUAL_EXACT_LIMIT,
-                residual_before=residual,
-                stage_raw=stage_raw,
-                stage_known=stage_known,
-                residual_after=residual_after,
-                known_factor_map=known_factor_map,
-            )
-            stages.append(stage)
-            _trace(f"recurse:stop reason={_stop_reason_from_residual(residual_after, budget_exhausted=False)}")
-            return residual_after, _stop_reason_from_residual(residual_after, budget_exhausted=False)
+                stage = _make_stage(
+                    stage_source="small-residual-exact",
+                    limit=SMALL_RESIDUAL_EXACT_LIMIT,
+                    residual_before=residual,
+                    stage_raw=stage_raw,
+                    stage_known=stage_known,
+                    residual_after=residual_after,
+                    known_factor_map=known_factor_map,
+                )
+                stages.append(stage)
+                _trace(f"recurse:stop reason={_stop_reason_from_residual(residual_after, budget_exhausted=False)}")
+                return residual_after, _stop_reason_from_residual(residual_after, budget_exhausted=False)
 
         return residual, _stop_reason_from_residual(residual, budget_exhausted=True)
 
     limit = remaining_schedule[0]
     residual_before = residual
-    stage_source, stage_raw, stage_known, residual_after = _factor_step(residual_before, limit)
+    stage_source, stage_raw, stage_known, residual_after = _factor_step(
+        residual_before,
+        limit,
+        allow_pollard_rho=allow_pollard_rho,
+    )
 
     if stage_known:
         _merge_factor_lists(known_factor_map, stage_known)
@@ -505,6 +606,8 @@ def _analyze_residual_recursive(
             remaining_schedule[1:],
             known_factor_map,
             stages,
+            allow_pollard_rho=allow_pollard_rho,
+            allow_small_residual_exact=allow_small_residual_exact,
         )
 
     _trace(f"recurse:stop reason={_stop_reason_from_residual(residual, budget_exhausted=False)}")
@@ -513,10 +616,18 @@ def _analyze_residual_recursive(
         remaining_schedule[1:],
         known_factor_map,
         stages,
+        allow_pollard_rho=allow_pollard_rho,
+        allow_small_residual_exact=allow_small_residual_exact,
     )
 
 
-def build_report(n: int, schedule: list[int]) -> dict[str, Any]:
+def build_report(
+    n: int,
+    schedule: list[int],
+    *,
+    allow_pollard_rho: bool = True,
+    allow_small_residual_exact: bool = True,
+) -> dict[str, Any]:
     known_factor_map: dict[int, int] = {}
     stages: list[dict[str, Any]] = []
 
@@ -525,6 +636,8 @@ def build_report(n: int, schedule: list[int]) -> dict[str, Any]:
         remaining_schedule=schedule,
         known_factor_map=known_factor_map,
         stages=stages,
+        allow_pollard_rho=allow_pollard_rho,
+        allow_small_residual_exact=allow_small_residual_exact,
     )
 
     final_known_children = _known_root_children(known_factor_map)
@@ -562,6 +675,8 @@ def build_report(n: int, schedule: list[int]) -> dict[str, Any]:
     return {
         "n": n,
         "schedule": schedule,
+        "allow_pollard_rho": allow_pollard_rho,
+        "allow_small_residual_exact": allow_small_residual_exact,
         "stages": stages,
         "stop_reason": stop_reason,
         "closure_kind": closure_kind,
@@ -634,9 +749,56 @@ def render_human(report: dict[str, Any]) -> str:
     )
     lines.append(f"residual = {report['residual']}")
     lines.append(f"residual_status = {report['residual_info']['status']}")
+    lines.append(f"residual_digits = {len(str(report['residual']))}")
     lines.append(f"root_generator_lower_bound = {report['root_generator_lower_bound']}")
     lines.append(f"exact_root_anatomy = {report['exact_root_anatomy']}")
     lines.append(f"fully_factored = {report['fully_factored']}")
+
+    if report["exact_root_children"] is not None:
+        lines.append(f"exact_root_children = {report['exact_root_children']}")
+        lines.append(f"exact_root_generator = {report['exact_root_generator']}")
+
+    return "\n".join(lines)
+
+
+
+def _compact_int(value: int, head: int = 24, tail: int = 24) -> str:
+    s = str(value)
+    if len(s) <= head + tail + 3:
+        return s
+    return f"{s[:head]}...{s[-tail:]}"
+
+
+def render_summary(report: dict[str, Any]) -> str:
+    lines = []
+    n_str = str(report["n"])
+    lines.append(f"digits = {len(n_str)}")
+    lines.append(f"n = {_compact_int(report['n'])}")
+    lines.append(f"schedule = {report['schedule']}")
+    lines.append("")
+
+    for stage in report["stages"]:
+        lines.append(
+            f"[{stage['limit']}] "
+            f"exact={stage['exact_root_children_if_closed_now'] is not None and stage['residual_info']['status'] == 'unit'} "
+            f"K={stage['known_root_children_so_far']} "
+            f"kg={stage['known_root_generator_lower_bound']} "
+            f"rg={stage['root_generator_lower_bound']} "
+            f"status={stage['residual_info']['status']} "
+            f"residual_digits={len(str(stage['residual_after']))}"
+        )
+
+    lines.append("")
+    lines.append(f"stop_reason = {report['stop_reason']}")
+    lines.append(f"closure_kind = {report['closure_kind']}")
+    lines.append(f"exact_root_anatomy = {report['exact_root_anatomy']}")
+    lines.append(f"known_root_children = {report['known_root_children']}")
+    lines.append(
+        f"known_root_generator_lower_bound = {report['known_root_generator_lower_bound']}"
+    )
+    lines.append(f"root_generator_lower_bound = {report['root_generator_lower_bound']}")
+    lines.append(f"residual_status = {report['residual_info']['status']}")
+    lines.append(f"residual_digits = {len(str(report['residual']))}")
 
     if report["exact_root_children"] is not None:
         lines.append(f"exact_root_children = {report['exact_root_children']}")
@@ -673,17 +835,39 @@ def main() -> int:
         default="100,1000,10000",
         help="Comma-separated factorint limits, e.g. 100,1000,10000",
     )
+    parser.add_argument(
+        "--no-pollard-rho",
+        action="store_true",
+        help="Disable pollard-rho fallback (experimental)",
+    )
+    parser.add_argument(
+        "--no-small-residual-exact",
+        action="store_true",
+        help="Disable exact closure of small residuals at exhausted schedule (experimental)",
+    )
     parser.add_argument("--json", action="store_true", help="Emit JSON")
+    parser.add_argument("--summary", action="store_true", help="Emit compact ladder summary")
+    parser.add_argument("--quiet", action="store_true", help="Suppress trace output")
     args = parser.parse_args()
 
     if args.n < 1:
         raise SystemExit("N must be >= 1")
 
+    global _TRACE_ENABLED
+
     schedule = parse_schedule(args.schedule)
-    report = build_report(args.n, schedule)
+    _TRACE_ENABLED = not args.quiet
+    report = build_report(
+        args.n,
+        schedule,
+        allow_pollard_rho=not args.no_pollard_rho,
+        allow_small_residual_exact=not args.no_small_residual_exact,
+    )
 
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
+    elif args.summary:
+        print(render_summary(report))
     else:
         print(render_human(report))
 
