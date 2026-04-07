@@ -124,6 +124,7 @@ Start here depending on what you need:
 - [docs/SPEC.md](docs/SPEC.md) — format, schema, metrics, and behavior contracts
 - [docs/STATUS.md](docs/STATUS.md) — what is defined, proved, empirical, or still open
 - [docs/reports/README.md](docs/reports/README.md) — reproducible reports, datasets, and regeneration commands
+- [ROADMAP.md](ROADMAP.md) — current priorities and likely next directions
 - [CHANGELOG.md](CHANGELOG.md) — public release history
 
 ## Typical workflow
