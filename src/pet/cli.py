@@ -17,7 +17,8 @@ from .core import (
 )
 from .io import load_json_file, render, to_json
 from .metrics import extended_metrics
-from .query import register_subparser, run_args as run_query
+from .families import register_subparser as register_families_subparser, run_args as run_families
+from .query import register_subparser as register_query_subparser, run_args as run_query
 from .metrics import (
     is_expanding,
     is_level_uniform,
@@ -122,8 +123,9 @@ def main(argv: list[str] | None = None) -> int:
     p_generators.add_argument("file", metavar="DATASET.jsonl")
     p_generators.add_argument("--metrics", action="store_true")
 
-    # query
-    register_subparser(subparsers)
+    # query / families
+    register_query_subparser(subparsers)
+    register_families_subparser(subparsers)
 
     args = parser.parse_args(argv[1:])
 
@@ -296,6 +298,9 @@ def main(argv: list[str] | None = None) -> int:
 
         elif args.command == "query":
             return run_query(args)
+
+        elif args.command == "families":
+            return run_families(args)
 
         else:
             parser.print_help()
