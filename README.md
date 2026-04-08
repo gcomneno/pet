@@ -125,6 +125,7 @@ Start here depending on what you need:
 - [docs/STATUS.md](docs/STATUS.md) — what is defined, proved, empirical, or still open
 - [docs/reports/README.md](docs/reports/README.md) — reproducible reports, datasets, and regeneration commands
 - [docs/problem-statement.md](docs/problem-statement.md) — concrete research problem and scope
+- [docs/experiment-1.md](docs/experiment-1.md) — first benchmark, metrics, and success criteria
 - [ROADMAP.md](ROADMAP.md) — current priorities and likely next directions
 - [CHANGELOG.md](CHANGELOG.md) — public release history
 
