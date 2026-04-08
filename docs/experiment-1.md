@@ -88,6 +88,8 @@ The final deliverable for Experiment 1 is a bounded benchmark report that states
 - where overlaps remained
 - what PET can and cannot claim from this benchmark
 
+A compact decision companion may also be maintained in [docs/experiment-1-scorecard.md](docs/experiment-1-scorecard.md).
+
 ## Interpretation rule
 
 A partial result is still a valid result.
