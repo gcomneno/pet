@@ -22,8 +22,8 @@ For the current tooling classification, see
 ## Stable research tooling
 
 - `atlas_summary.py` — atlas-style summary generation used by bounded reports
-- `cluster_families_disjoint.py` — disjoint family clustering benchmark tooling
-  used in the report-facing workflow
+- `cluster_families_disjoint.py` — compatibility wrapper for the disjoint family
+  clustering benchmark tooling; canonical entry point: `pet families benchmark-disjoint`
 
 ## Secondary / non-canonical tooling
 

@@ -547,7 +547,8 @@ ma cattura differenze reali e misurabili. Il potere discriminante è presente
 **in media** ma non abbastanza concentrato da produrre separazione netta ai bordi.
 
 Gli strumenti di analisi sono in `tools/cluster_families.py` (famiglie originali)
-e `tools/cluster_families_disjoint.py` (famiglie disgiunte).
+e in `pet families benchmark-disjoint` (famiglie disgiunte, con wrapper compatibile
+in `tools/cluster_families_disjoint.py`).
 
 ## JSONL scan record schema (v1)
 

@@ -66,8 +66,9 @@ def assert_script_benchmark_markers(text: str, path: str) -> None:
     assert "## Method" in text, f"{path}: missing '## Method' section"
 
     assert (
-        "tools/cluster_families_disjoint.py" in text
-    ), f"{path}: missing benchmark script reference"
+        "pet families benchmark-disjoint" in text
+        or "tools/cluster_families_disjoint.py" in text
+    ), f"{path}: missing benchmark command/script reference"
 
 
 @pytest.mark.parametrize("path,spec", REPORT_CONTRACTS.items())
