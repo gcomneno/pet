@@ -42,7 +42,7 @@ Generate an atlas-style summary from a scan dataset:
 
 Run the current canonical family benchmark:
 
-    python3 tools/cluster_families_disjoint.py
+    pet families benchmark-disjoint
 
 ## Minimal smoke run
 
@@ -69,7 +69,8 @@ Notes:
 
 Treat these as stable research tooling:
 - `tools/atlas_summary.py`
-- `tools/cluster_families_disjoint.py`
+- `pet families benchmark-disjoint`
+- `tools/cluster_families_disjoint.py` (compatibility wrapper)
 
 Treat `tools/cluster_families.py` as secondary/non-canonical.
 

@@ -13,7 +13,7 @@ The goal is descriptive: measure where PET captures structural differences, wher
 
 ## Method
 
-The benchmark uses `tools/cluster_families_disjoint.py`, which removes overlaps by priority:
+The benchmark uses `pet families benchmark-disjoint`, which removes overlaps by priority:
 
 `Perfect > Primorials > Hamming > HighlyComposite`
 

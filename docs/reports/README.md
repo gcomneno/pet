@@ -78,10 +78,10 @@ For the canonical end-to-end lab path, see:
 - epistemic class: benchmark report
 - bounded scope: fixed bounded family samples embedded in the benchmark script
 - associated dataset: none committed as a separate scan dataset
-- associated summary/tooling: `tools/cluster_families_disjoint.py`
+- associated summary/tooling: `pet families benchmark-disjoint`
 - regeneration command:
 
-      python3 tools/cluster_families_disjoint.py
+      pet families benchmark-disjoint
 
 ### `observation-pipeline.md`
 
@@ -97,7 +97,7 @@ For the canonical end-to-end lab path, see:
 - epistemic class: workflow note
 - bounded scope: current lab process, not a single scan range
 - associated dataset: references scan datasets and derived report artifacts
-- associated summary/tooling: `tools/atlas_summary.py`, `tools/cluster_families_disjoint.py`
+- associated summary/tooling: `tools/atlas_summary.py`, `pet families benchmark-disjoint`
 
 ## Local dataset and derived artifact index
 

@@ -84,17 +84,17 @@ stable summary script.
 ### 4b. Family benchmark workflow
 
 Primary helper:
-- `tools/cluster_families_disjoint.py`
+- `pet families benchmark-disjoint`
 
 Current example:
 - report: `docs/reports/families-benchmark-disjoint.md`
 
 Command:
 
-    python3 tools/cluster_families_disjoint.py
+    pet families benchmark-disjoint
 
-This workflow is currently script-output-backed: the report is derived from the
-benchmark script output rather than from a committed scan dataset.
+This workflow is currently CLI-output-backed: the report is derived from the
+family benchmark command output rather than from a committed scan dataset.
 
 ## Stable filenames and expected outputs
 
@@ -156,10 +156,10 @@ Current stable filename:
 
 Command pattern:
 
-    python3 tools/cluster_families_disjoint.py
+    pet families benchmark-disjoint
 
 Expected output:
-- stdout from the benchmark script, to be used when preparing
+- stdout from the family benchmark command, to be used when preparing
   `docs/reports/families-benchmark-disjoint.md`
 
 Current stable report filename:

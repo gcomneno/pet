@@ -24,16 +24,16 @@ Reason:
 - explicitly referenced by `docs/reports/canonical-workflow.md`
 - consumes bounded scan JSONL input and produces atlas-style summary output
 
-### `tools/cluster_families_disjoint.py`
+### `pet families benchmark-disjoint`
 
 Status:
-- stable research tooling
+- stable research CLI capability
 
 Reason:
 - explicitly used by `docs/reports/families-benchmark-disjoint.md`
-- explicitly referenced by `README.md`
 - explicitly referenced by `docs/reports/canonical-workflow.md`
 - currently defines the canonical family benchmark path
+- compatibility wrapper remains available at `tools/cluster_families_disjoint.py`
 
 ## Secondary / non-canonical tooling
 
@@ -48,7 +48,7 @@ Status:
 
 Reason:
 - cited in `docs/SPEC.md`
-- superseded in the current report workflow by `tools/cluster_families_disjoint.py`
+- superseded in the current report workflow by `pet families benchmark-disjoint`
 - still meaningful, but not the benchmark path currently promoted by stable lab docs
 
 ### `tools/scan_query.py`
