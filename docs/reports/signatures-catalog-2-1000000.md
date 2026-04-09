@@ -66,6 +66,78 @@ The full `shape` is also stable as a prime-free rooted structure, but its human-
 Minimal realizers in this document are bounded empirical minima within `2..1000000`.
 They should be treated as reproducible observations, not as proofs of global minimality beyond the scanned range.
 
+## Transition-law note
+
+A further bounded empirical result is that elementary transitions between PET
+generator families behave deterministically in the tested range.
+
+Checked setup:
+- source values: `2..100000`
+- tested primes for local moves: `2, 3, 5, 7, 11, 13, 17, 19, 23, 29`
+
+Observed bounded laws:
+
+### 1. `T_new(g)`
+
+If a number in generator family `g` is multiplied by a **new prime** not already
+present in its factorization, the target generator family is determined only by `g`.
+
+Examples:
+- `2 -> 6`
+- `6 -> 30`
+- `30 -> 210`
+- `60 -> 420`
+- `210 -> 2310`
+
+### 2. `T_inc(g, e)`
+
+If a number in generator family `g` is multiplied by an **existing prime**
+already present with exponent `e`, the target generator family is determined
+only by `(g, e)`.
+
+Examples:
+- `6, e=1 -> 12`
+- `30, e=1 -> 60`
+- `60, e=2 -> 60`
+- `60, e=3 -> 240`
+- `60, e=5 -> 960`
+
+### 3. `T_drop(g)`
+
+If a prime factor of exponent `1` is removed, the source generator family `g`
+moves to a target family determined only by `g`.
+
+Examples:
+- `6 -> 2`
+- `30 -> 6`
+- `210 -> 30`
+- `420 -> 60`
+- `2310 -> 210`
+
+### 4. `T_dec(g, e)`
+
+If the exponent of an existing prime is decreased from `e` to `e-1`, the target
+generator family is determined only by `(g, e)`.
+
+Examples:
+- `12, e=2 -> 6`
+- `12, e=3 -> 12`
+- `12, e=5 -> 48`
+- `60, e=2 -> 30`
+- `60, e=3 -> 60`
+- `60, e=5 -> 240`
+
+### Bounded determinism status
+
+Observed checks:
+- non-deterministic `T_new` classes: `0`
+- non-deterministic `T_inc` classes: `0`
+- non-deterministic `T_drop` classes: `0`
+- non-deterministic `T_dec` classes: `0`
+
+This should currently be treated as a bounded empirical pattern, not as a theorem.
+
+
 ## Observations
 
 1. The catalog does not attempt a full taxonomy of all PET forms; it isolates a
