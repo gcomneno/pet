@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 
 from .algebra import distance, structural_distance
-from .core import encode
+from .core import encode, prime_factorization
 
 
 FAMILIES_RAW = {
@@ -36,6 +36,45 @@ def make_disjoint(families_raw):
 
 
 FAMILIES = make_disjoint(FAMILIES_RAW)
+
+
+def is_prime_power_value(n: int) -> bool:
+    factors = prime_factorization(n)
+    return len(factors) == 1 and factors[0][1] >= 2
+
+
+def is_semiprime_value(n: int) -> bool:
+    factors = prime_factorization(n)
+    return sum(exp for _, exp in factors) == 2
+
+
+def is_squarefree_composite_value(n: int) -> bool:
+    factors = prime_factorization(n)
+    return len(factors) >= 2 and all(exp == 1 for _, exp in factors)
+
+
+def build_experiment_2_families_raw(start: int, end: int) -> dict[str, list[int]]:
+    if start < 2:
+        raise ValueError("start must be >= 2")
+    if end < start:
+        raise ValueError("end must be >= start")
+
+    values = range(start, end + 1)
+
+    return {
+        "PrimePowers": [n for n in values if is_prime_power_value(n)],
+        "Semiprimes": [n for n in values if is_semiprime_value(n)],
+        "Squarefree": [n for n in values if is_squarefree_composite_value(n)],
+        "HighlyComposite": [
+            n for n in FAMILIES_RAW["HighlyComposite"]
+            if start <= n <= end and n >= 4
+        ],
+    }
+
+
+def build_experiment_2_families(start: int, end: int) -> dict[str, list[int]]:
+    return make_disjoint(build_experiment_2_families_raw(start, end))
+
 
 
 def dist_matrix(members, dfunc):
@@ -210,29 +249,53 @@ def print_overlap_report(families_raw, families_disjoint):
         )
 
 
-def cmd_benchmark_disjoint(args: argparse.Namespace) -> int:
-    print("PET — Clustering famiglie aritmetiche (DISGIUNTE)")
-    print("Priorità: Perfect > Primorials > Hamming > HighlyComposite")
+def run_benchmark(
+    families_raw: dict[str, list[int]],
+    *,
+    title: str,
+    priority_line: str,
+) -> int:
+    families = make_disjoint(families_raw)
+
+    print(title)
+    print(priority_line)
     print("distance() e structural_distance()")
 
-    print_overlap_report(FAMILIES_RAW, FAMILIES)
+    print_overlap_report(families_raw, families)
 
-    for name, members in FAMILIES.items():
+    for name, members in families.items():
         analyze_family(name, members)
 
-    inter_family_distances(FAMILIES, distance, "distance")
-    inter_family_distances(FAMILIES, structural_distance, "structural_distance")
+    inter_family_distances(families, distance, "distance")
+    inter_family_distances(families, structural_distance, "structural_distance")
 
     print(f"\n{'=' * 60}")
     print("  SEPARABILITÀ  (gap inter-min > max intra-diam?)")
     print(f"{'=' * 60}")
-    separability_report(FAMILIES, distance, "distance")
-    separability_report(FAMILIES, structural_distance, "structural_distance")
+    separability_report(families, distance, "distance")
+    separability_report(families, structural_distance, "structural_distance")
 
     print(f"\n{'=' * 60}")
     print("  Fine analisi.")
     print(f"{'=' * 60}")
     return 0
+
+
+def cmd_benchmark_disjoint(args: argparse.Namespace) -> int:
+    return run_benchmark(
+        FAMILIES_RAW,
+        title="PET — Clustering famiglie aritmetiche (DISGIUNTE)",
+        priority_line="Priorità: Perfect > Primorials > Hamming > HighlyComposite",
+    )
+
+
+def cmd_benchmark_exp2(args: argparse.Namespace) -> int:
+    families_raw = build_experiment_2_families_raw(args.start, args.end)
+    return run_benchmark(
+        families_raw,
+        title="PET — Esperimento 2: famiglie classiche generate su range disgiunto",
+        priority_line="Priorità: PrimePowers > Semiprimes > Squarefree > HighlyComposite",
+    )
 
 
 def _add_families_subcommands(subparsers) -> None:
@@ -241,6 +304,14 @@ def _add_families_subcommands(subparsers) -> None:
         help="run the disjoint classical-family PET benchmark",
     )
     p_benchmark.set_defaults(func=cmd_benchmark_disjoint)
+
+    p_exp2 = subparsers.add_parser(
+        "benchmark-exp2",
+        help="run experiment 2 on generated disjoint family samples",
+    )
+    p_exp2.add_argument("--start", type=int, default=2)
+    p_exp2.add_argument("--end", type=int, default=200)
+    p_exp2.set_defaults(func=cmd_benchmark_exp2)
 
 
 def register_subparser(subparsers) -> None:
