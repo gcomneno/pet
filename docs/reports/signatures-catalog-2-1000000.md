@@ -89,18 +89,22 @@ Examples:
 - `60 -> 420`
 - `210 -> 2310`
 
-### 2. `T_inc(g, e)`
+### 2. `T_inc`
 
-If a number in generator family `g` is multiplied by an **existing prime**
-already present with exponent `e`, the target generator family is determined
-only by `(g, e)`.
+For exponent-increase moves with an **existing prime**, the coarse bounded law
+`(g, e) -> g'` is deterministic in the tested range.
 
-Examples:
-- `6, e=1 -> 12`
-- `30, e=1 -> 60`
-- `60, e=2 -> 60`
-- `60, e=3 -> 240`
-- `60, e=5 -> 960`
+A stronger bounded compression also holds for `e >= 2`:
+
+`T_inc ~ (g, gen(e), gen(e+1))`
+
+Observed counts:
+- raw classes `(g, e)`, `e >= 2`: `142`
+- compressed classes `(g, gen(e), gen(e+1))`: `122`
+- non-deterministic compressed classes: `0`
+
+So the currently strongest bounded empirical formulation is not just
+`T_inc(g, e)`, but the refined local-generator law above.
 
 ### 3. `T_drop(g)`
 
@@ -114,29 +118,58 @@ Examples:
 - `420 -> 60`
 - `2310 -> 210`
 
-### 4. `T_dec(g, e)`
+### 4. `T_dec`
 
-If the exponent of an existing prime is decreased from `e` to `e-1`, the target
-generator family is determined only by `(g, e)`.
+For exponent-decrease moves on an **existing prime**, the coarse bounded law
+`(g, e) -> g'` is deterministic in the tested range.
 
-Examples:
-- `12, e=2 -> 6`
-- `12, e=3 -> 12`
-- `12, e=5 -> 48`
-- `60, e=2 -> 30`
-- `60, e=3 -> 60`
-- `60, e=5 -> 240`
+A stronger bounded compression also holds for `e >= 3`:
+
+`T_dec ~ (g, gen(e), gen(e-1))`
+
+Observed counts:
+- raw classes `(g, e)`, `e >= 3`: `116`
+- compressed classes `(g, gen(e), gen(e-1))`: `100`
+- non-deterministic compressed classes: `0`
+
+So the currently strongest bounded empirical formulation is not just
+`T_dec(g, e)`, but the refined local-generator law above.
+
+### Equivalent coordinate reformulation
+
+Let `h = gen(n / p^e)` be the generator of the ambient part left after removing
+the moved prime power.
+
+Then the same bounded laws can be rewritten as:
+
+- `T_inc ~ (h, gen(e), gen(e+1))`
+- `T_dec ~ (h, gen(e), gen(e-1))`
+
+In the tested range this is **not** a stronger law, only an equivalent change of
+coordinates: once `gen(e)` is fixed, `(g, gen(e))` and `(h, gen(e))` determine
+each other, and the compressed class counts stay the same.
+
+### Failed stronger compressions
+
+The following stronger compressions were tested in the same bounded range and
+failed:
+
+- unordered local pair `{gen(e), gen(e±1)}`
+- edge-factor laws of the form `g'/g = rho(...)`
+- centered local windows `(gen(e-1), gen(e), gen(e+1))`
+- local multiplicity augmentations using exponent-count data
 
 ### Bounded determinism status
 
 Observed checks:
 - non-deterministic `T_new` classes: `0`
-- non-deterministic `T_inc` classes: `0`
+- non-deterministic coarse `T_inc(g, e)` classes: `0`
+- non-deterministic pair-compressed `T_inc` classes: `0`
 - non-deterministic `T_drop` classes: `0`
-- non-deterministic `T_dec` classes: `0`
+- non-deterministic coarse `T_dec(g, e)` classes: `0`
+- non-deterministic pair-compressed `T_dec` classes: `0`
 
 This should currently be treated as a bounded empirical pattern, not as a theorem.
-
 
 ## Observations
 
