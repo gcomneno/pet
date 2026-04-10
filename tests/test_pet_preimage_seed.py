@@ -685,3 +685,53 @@ def test_recommended_search_profile_switches_known_child_filter_only_for_open_ca
         "max_new_in_path": 2,
         "require_known_children_covered": True,
     }
+
+
+def test_run_profiled_search_uses_recommended_profile_for_open_case():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        run_profiled_search,
+    )
+
+    data = build_partial_explain(84739348317483740132, [10])
+    seed = build_seed(data, rank=1)
+
+    quick = run_profiled_search(seed, depth=6, mode="quick")
+    deep = run_profiled_search(seed, depth=6, mode="deep")
+
+    quick_ns = sorted(node["current_n"] for node in quick)
+    deep_ns = sorted(node["current_n"] for node in deep)
+
+    assert len(quick) == 17
+    assert len(deep) == 19
+
+    assert quick_ns[:8] == [40320, 60480, 90720, 100800, 151200, 221760, 226800, 332640]
+    assert deep_ns[:8] == [40320, 60480, 90720, 100800, 151200, 221760, 226800, 332640]
+
+    assert max(quick_ns) <= 5_000_000
+    assert max(deep_ns) <= 15_000_000
+
+
+def test_run_profiled_search_uses_recommended_profile_for_exact_case():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        run_profiled_search,
+    )
+
+    data = build_partial_explain(4452484, [10])
+    seed = build_seed(data, rank=1)
+
+    quick = run_profiled_search(seed, depth=6, mode="quick")
+    deep = run_profiled_search(seed, depth=6, mode="deep")
+
+    quick_ns = sorted(node["current_n"] for node in quick)
+    deep_ns = sorted(node["current_n"] for node in deep)
+
+    assert len(quick) == 24
+    assert len(deep) == 27
+
+    assert quick_ns[:8] == [26880, 40320, 60480, 90720, 100800, 147840, 151200, 221760]
+    assert deep_ns[:8] == [26880, 40320, 60480, 90720, 100800, 147840, 151200, 221760]
+
+    assert max(quick_ns) <= 5_000_000
+    assert max(deep_ns) <= 15_000_000

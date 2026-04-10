@@ -622,6 +622,37 @@ def recommended_search_profile(
     }
 
 
+def run_profiled_search(
+    seed: dict[str, Any],
+    depth: int,
+    mode: str = "quick",
+) -> list[dict[str, Any]]:
+    if not isinstance(depth, int):
+        raise TypeError("depth must be an int")
+    if depth < 1:
+        raise ValueError("depth must be >= 1")
+
+    profile = recommended_search_profile(seed, mode=mode)
+
+    rows = expand_seed_once(seed)
+    rows = [row for row in rows if row["target_n"] <= profile["max_target_n"]]
+    frontier = [advance_seed(seed, row) for row in rows]
+
+    if depth == 1:
+        return frontier
+
+    for _ in range(2, depth + 1):
+        frontier = search_step_pruned(
+            seed,
+            frontier,
+            max_target_n=profile["max_target_n"],
+            max_new_in_path=profile["max_new_in_path"],
+            require_known_children_covered=profile["require_known_children_covered"],
+        )
+
+    return frontier
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")
