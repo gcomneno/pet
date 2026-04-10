@@ -494,6 +494,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_explain.add_argument("--json", action="store_true")
 
+    # partial explain
+    p_partial_explain = subparsers.add_parser(
+        "partial-explain",
+        help="run Partial-PET probe + hybrid synthesis and show the top candidate(s)",
+    )
+    p_partial_explain.add_argument("n", type=int, metavar="N")
+    p_partial_explain.add_argument(
+        "--schedule",
+        default="100,1000,10000",
+        help="comma-separated probe schedule, e.g. 10 or 100,1000,10000",
+    )
+    p_partial_explain.add_argument("--json", action="store_true")
+
     # dismantle
     p_dismantle = subparsers.add_parser(
         "dismantle",
@@ -737,6 +750,21 @@ def main(argv: list[str] | None = None) -> int:
                             )
                     if neighborhood["truncated"]:
                         print("  [truncated by --max-nodes]")
+
+        elif args.command == "partial-explain":
+            if args.n < 1:
+                raise ValueError("N must be >= 1")
+
+            import tools.partial_signature_probe as probe_mod
+            from tools.partial_explain import build_partial_explain, render_human
+
+            schedule = probe_mod.parse_schedule(args.schedule)
+            data = build_partial_explain(args.n, schedule)
+
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(render_human(data))
 
         elif args.command == "dismantle":
             data = _dismantle_data(args.n)
