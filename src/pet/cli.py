@@ -119,7 +119,7 @@ def _explain_moves(n: int) -> dict:
     return moves
 
 
-def _move_edges_for_neighborhood(n: int) -> list[dict]:
+def _pathwise_edges_for_number(n: int) -> list[dict]:
     moves = _explain_moves(n)
     edges: list[dict] = []
 
@@ -127,6 +127,7 @@ def _move_edges_for_neighborhood(n: int) -> list[dict]:
     edges.append(
         {
             "label": f"NEW(x{new_move['prime']})",
+            "target_n": new_move["target_n"],
             "target_generator": new_move["target_generator"],
         }
     )
@@ -135,7 +136,8 @@ def _move_edges_for_neighborhood(n: int) -> list[dict]:
     if drop_move is not None:
         edges.append(
             {
-                "label": "DROP(e=1)",
+                "label": f"DROP(p={drop_move['representative_prime']})",
+                "target_n": drop_move["target_n"],
                 "target_generator": drop_move["target_generator"],
             }
         )
@@ -143,7 +145,8 @@ def _move_edges_for_neighborhood(n: int) -> list[dict]:
     for row in moves["inc"]:
         edges.append(
             {
-                "label": f"INC(e={row['exponent']})",
+                "label": f"INC(p={row['representative_prime']},e={row['exponent']})",
+                "target_n": row["target_n"],
                 "target_generator": row["target_generator"],
             }
         )
@@ -151,7 +154,8 @@ def _move_edges_for_neighborhood(n: int) -> list[dict]:
     for row in moves["dec"]:
         edges.append(
             {
-                "label": f"DEC(e={row['exponent']})",
+                "label": f"DEC(p={row['representative_prime']},e={row['exponent']})",
+                "target_n": row["target_n"],
                 "target_generator": row["target_generator"],
             }
         )
@@ -159,66 +163,35 @@ def _move_edges_for_neighborhood(n: int) -> list[dict]:
     return edges
 
 
-def _generator_neighborhood(n: int, depth: int) -> list[dict]:
+def _pathwise_neighborhood(n: int, depth: int) -> list[dict]:
     if depth <= 1:
         return []
 
+    frontier = {n: {"path": []}}
     levels: list[dict] = []
 
-    # depth 1 must reflect the actual input number N, not the generator representative
-    level1_targets: dict[int, dict] = {}
-    start_generator = shape_signature_dict(n)["generator"]
-
-    for edge in _move_edges_for_neighborhood(n):
-        target_generator = edge["target_generator"]
-        row = level1_targets.setdefault(
-            target_generator,
-            {
-                "generator": target_generator,
-                "representative_n": target_generator,
-                "from_generators": {start_generator},
-                "last_step_labels": set(),
-                "path": [edge["label"]],
-            },
-        )
-        row["last_step_labels"].add(edge["label"])
-
-    if not level1_targets:
-        return []
-
-    rows = []
-    for generator in sorted(level1_targets):
-        row = level1_targets[generator]
-        rows.append(
-            {
-                "generator": row["generator"],
-                "representative_n": row["representative_n"],
-                "from_generators": sorted(row["from_generators"]),
-                "last_step_labels": sorted(row["last_step_labels"]),
-                "path": row["path"],
-            }
-        )
-
-    levels.append({"depth": 1, "targets": rows})
-    frontier = {row["generator"]: {"path": row["path"]} for row in rows}
-
-    for level in range(2, depth + 1):
+    for level in range(1, depth + 1):
         next_targets: dict[int, dict] = {}
 
-        for source_generator, meta in sorted(frontier.items()):
-            for edge in _move_edges_for_neighborhood(source_generator):
+        for source_n, meta in sorted(frontier.items()):
+            source_generator = shape_signature_dict(source_n)["generator"]
+
+            for edge in _pathwise_edges_for_number(source_n):
+                target_n = edge["target_n"]
                 target_generator = edge["target_generator"]
 
                 row = next_targets.setdefault(
-                    target_generator,
+                    target_n,
                     {
+                        "n": target_n,
                         "generator": target_generator,
-                        "representative_n": target_generator,
+                        "from_numbers": set(),
                         "from_generators": set(),
                         "last_step_labels": set(),
                         "path": meta["path"] + [edge["label"]],
                     },
                 )
+                row["from_numbers"].add(source_n)
                 row["from_generators"].add(source_generator)
                 row["last_step_labels"].add(edge["label"])
 
@@ -226,12 +199,13 @@ def _generator_neighborhood(n: int, depth: int) -> list[dict]:
             break
 
         rows = []
-        for generator in sorted(next_targets):
-            row = next_targets[generator]
+        for target_n in sorted(next_targets):
+            row = next_targets[target_n]
             rows.append(
                 {
+                    "n": row["n"],
                     "generator": row["generator"],
-                    "representative_n": row["representative_n"],
+                    "from_numbers": sorted(row["from_numbers"]),
                     "from_generators": sorted(row["from_generators"]),
                     "last_step_labels": sorted(row["last_step_labels"]),
                     "path": row["path"],
@@ -239,10 +213,9 @@ def _generator_neighborhood(n: int, depth: int) -> list[dict]:
             )
 
         levels.append({"depth": level, "targets": rows})
-        frontier = {row["generator"]: {"path": row["path"]} for row in rows}
+        frontier = {row["n"]: {"path": row["path"]} for row in rows}
 
     return levels
-
 
 
 def _greedy_dismantle(n: int) -> list[dict]:
@@ -297,7 +270,7 @@ def _greedy_dismantle(n: int) -> list[dict]:
     return steps
 
 
-def _explain_data(n: int, depth: int = 1) -> dict:
+def _explain_data(n: int, pathwise_depth: int = 1) -> dict:
     tree = encode(n)
     factors = prime_factorization(n)
     signature = shape_signature_dict(n)
@@ -305,7 +278,7 @@ def _explain_data(n: int, depth: int = 1) -> dict:
 
     return {
         "n": n,
-        "depth": depth,
+        "pathwise_depth": pathwise_depth,
         "factorization": [{"prime": p, "exponent": e} for p, e in factors],
         "factorization_str": _format_factorization(factors),
         "generator": signature["generator"],
@@ -314,8 +287,20 @@ def _explain_data(n: int, depth: int = 1) -> dict:
         "signature": signature["signature"],
         "metrics": metrics,
         "moves": _explain_moves(n),
-        "generator_neighborhood": _generator_neighborhood(n, depth),
-        "dismantle_greedy": _greedy_dismantle(n),
+        "pathwise_neighborhood": _pathwise_neighborhood(n, pathwise_depth),
+    }
+
+
+def _dismantle_data(n: int) -> dict:
+    factors = prime_factorization(n)
+    signature = shape_signature_dict(n)
+
+    return {
+        "n": n,
+        "factorization": [{"prime": p, "exponent": e} for p, e in factors],
+        "factorization_str": _format_factorization(factors),
+        "generator": signature["generator"],
+        "steps": _greedy_dismantle(n),
     }
 
 
@@ -400,12 +385,26 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_explain.add_argument("n", type=int, metavar="N")
     p_explain.add_argument(
-        "--depth",
+        "--pathwise-depth",
         type=int,
         default=1,
-        help="generator-neighborhood depth (default: 1)",
+        help="pathwise neighborhood depth (default: 1)",
+    )
+    p_explain.add_argument(
+        "--depth",
+        dest="pathwise_depth",
+        type=int,
+        help=argparse.SUPPRESS,
     )
     p_explain.add_argument("--json", action="store_true")
+
+    # dismantle
+    p_dismantle = subparsers.add_parser(
+        "dismantle",
+        help="greedily dismantle N via PET DEC/DROP steps",
+    )
+    p_dismantle.add_argument("n", type=int, metavar="N")
+    p_dismantle.add_argument("--json", action="store_true")
 
     # scan
     p_scan = subparsers.add_parser("scan", help="scan range and output JSONL dataset")
@@ -544,10 +543,10 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"{key} = {value}")
 
         elif args.command == "explain":
-            if args.depth < 1:
-                raise ValueError("--depth must be >= 1")
+            if args.pathwise_depth < 1:
+                raise ValueError("--pathwise-depth must be >= 1")
 
-            data = _explain_data(args.n, depth=args.depth)
+            data = _explain_data(args.n, pathwise_depth=args.pathwise_depth)
 
             if args.json:
                 print(json.dumps(data, indent=2, ensure_ascii=False))
@@ -612,21 +611,32 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     print("  DEC: unavailable")
 
-                if data["generator_neighborhood"]:
-                    print(f"generator neighborhood (compressed, depth={data['depth']}):")
-                    for level in data["generator_neighborhood"]:
+                if data["pathwise_neighborhood"]:
+                    print(f"pathwise neighborhood (depth={data['pathwise_depth']}):")
+                    for level in data["pathwise_neighborhood"]:
                         print(f"  depth {level['depth']}:")
                         for row in level["targets"]:
                             print(
                                 "   ",
+                                f"n={row['n']}",
                                 f"g={row['generator']}",
-                                f"from={row['from_generators']}",
+                                f"from_n={row['from_numbers']}",
+                                f"from_g={row['from_generators']}",
                                 f"via={row['last_step_labels']}",
                                 f"path={' -> '.join(row['path'])}",
                             )
 
+        elif args.command == "dismantle":
+            data = _dismantle_data(args.n)
+
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {data['n']}")
+                print(f"factorization = {data['factorization_str']}")
+                print(f"generator = {data['generator']}")
                 print("greedy dismantle:")
-                for step in data["dismantle_greedy"]:
+                for step in data["steps"]:
                     if step["op"] == "STOP":
                         print(
                             "   ",
