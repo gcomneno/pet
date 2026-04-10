@@ -755,6 +755,12 @@ def main(argv: list[str] | None = None) -> int:
             if args.n < 1:
                 raise ValueError("N must be >= 1")
 
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
             import tools.partial_signature_probe as probe_mod
             from tools.partial_explain import build_partial_explain, render_human
 
