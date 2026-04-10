@@ -148,3 +148,37 @@ def test_cli_explain_json():
 
     assert data["pathwise_neighborhood"] == {"levels": [], "truncated": False}
 
+def test_cli_explain_text():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "explain",
+            "72",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    expected = [
+        "N = 72",
+        "factorization = 2^3 * 3^2",
+        "generator = 36",
+        "already_minimal = False",
+        "child_generators = [2, 2]",
+        "metrics = nodes=4 height=2 max_branching=2 recursive_mass=2",
+        "moves:",
+        "  NEW: x5 -> N'=360 generator=180",
+        "  DROP: unavailable",
+        "  INC:",
+        "    e=2 primes=[3] representative=3 -> N'=216 generator=36",
+        "    e=3 primes=[2] representative=2 -> N'=144 generator=144",
+        "  DEC:",
+        "    e=2 primes=[3] representative=3 -> N'=24 generator=12",
+        "    e=3 primes=[2] representative=2 -> N'=36 generator=36",
+    ]
+
+    assert result.stdout.strip().splitlines() == expected
+
