@@ -568,3 +568,41 @@ def test_search_step_pruned_respects_max_new_in_path():
     assert 12252240 not in current_ns
     assert 960960 in current_ns
     assert 12612600 in current_ns
+
+
+def test_constraint_report_for_n_distinguishes_exact_and_open_same_seed():
+    from tools.pet_preimage_seed import build_seed, constraint_report_for_n
+
+    exact_data = build_partial_explain(4452484, [10])
+    open_data = build_partial_explain(84739348317483740132, [10])
+
+    exact_seed = build_seed(exact_data, rank=1)
+    open_seed = build_seed(open_data, rank=1)
+
+    r_exact_420 = constraint_report_for_n(exact_seed, 420)
+    r_open_420 = constraint_report_for_n(open_seed, 420)
+
+    assert r_exact_420["current_root_children"] == [[], [], [], [[]]]
+    assert r_exact_420["known_children_covered"] is True
+    assert r_exact_420["extra_children_over_known"] == 0
+    assert r_exact_420["exact_root_match"] is True
+
+    assert r_open_420["current_root_children"] == [[], [], [], [[]]]
+    assert r_open_420["known_children_covered"] is True
+    assert r_open_420["extra_children_over_known"] == 2
+    assert r_open_420["exact_root_match"] is None
+
+    r_exact_13860 = constraint_report_for_n(exact_seed, 13860)
+    r_open_13860 = constraint_report_for_n(open_seed, 13860)
+
+    assert r_exact_13860["current_root_children"] == [[], [], [], [[]], [[]]]
+    assert r_open_13860["current_root_children"] == [[], [], [], [[]], [[]]]
+
+    assert r_exact_13860["known_children_covered"] is True
+    assert r_open_13860["known_children_covered"] is True
+
+    assert r_exact_13860["extra_children_over_known"] == 1
+    assert r_open_13860["extra_children_over_known"] == 3
+
+    assert r_exact_13860["exact_root_match"] is False
+    assert r_open_13860["exact_root_match"] is None

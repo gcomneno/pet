@@ -538,6 +538,48 @@ def search_step_pruned(
 
     return prune_nodes_by_current_n(out)
 
+def constraint_report_for_n(seed: dict[str, Any], n: int) -> dict[str, Any]:
+    if not isinstance(n, int):
+        raise TypeError("n must be an int")
+    if n < 1:
+        raise ValueError("n must be >= 1")
+
+    certified = require_field(seed, "certified_constraints")
+    exact_root_anatomy = require_field(certified, "exact_root_anatomy")
+    known_root_children = require_field(certified, "known_root_children")
+    exact_root_children = certified.get("exact_root_children")
+
+    if not isinstance(known_root_children, list):
+        raise TypeError("certified_constraints.known_root_children must be a list")
+    if exact_root_children is not None and not isinstance(exact_root_children, list):
+        raise TypeError("certified_constraints.exact_root_children must be a list or None")
+
+    current = shape_signature_dict(n)
+    current_root_children = current["signature"]
+    current_root_generator = current["generator"]
+
+    current_counts = _signature_counter(current_root_children)
+    known_counts = _signature_counter(known_root_children)
+
+    known_children_covered = all(
+        current_counts[sig] >= count
+        for sig, count in known_counts.items()
+    )
+
+    exact_root_match = None
+    if exact_root_anatomy:
+        exact_root_match = (current_root_children == exact_root_children)
+
+    return {
+        "n": n,
+        "current_root_children": current_root_children,
+        "current_root_generator": current_root_generator,
+        "known_children_covered": known_children_covered,
+        "extra_children_over_known": len(current_root_children) - len(known_root_children),
+        "exact_root_match": exact_root_match,
+    }
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")
@@ -567,6 +609,8 @@ def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
         "source_schedule": source_schedule,
         "certified_constraints": {
             "exact_root_anatomy": probe["exact_root_anatomy"],
+            "exact_root_children": probe.get("exact_root_children"),
+            "exact_root_generator": probe.get("exact_root_generator"),
             "known_root_children": probe["known_root_children"],
             "known_root_generator_lower_bound": probe["known_root_generator_lower_bound"],
             "root_generator_lower_bound": probe["root_generator_lower_bound"],
