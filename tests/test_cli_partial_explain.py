@@ -72,7 +72,7 @@ def test_cli_partial_explain_json_partial_composite_case():
     assert probe["residual_info"]["status"] == "composite-non-prime-power"
     assert probe["root_generator_lower_bound"] == 420
 
-    assert data["candidate_count"] == 3
+    assert data["candidate_count"] == 2
 
     top = data["top_candidate"]
     assert top["candidate_kind"] == "minimal-leaf-completion"
@@ -107,7 +107,7 @@ def test_cli_partial_explain_human_output():
         "root_generator_lower_bound = 420",
         "residual_status = composite-non-prime-power",
         "residual_digits = 19",
-        "candidate_count = 3",
+        "candidate_count = 2",
         "",
         "top_candidate:",
         "  rank = 1",
@@ -117,8 +117,7 @@ def test_cli_partial_explain_human_output():
         "",
         "top_candidates:",
         "  [1] kind=minimal-leaf-completion root_generator=420 root_children=[[], [], [], [[]]]",
-        "  [2] kind=grouped-leaf-completion root_generator=180 root_children=[[], [[]], [[]]]",
-        "  [3] kind=prime-power-style-completion root_generator=5040 root_children=[[], [], [[]], [[[]]]]",
+        "  [2] kind=prime-power-style-completion root_generator=5040 root_children=[[], [], [[]], [[[]]]]",
     ]
 
     assert result.stdout.strip().splitlines() == expected

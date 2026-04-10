@@ -176,6 +176,9 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
     known_root_generator_lower_bound = require_field(
         hard_constraints, "known_root_generator_lower_bound"
     )
+    root_generator_lower_bound = require_field(
+        hard_constraints, "root_generator_lower_bound"
+    )
     exact_root_anatomy = require_field(hard_constraints, "exact_root_anatomy")
     exact_root_children = hard_constraints.get("exact_root_children")
     exact_root_generator = hard_constraints.get("exact_root_generator")
@@ -194,6 +197,8 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
         raise TypeError("known_root_children must be a list")
     if not isinstance(known_root_generator_lower_bound, int):
         raise TypeError("known_root_generator_lower_bound must be an int")
+    if not isinstance(root_generator_lower_bound, int):
+        raise TypeError("root_generator_lower_bound must be an int")
 
     candidates: list[dict[str, Any]] = []
 
@@ -316,6 +321,11 @@ def build_candidates(bridge: dict[str, Any]) -> dict[str, Any]:
                     ],
                 )
             )
+
+    candidates = [
+        c for c in candidates
+        if c["candidate_root_generator"] >= root_generator_lower_bound
+    ]
 
     candidates.sort(key=lambda c: (c["score"], c["candidate_root_generator"], c["candidate_kind"]))
 
