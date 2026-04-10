@@ -9,8 +9,10 @@ from .algebra import distance, structural_distance
 from .core import (
     decode,
     encode,
+    is_prime,
     metrics_dict,
     minimal_shape_representative,
+    prime_factorization,
     shape_generator,
     shape_signature_dict,
     validate,
@@ -27,6 +29,167 @@ from .metrics import (
     leaf_ratio,
     profile_shape,
 )
+
+
+def _format_factorization(factors):
+    if not factors:
+        return "1"
+
+    parts = []
+    for prime, exp in factors:
+        if exp == 1:
+            parts.append(str(prime))
+        else:
+            parts.append(f"{prime}^{exp}")
+    return " * ".join(parts)
+
+
+def _next_new_prime(support: set[int]) -> int:
+    candidate = 2
+    while True:
+        if candidate not in support and is_prime(candidate):
+            return candidate
+        candidate += 1
+
+
+def _explain_moves(n: int) -> dict:
+    factors = prime_factorization(n)
+    support = {p for p, _ in factors}
+
+    by_exp: dict[int, list[int]] = {}
+    for prime, exp in factors:
+        by_exp.setdefault(exp, []).append(prime)
+
+    q = _next_new_prime(support)
+    new_n = n * q
+
+    moves = {
+        "new": {
+            "prime": q,
+            "target_n": new_n,
+            "target_generator": shape_signature_dict(new_n)["generator"],
+        },
+        "drop": None,
+        "inc": [],
+        "dec": [],
+    }
+
+    for exp in sorted(by_exp):
+        primes = sorted(by_exp[exp])
+        rep = primes[0]
+
+        inc_n = n * rep
+        moves["inc"].append(
+            {
+                "exponent": exp,
+                "count": len(primes),
+                "primes": primes,
+                "representative_prime": rep,
+                "target_n": inc_n,
+                "target_generator": shape_signature_dict(inc_n)["generator"],
+            }
+        )
+
+        if exp >= 2:
+            dec_n = n // rep
+            moves["dec"].append(
+                {
+                    "exponent": exp,
+                    "count": len(primes),
+                    "primes": primes,
+                    "representative_prime": rep,
+                    "target_n": dec_n,
+                    "target_generator": shape_signature_dict(dec_n)["generator"],
+                }
+            )
+
+    if 1 in by_exp:
+        primes = sorted(by_exp[1])
+        rep = primes[0]
+        drop_n = n // rep
+        if drop_n >= 2:
+            moves["drop"] = {
+                "count": len(primes),
+                "primes": primes,
+                "representative_prime": rep,
+                "target_n": drop_n,
+                "target_generator": shape_signature_dict(drop_n)["generator"],
+            }
+
+    return moves
+
+
+def _greedy_dismantle(n: int) -> list[dict]:
+    steps: list[dict] = []
+    cur = n
+
+    while True:
+        factors = prime_factorization(cur)
+        cur_g = shape_signature_dict(cur)["generator"]
+        cur_fact = _format_factorization(factors)
+
+        if len(factors) == 1 and factors[0][1] == 1:
+            steps.append(
+                {
+                    "n": cur,
+                    "factorization": cur_fact,
+                    "generator": cur_g,
+                    "op": "STOP",
+                    "note": "prime reached",
+                    "next_n": None,
+                    "next_generator": None,
+                }
+            )
+            break
+
+        exp_gt1 = [(exp, prime) for prime, exp in factors if exp >= 2]
+        if exp_gt1:
+            exp, prime = sorted(exp_gt1, key=lambda item: (-item[0], item[1]))[0]
+            nxt = cur // prime
+            op = "DEC"
+            note = f"prime={prime}, exponent={exp}->{exp - 1}"
+        else:
+            prime = factors[0][0]
+            nxt = cur // prime
+            op = "DROP"
+            note = f"prime={prime}"
+
+        nxt_g = shape_signature_dict(nxt)["generator"]
+        steps.append(
+            {
+                "n": cur,
+                "factorization": cur_fact,
+                "generator": cur_g,
+                "op": op,
+                "note": note,
+                "next_n": nxt,
+                "next_generator": nxt_g,
+            }
+        )
+        cur = nxt
+
+    return steps
+
+
+def _explain_data(n: int) -> dict:
+    tree = encode(n)
+    factors = prime_factorization(n)
+    signature = shape_signature_dict(n)
+    metrics = metrics_dict(tree)
+
+    return {
+        "n": n,
+        "factorization": [{"prime": p, "exponent": e} for p, e in factors],
+        "factorization_str": _format_factorization(factors),
+        "generator": signature["generator"],
+        "already_minimal": signature["already_minimal"],
+        "child_generators": signature["child_generators"],
+        "signature": signature["signature"],
+        "metrics": metrics,
+        "moves": _explain_moves(n),
+        "dismantle_greedy": _greedy_dismantle(n),
+    }
+
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -101,6 +264,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_xmetrics.add_argument("n", type=int, metavar="N")
     p_xmetrics.add_argument("--json", action="store_true")
+
+    # explain
+    p_explain = subparsers.add_parser(
+        "explain",
+        help="explain N as PET building blocks and immediate rewrite moves",
+    )
+    p_explain.add_argument("n", type=int, metavar="N")
+    p_explain.add_argument("--json", action="store_true")
 
     # scan
     p_scan = subparsers.add_parser("scan", help="scan range and output JSONL dataset")
@@ -237,6 +408,92 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"N = {args.n}")
                 for key, value in data.items():
                     print(f"{key} = {value}")
+
+        elif args.command == "explain":
+            data = _explain_data(args.n)
+
+            if args.json:
+                print(json.dumps(data, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {data['n']}")
+                print(f"factorization = {data['factorization_str']}")
+                print(f"generator = {data['generator']}")
+                print(f"already_minimal = {data['already_minimal']}")
+                print(f"child_generators = {data['child_generators']}")
+                print(
+                    "metrics =",
+                    f"nodes={data['metrics']['node_count']}",
+                    f"height={data['metrics']['height']}",
+                    f"max_branching={data['metrics']['max_branching']}",
+                    f"recursive_mass={data['metrics']['recursive_mass']}",
+                )
+
+                print("moves:")
+                new_move = data["moves"]["new"]
+                print(
+                    "  NEW:",
+                    f"x{new_move['prime']}",
+                    f"-> N'={new_move['target_n']}",
+                    f"generator={new_move['target_generator']}",
+                )
+
+                drop_move = data["moves"]["drop"]
+                if drop_move is None:
+                    print("  DROP: unavailable")
+                else:
+                    print(
+                        "  DROP:",
+                        f"primes={drop_move['primes']}",
+                        f"representative={drop_move['representative_prime']}",
+                        f"-> N'={drop_move['target_n']}",
+                        f"generator={drop_move['target_generator']}",
+                    )
+
+                if data["moves"]["inc"]:
+                    print("  INC:")
+                    for row in data["moves"]["inc"]:
+                        print(
+                            "   ",
+                            f"e={row['exponent']}",
+                            f"primes={row['primes']}",
+                            f"representative={row['representative_prime']}",
+                            f"-> N'={row['target_n']}",
+                            f"generator={row['target_generator']}",
+                        )
+
+                if data["moves"]["dec"]:
+                    print("  DEC:")
+                    for row in data["moves"]["dec"]:
+                        print(
+                            "   ",
+                            f"e={row['exponent']}",
+                            f"primes={row['primes']}",
+                            f"representative={row['representative_prime']}",
+                            f"-> N'={row['target_n']}",
+                            f"generator={row['target_generator']}",
+                        )
+                else:
+                    print("  DEC: unavailable")
+
+                print("greedy dismantle:")
+                for step in data["dismantle_greedy"]:
+                    if step["op"] == "STOP":
+                        print(
+                            "   ",
+                            f"STOP at N={step['n']}",
+                            f"({step['factorization']})",
+                            f"generator={step['generator']}",
+                        )
+                    else:
+                        print(
+                            "   ",
+                            f"N={step['n']}",
+                            f"({step['factorization']})",
+                            f"[g={step['generator']}]",
+                            f"--{step['op']} {step['note']}-->",
+                            f"{step['next_n']}",
+                            f"[g={step['next_generator']}]",
+                        )
 
         elif args.command == "scan":
             from .scan import scan_range, write_jsonl
