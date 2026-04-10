@@ -472,6 +472,51 @@ def search_step(
     return advance_node_layer_rows(seed, layer_rows)
 
 
+def prune_nodes_by_current_n(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if not isinstance(nodes, list):
+        raise TypeError("nodes must be a list")
+
+    best_by_n: dict[int, dict[str, Any]] = {}
+    order: list[int] = []
+
+    for node in nodes:
+        current_n = require_field(node, "current_n")
+        path = require_field(node, "path")
+
+        if not isinstance(current_n, int):
+            raise TypeError("node.current_n must be an int")
+        if not isinstance(path, list):
+            raise TypeError("node.path must be a list")
+
+        if current_n not in best_by_n:
+            best_by_n[current_n] = node
+            order.append(current_n)
+            continue
+
+        old = best_by_n[current_n]
+        old_path = require_field(old, "path")
+        if not isinstance(old_path, list):
+            raise TypeError("node.path must be a list")
+
+        new_key = (len(path), path)
+        old_key = (len(old_path), old_path)
+
+        if new_key < old_key:
+            best_by_n[current_n] = node
+
+    return [best_by_n[n] for n in order]
+
+
+def search_step_pruned(
+    seed: dict[str, Any],
+    nodes: list[dict[str, Any]],
+    max_target_n: int | None = None,
+) -> list[dict[str, Any]]:
+    return prune_nodes_by_current_n(
+        search_step(seed, nodes, max_target_n=max_target_n)
+    )
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")

@@ -474,3 +474,60 @@ def test_search_step_depth_3_with_cap_keeps_frontier_controlled():
         ["INC(p=3,e=1)", "INC(p=5,e=1)"],
         ["INC(p=3,e=1)", "INC(p=2,e=2)"],
     ] for node in nodes3)
+
+
+def test_prune_nodes_by_current_n_keeps_one_canonical_path_per_state():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        expand_seed_once,
+        advance_seed,
+        search_step,
+        prune_nodes_by_current_n,
+    )
+
+    data = build_partial_explain(84739348317483740132, [10])
+    seed = build_seed(data, rank=1)
+
+    row_a = expand_seed_once(seed)[0]  # NEW(x11) -> 4620
+    row_b = expand_seed_once(seed)[1]  # INC(p=3,e=1) -> 1260
+
+    node_a = advance_seed(seed, row_a)
+    node_b = advance_seed(seed, row_b)
+
+    nodes2 = search_step(seed, [node_a, node_b], max_target_n=20000)
+    pruned2 = prune_nodes_by_current_n(nodes2)
+
+    assert [node["current_n"] for node in pruned2] == [13860, 9240, 6300, 2520]
+    assert [node["path"] for node in pruned2] == [
+        ["INC(p=3,e=1)", "NEW(x11)"],
+        ["NEW(x11)", "INC(p=2,e=2)"],
+        ["INC(p=3,e=1)", "INC(p=5,e=1)"],
+        ["INC(p=3,e=1)", "INC(p=2,e=2)"],
+    ]
+
+
+def test_search_step_pruned_removes_duplicate_current_n_without_losing_states():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        expand_seed_once,
+        advance_seed,
+        search_step,
+        search_step_pruned,
+    )
+
+    data = build_partial_explain(84739348317483740132, [10])
+    seed = build_seed(data, rank=1)
+
+    row_a = expand_seed_once(seed)[0]  # NEW(x11) -> 4620
+    row_b = expand_seed_once(seed)[1]  # INC(p=3,e=1) -> 1260
+
+    node_a = advance_seed(seed, row_a)
+    node_b = advance_seed(seed, row_b)
+
+    raw2 = search_step(seed, [node_a, node_b], max_target_n=20000)
+    pruned2 = search_step_pruned(seed, [node_a, node_b], max_target_n=20000)
+
+    assert len(raw2) == 5
+    assert len(pruned2) == 4
+    assert sorted({node["current_n"] for node in raw2}) == [2520, 6300, 9240, 13860]
+    assert [node["current_n"] for node in pruned2] == [13860, 9240, 6300, 2520]
