@@ -163,12 +163,18 @@ def _pathwise_edges_for_number(n: int) -> list[dict]:
     return edges
 
 
-def _pathwise_neighborhood(n: int, depth: int) -> list[dict]:
+def _pathwise_neighborhood(
+    n: int,
+    depth: int,
+    max_nodes: int | None = None,
+) -> dict:
     if depth <= 1:
-        return []
+        return {"levels": [], "truncated": False}
 
     frontier = {n: {"path": []}}
     levels: list[dict] = []
+    seen_nodes = {n}
+    truncated = False
 
     for level in range(1, depth + 1):
         next_targets: dict[int, dict] = {}
@@ -179,6 +185,12 @@ def _pathwise_neighborhood(n: int, depth: int) -> list[dict]:
             for edge in _pathwise_edges_for_number(source_n):
                 target_n = edge["target_n"]
                 target_generator = edge["target_generator"]
+
+                if target_n not in seen_nodes:
+                    if max_nodes is not None and len(seen_nodes) >= max_nodes:
+                        truncated = True
+                        continue
+                    seen_nodes.add(target_n)
 
                 row = next_targets.setdefault(
                     target_n,
@@ -215,18 +227,19 @@ def _pathwise_neighborhood(n: int, depth: int) -> list[dict]:
         levels.append({"depth": level, "targets": rows})
         frontier = {row["n"]: {"path": row["path"]} for row in rows}
 
-    return levels
+    return {"levels": levels, "truncated": truncated}
 
 
 def _dot_quote(value: str) -> str:
     return value.replace("\\", "\\\\").replace('"', '\"')
 
 
-def _pathwise_dot(n: int, depth: int) -> str:
+def _pathwise_dot(n: int, depth: int, max_nodes: int | None = None) -> str:
     nodes: dict[int, int] = {n: shape_signature_dict(n)["generator"]}
     edge_labels: dict[tuple[int, int], set[str]] = {}
-
     frontier = {n}
+    seen_nodes = {n}
+    truncated = False
 
     if depth > 1:
         for _level in range(1, depth + 1):
@@ -238,9 +251,16 @@ def _pathwise_dot(n: int, depth: int) -> str:
                     target_g = edge["target_generator"]
                     label = edge["label"]
 
-                    nodes[target_n] = target_g
-                    edge_labels.setdefault((source_n, target_n), set()).add(label)
-                    next_frontier.add(target_n)
+                    if target_n not in seen_nodes:
+                        if max_nodes is not None and len(seen_nodes) >= max_nodes:
+                            truncated = True
+                            continue
+                        seen_nodes.add(target_n)
+                        nodes[target_n] = target_g
+
+                    if target_n in nodes:
+                        edge_labels.setdefault((source_n, target_n), set()).add(label)
+                        next_frontier.add(target_n)
 
             if not next_frontier:
                 break
@@ -252,6 +272,9 @@ def _pathwise_dot(n: int, depth: int) -> str:
         "  rankdir=LR;",
         '  node [shape=box];',
     ]
+
+    if truncated:
+        lines.append('  truncated_note [shape=note,label="truncated by --max-nodes"];')
 
     for node_n in sorted(nodes):
         node_id = f"n_{node_n}"
@@ -323,7 +346,11 @@ def _greedy_dismantle(n: int) -> list[dict]:
     return steps
 
 
-def _explain_data(n: int, pathwise_depth: int = 1) -> dict:
+def _explain_data(
+    n: int,
+    pathwise_depth: int = 1,
+    max_nodes: int | None = None,
+) -> dict:
     tree = encode(n)
     factors = prime_factorization(n)
     signature = shape_signature_dict(n)
@@ -340,7 +367,12 @@ def _explain_data(n: int, pathwise_depth: int = 1) -> dict:
         "signature": signature["signature"],
         "metrics": metrics,
         "moves": _explain_moves(n),
-        "pathwise_neighborhood": _pathwise_neighborhood(n, pathwise_depth),
+        "max_nodes": max_nodes,
+        "pathwise_neighborhood": _pathwise_neighborhood(
+            n,
+            pathwise_depth,
+            max_nodes=max_nodes,
+        ),
     }
 
 
@@ -453,6 +485,12 @@ def main(argv: list[str] | None = None) -> int:
         "--dot",
         action="store_true",
         help="print the pathwise neighborhood as Graphviz DOT",
+    )
+    p_explain.add_argument(
+        "--max-nodes",
+        type=int,
+        default=None,
+        help="cap the total number of pathwise neighborhood nodes",
     )
     p_explain.add_argument("--json", action="store_true")
 
@@ -603,13 +641,19 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "explain":
             if args.pathwise_depth < 1:
                 raise ValueError("--pathwise-depth must be >= 1")
+            if args.max_nodes is not None and args.max_nodes < 1:
+                raise ValueError("--max-nodes must be >= 1")
             if args.json and args.dot:
                 raise ValueError("--json and --dot cannot be used together")
 
-            data = _explain_data(args.n, pathwise_depth=args.pathwise_depth)
+            data = _explain_data(
+                args.n,
+                pathwise_depth=args.pathwise_depth,
+                max_nodes=args.max_nodes,
+            )
 
             if args.dot:
-                print(_pathwise_dot(args.n, args.pathwise_depth))
+                print(_pathwise_dot(args.n, args.pathwise_depth, max_nodes=args.max_nodes))
             elif args.json:
                 print(json.dumps(data, indent=2, ensure_ascii=False))
             else:
@@ -673,9 +717,13 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     print("  DEC: unavailable")
 
-                if data["pathwise_neighborhood"]:
-                    print(f"pathwise neighborhood (depth={data['pathwise_depth']}):")
-                    for level in data["pathwise_neighborhood"]:
+                neighborhood = data["pathwise_neighborhood"]
+                if neighborhood["levels"]:
+                    cap = ""
+                    if data["max_nodes"] is not None:
+                        cap = f", max_nodes={data['max_nodes']}"
+                    print(f"pathwise neighborhood (depth={data['pathwise_depth']}{cap}):")
+                    for level in neighborhood["levels"]:
                         print(f"  depth {level['depth']}:")
                         for row in level["targets"]:
                             print(
@@ -687,6 +735,8 @@ def main(argv: list[str] | None = None) -> int:
                                 f"via={row['last_step_labels']}",
                                 f"path={' -> '.join(row['path'])}",
                             )
+                    if neighborhood["truncated"]:
+                        print("  [truncated by --max-nodes]")
 
         elif args.command == "dismantle":
             data = _dismantle_data(args.n)
