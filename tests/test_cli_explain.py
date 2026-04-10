@@ -86,3 +86,30 @@ def test_cli_explain_rejects_json_and_dot_together():
 
     assert result.returncode != 0
     assert "ERROR: --json and --dot cannot be used together" in result.stderr
+
+def test_cli_explain_pathwise_dot_without_truncation():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "explain",
+            "59347",
+            "--pathwise-depth",
+            "2",
+            "--dot",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert result.stdout.startswith("digraph pet_explain {")
+    assert "truncated_note" not in result.stdout
+    assert "n_59347 [" in result.stdout
+    assert "style=bold" in result.stdout
+    assert "N=59347" in result.stdout
+    assert 'n_59347 -> n_3491 [label="DROP(p=17)"];' in result.stdout
+    assert 'n_59347 -> n_118694 [label="NEW(x2)"];' in result.stdout
+    assert 'n_59347 -> n_1008899 [label="INC(p=17,e=1)"];' in result.stdout
+
