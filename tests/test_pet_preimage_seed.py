@@ -606,3 +606,42 @@ def test_constraint_report_for_n_distinguishes_exact_and_open_same_seed():
 
     assert r_exact_13860["exact_root_match"] is False
     assert r_open_13860["exact_root_match"] is None
+
+
+def test_search_step_pruned_can_require_known_children_covered():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        expand_seed_once,
+        advance_seed,
+        search_step_pruned,
+    )
+
+    exact_data = build_partial_explain(4452484, [10])
+    open_data = build_partial_explain(84739348317483740132, [10])
+
+    exact_seed = build_seed(exact_data, rank=1)
+    open_seed = build_seed(open_data, rank=1)
+
+    def run(seed):
+        frontier = [advance_seed(seed, row) for row in expand_seed_once(seed)]
+        for _ in range(2, 7):
+            frontier = search_step_pruned(
+                seed,
+                frontier,
+                max_target_n=15_000_000,
+                max_new_in_path=2,
+                require_known_children_covered=True,
+            )
+        return frontier
+
+    exact_frontier = run(exact_seed)
+    open_frontier = run(open_seed)
+
+    assert len(exact_frontier) == 6
+    assert len(open_frontier) == 19
+
+    exact_ns = sorted(node["current_n"] for node in exact_frontier)
+    open_ns = sorted(node["current_n"] for node in open_frontier)
+
+    assert exact_ns == [221760, 332640, 1441440, 2162160, 3603600, 5405400]
+    assert open_ns[:8] == [40320, 60480, 90720, 100800, 151200, 221760, 226800, 332640]

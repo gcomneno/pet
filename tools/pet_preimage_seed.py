@@ -512,6 +512,7 @@ def search_step_pruned(
     nodes: list[dict[str, Any]],
     max_target_n: int | None = None,
     max_new_in_path: int | None = None,
+    require_known_children_covered: bool = False,
 ) -> list[dict[str, Any]]:
     out = search_step(seed, nodes, max_target_n=max_target_n)
 
@@ -532,6 +533,22 @@ def search_step_pruned(
                 if isinstance(step, str) and step.startswith("NEW(")
             )
             if new_count <= max_new_in_path:
+                filtered.append(node)
+
+        out = filtered
+
+    if not isinstance(require_known_children_covered, bool):
+        raise TypeError("require_known_children_covered must be a bool")
+
+    if require_known_children_covered:
+        filtered = []
+        for node in out:
+            current_n = require_field(node, "current_n")
+            if not isinstance(current_n, int):
+                raise TypeError("node.current_n must be an int")
+
+            report = constraint_report_for_n(seed, current_n)
+            if report["known_children_covered"]:
                 filtered.append(node)
 
         out = filtered
