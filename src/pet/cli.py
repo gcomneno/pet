@@ -218,6 +218,59 @@ def _pathwise_neighborhood(n: int, depth: int) -> list[dict]:
     return levels
 
 
+def _dot_quote(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\"')
+
+
+def _pathwise_dot(n: int, depth: int) -> str:
+    nodes: dict[int, int] = {n: shape_signature_dict(n)["generator"]}
+    edge_labels: dict[tuple[int, int], set[str]] = {}
+
+    frontier = {n}
+
+    if depth > 1:
+        for _level in range(1, depth + 1):
+            next_frontier: set[int] = set()
+
+            for source_n in sorted(frontier):
+                for edge in _pathwise_edges_for_number(source_n):
+                    target_n = edge["target_n"]
+                    target_g = edge["target_generator"]
+                    label = edge["label"]
+
+                    nodes[target_n] = target_g
+                    edge_labels.setdefault((source_n, target_n), set()).add(label)
+                    next_frontier.add(target_n)
+
+            if not next_frontier:
+                break
+
+            frontier = next_frontier
+
+    lines = [
+        "digraph pet_explain {",
+        "  rankdir=LR;",
+        '  node [shape=box];',
+    ]
+
+    for node_n in sorted(nodes):
+        node_id = f"n_{node_n}"
+        node_label = f"N={node_n}\\ng={nodes[node_n]}"
+        extra = " style=bold" if node_n == n else ""
+        lines.append(f'  {node_id} [label="{_dot_quote(node_label)}"{extra}];')
+
+    for (src, dst) in sorted(edge_labels):
+        labels = sorted(edge_labels[(src, dst)])
+        edge_label = " / ".join(labels)
+        lines.append(
+            f'  n_{src} -> n_{dst} [label="{_dot_quote(edge_label)}"];'
+        )
+
+    lines.append("}")
+    return "\n".join(lines)
+
+
+
 def _greedy_dismantle(n: int) -> list[dict]:
     steps: list[dict] = []
     cur = n
@@ -396,6 +449,11 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         help=argparse.SUPPRESS,
     )
+    p_explain.add_argument(
+        "--dot",
+        action="store_true",
+        help="print the pathwise neighborhood as Graphviz DOT",
+    )
     p_explain.add_argument("--json", action="store_true")
 
     # dismantle
@@ -545,10 +603,14 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "explain":
             if args.pathwise_depth < 1:
                 raise ValueError("--pathwise-depth must be >= 1")
+            if args.json and args.dot:
+                raise ValueError("--json and --dot cannot be used together")
 
             data = _explain_data(args.n, pathwise_depth=args.pathwise_depth)
 
-            if args.json:
+            if args.dot:
+                print(_pathwise_dot(args.n, args.pathwise_depth))
+            elif args.json:
                 print(json.dumps(data, indent=2, ensure_ascii=False))
             else:
                 print(f"N = {data['n']}")
