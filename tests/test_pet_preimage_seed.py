@@ -645,3 +645,43 @@ def test_search_step_pruned_can_require_known_children_covered():
 
     assert exact_ns == [221760, 332640, 1441440, 2162160, 3603600, 5405400]
     assert open_ns[:8] == [40320, 60480, 90720, 100800, 151200, 221760, 226800, 332640]
+
+
+def test_recommended_search_profile_switches_known_child_filter_only_for_open_cases():
+    from tools.pet_preimage_seed import build_seed, recommended_search_profile
+
+    exact_data = build_partial_explain(4452484, [10])
+    open_data = build_partial_explain(84739348317483740132, [10])
+
+    exact_seed = build_seed(exact_data, rank=1)
+    open_seed = build_seed(open_data, rank=1)
+
+    exact_quick = recommended_search_profile(exact_seed, mode="quick")
+    open_quick = recommended_search_profile(open_seed, mode="quick")
+    exact_deep = recommended_search_profile(exact_seed, mode="deep")
+    open_deep = recommended_search_profile(open_seed, mode="deep")
+
+    assert exact_quick == {
+        "rank": 1,
+        "max_target_n": 5_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": False,
+    }
+    assert open_quick == {
+        "rank": 1,
+        "max_target_n": 5_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": True,
+    }
+    assert exact_deep == {
+        "rank": 1,
+        "max_target_n": 15_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": False,
+    }
+    assert open_deep == {
+        "rank": 1,
+        "max_target_n": 15_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": True,
+    }

@@ -597,6 +597,31 @@ def constraint_report_for_n(seed: dict[str, Any], n: int) -> dict[str, Any]:
     }
 
 
+def recommended_search_profile(
+    seed: dict[str, Any],
+    mode: str = "quick",
+) -> dict[str, Any]:
+    certified = require_field(seed, "certified_constraints")
+    exact_root_anatomy = require_field(certified, "exact_root_anatomy")
+
+    if not isinstance(exact_root_anatomy, bool):
+        raise TypeError("certified_constraints.exact_root_anatomy must be a bool")
+
+    if mode == "quick":
+        max_target_n = 5_000_000
+    elif mode == "deep":
+        max_target_n = 15_000_000
+    else:
+        raise ValueError("mode must be 'quick' or 'deep'")
+
+    return {
+        "rank": 1,
+        "max_target_n": max_target_n,
+        "max_new_in_path": 2,
+        "require_known_children_covered": (not exact_root_anatomy),
+    }
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")
