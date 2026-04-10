@@ -735,3 +735,83 @@ def test_run_profiled_search_uses_recommended_profile_for_exact_case():
 
     assert max(quick_ns) <= 5_000_000
     assert max(deep_ns) <= 15_000_000
+
+
+def test_build_profiled_search_report_for_open_case():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        build_profiled_search_report,
+    )
+
+    data = build_partial_explain(84739348317483740132, [10])
+    seed = build_seed(data, rank=1)
+
+    quick = build_profiled_search_report(seed, depth=6, mode="quick")
+    deep = build_profiled_search_report(seed, depth=6, mode="deep")
+
+    assert quick["schema"] == "pet-preimage-profiled-search-report-v0"
+    assert quick["source_n"] == 84739348317483740132
+    assert quick["mode"] == "quick"
+    assert quick["depth"] == 6
+    assert quick["profile"] == {
+        "rank": 1,
+        "max_target_n": 5_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": True,
+    }
+    assert quick["frontier_count"] == 17
+    assert quick["min_n"] == 40320
+    assert quick["max_n"] == 3603600
+    assert quick["sample_ns"][:8] == [40320, 60480, 90720, 100800, 151200, 221760, 226800, 332640]
+
+    assert deep["mode"] == "deep"
+    assert deep["profile"] == {
+        "rank": 1,
+        "max_target_n": 15_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": True,
+    }
+    assert deep["frontier_count"] == 19
+    assert deep["min_n"] == 40320
+    assert deep["max_n"] == 12612600
+    assert deep["sample_ns"][:8] == [40320, 60480, 90720, 100800, 151200, 221760, 226800, 332640]
+
+
+def test_build_profiled_search_report_for_exact_case():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        build_profiled_search_report,
+    )
+
+    data = build_partial_explain(4452484, [10])
+    seed = build_seed(data, rank=1)
+
+    quick = build_profiled_search_report(seed, depth=6, mode="quick")
+    deep = build_profiled_search_report(seed, depth=6, mode="deep")
+
+    assert quick["schema"] == "pet-preimage-profiled-search-report-v0"
+    assert quick["source_n"] == 4452484
+    assert quick["mode"] == "quick"
+    assert quick["depth"] == 6
+    assert quick["profile"] == {
+        "rank": 1,
+        "max_target_n": 5_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": False,
+    }
+    assert quick["frontier_count"] == 24
+    assert quick["min_n"] == 26880
+    assert quick["max_n"] == 3603600
+    assert quick["sample_ns"][:8] == [26880, 40320, 60480, 90720, 100800, 147840, 151200, 221760]
+
+    assert deep["mode"] == "deep"
+    assert deep["profile"] == {
+        "rank": 1,
+        "max_target_n": 15_000_000,
+        "max_new_in_path": 2,
+        "require_known_children_covered": False,
+    }
+    assert deep["frontier_count"] == 27
+    assert deep["min_n"] == 26880
+    assert deep["max_n"] == 12612600
+    assert deep["sample_ns"][:8] == [26880, 40320, 60480, 90720, 100800, 147840, 151200, 221760]

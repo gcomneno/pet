@@ -653,6 +653,29 @@ def run_profiled_search(
     return frontier
 
 
+def build_profiled_search_report(
+    seed: dict[str, Any],
+    depth: int,
+    mode: str = "quick",
+) -> dict[str, Any]:
+    profile = recommended_search_profile(seed, mode=mode)
+    frontier = run_profiled_search(seed, depth=depth, mode=mode)
+
+    ns = sorted(node["current_n"] for node in frontier)
+
+    return {
+        "schema": "pet-preimage-profiled-search-report-v0",
+        "source_n": seed["source_n"],
+        "mode": mode,
+        "depth": depth,
+        "profile": profile,
+        "frontier_count": len(frontier),
+        "min_n": ns[0] if ns else None,
+        "max_n": ns[-1] if ns else None,
+        "sample_ns": ns[:20],
+    }
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")
