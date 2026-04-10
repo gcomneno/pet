@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import subprocess
 import sys
 
@@ -112,4 +113,38 @@ def test_cli_explain_pathwise_dot_without_truncation():
     assert 'n_59347 -> n_3491 [label="DROP(p=17)"];' in result.stdout
     assert 'n_59347 -> n_118694 [label="NEW(x2)"];' in result.stdout
     assert 'n_59347 -> n_1008899 [label="INC(p=17,e=1)"];' in result.stdout
+
+def test_cli_explain_json():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pet.cli",
+            "explain",
+            "72",
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    data = json.loads(result.stdout)
+
+    assert data["n"] == 72
+    assert data["pathwise_depth"] == 1
+    assert data["factorization_str"] == "2^3 * 3^2"
+    assert data["generator"] == 36
+    assert data["already_minimal"] is False
+    assert data["child_generators"] == [2, 2]
+    assert data["max_nodes"] is None
+
+    assert set(data["moves"].keys()) == {"new", "drop", "inc", "dec"}
+    assert data["moves"]["new"]["target_n"] == 360
+    assert data["moves"]["new"]["target_generator"] == 180
+    assert data["moves"]["drop"] is None
+    assert [row["target_n"] for row in data["moves"]["inc"]] == [216, 144]
+    assert [row["target_n"] for row in data["moves"]["dec"]] == [24, 36]
+
+    assert data["pathwise_neighborhood"] == {"levels": [], "truncated": False}
 
