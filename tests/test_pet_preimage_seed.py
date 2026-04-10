@@ -531,3 +531,40 @@ def test_search_step_pruned_removes_duplicate_current_n_without_losing_states():
     assert len(pruned2) == 4
     assert sorted({node["current_n"] for node in raw2}) == [2520, 6300, 9240, 13860]
     assert [node["current_n"] for node in pruned2] == [13860, 9240, 6300, 2520]
+
+
+def test_search_step_pruned_respects_max_new_in_path():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        expand_seed_once,
+        advance_seed,
+        search_step_pruned,
+    )
+
+    data = build_partial_explain(84739348317483740132, [10])
+    seed = build_seed(data, rank=1)
+
+    row_a = expand_seed_once(seed)[0]  # NEW(x11) -> 4620
+    row_b = expand_seed_once(seed)[1]  # INC(p=3,e=1) -> 1260
+
+    frontier = [
+        advance_seed(seed, row_a),
+        advance_seed(seed, row_b),
+    ]
+
+    for _ in range(2, 7):
+        frontier = search_step_pruned(
+            seed,
+            frontier,
+            max_target_n=15_000_000,
+            max_new_in_path=2,
+        )
+
+    assert len(frontier) == 26
+    assert all(sum(1 for step in node["path"] if step.startswith("NEW(")) <= 2 for node in frontier)
+
+    current_ns = sorted(node["current_n"] for node in frontier)
+    assert 8168160 not in current_ns
+    assert 12252240 not in current_ns
+    assert 960960 in current_ns
+    assert 12612600 in current_ns

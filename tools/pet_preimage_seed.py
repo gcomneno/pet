@@ -511,11 +511,32 @@ def search_step_pruned(
     seed: dict[str, Any],
     nodes: list[dict[str, Any]],
     max_target_n: int | None = None,
+    max_new_in_path: int | None = None,
 ) -> list[dict[str, Any]]:
-    return prune_nodes_by_current_n(
-        search_step(seed, nodes, max_target_n=max_target_n)
-    )
+    out = search_step(seed, nodes, max_target_n=max_target_n)
 
+    if max_new_in_path is not None:
+        if not isinstance(max_new_in_path, int):
+            raise TypeError("max_new_in_path must be an int")
+        if max_new_in_path < 0:
+            raise ValueError("max_new_in_path must be >= 0")
+
+        filtered: list[dict[str, Any]] = []
+        for node in out:
+            path = require_field(node, "path")
+            if not isinstance(path, list):
+                raise TypeError("node.path must be a list")
+
+            new_count = sum(
+                1 for step in path
+                if isinstance(step, str) and step.startswith("NEW(")
+            )
+            if new_count <= max_new_in_path:
+                filtered.append(node)
+
+        out = filtered
+
+    return prune_nodes_by_current_n(out)
 
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
