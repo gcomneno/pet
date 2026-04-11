@@ -374,3 +374,7 @@ def shape_shortest_path(start: Shape, target: Shape, max_depth: int = 8) -> tupl
     raise ValueError(
         f"target shape {target_n!r} not reached from {start_n!r} within max_depth={max_depth}"
     )
+
+
+def shape_distance(start: Shape, target: Shape, max_depth: int = 8) -> int:
+    return len(shape_shortest_path(start, target, max_depth=max_depth))

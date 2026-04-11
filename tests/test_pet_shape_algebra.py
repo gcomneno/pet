@@ -292,3 +292,25 @@ def test_shape_shortest_path_two_steps_to_root_new_then_inc():
 
     assert cur == target
     assert len(path) == 2
+
+
+def test_shape_distance_identity_is_zero():
+    from tools.pet_shape_algebra import normalize_shape, shape_distance
+
+    shape = normalize_shape(((),))
+    assert shape_distance(shape, shape) == 0
+
+
+def test_shape_distance_single_step_cases():
+    from tools.pet_shape_algebra import normalize_shape, shape_distance
+
+    assert shape_distance(normalize_shape(((),)), normalize_shape(()), max_depth=2) == 1
+    assert shape_distance(normalize_shape(((),)), normalize_shape((((),),)), max_depth=2) == 1
+
+
+def test_shape_distance_two_step_case():
+    from tools.pet_shape_algebra import normalize_shape, shape_distance
+
+    start = normalize_shape(())
+    target = normalize_shape((((),),))
+    assert shape_distance(start, target, max_depth=3) == 2
