@@ -447,3 +447,38 @@ def stable_path_to_index_path(shape: Shape, stable_path: StablePathT) -> PathT:
 
 def shape_at_stable(shape: Shape, stable_path: StablePathT) -> Shape:
     return shape_at(shape, stable_path_to_index_path(shape, stable_path))
+
+
+def shape_apply(shape: Shape, op: str, path: PathT = ()) -> Shape:
+    root = normalize_shape(shape)
+    op = op.upper()
+
+    if op == "NEW":
+        if path != ():
+            raise ValueError("NEW requires root path ()")
+        return shape_new(root)
+
+    if op == "DROP":
+        if path != ():
+            raise ValueError("DROP requires root path ()")
+        return shape_drop(root)
+
+    if op == "INC":
+        if path == ():
+            raise ValueError("INC requires a non-empty path")
+        return shape_inc(root, path)
+
+    if op == "DEC":
+        if path == ():
+            raise ValueError("DEC requires a non-empty path")
+        return shape_dec(root, path)
+
+    raise ValueError(f"unknown shape op: {op}")
+
+
+def shape_can_apply(shape: Shape, op: str, path: PathT = ()) -> bool:
+    try:
+        shape_apply(shape, op, path)
+        return True
+    except (ValueError, IndexError, NotImplementedError):
+        return False

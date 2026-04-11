@@ -374,3 +374,44 @@ def test_shape_at_stable_reads_same_node_as_shape_at():
     stable = index_path_to_stable_path(shape, path)
 
     assert shape_at_stable(shape, stable) == shape_at(shape, path)
+
+
+def test_shape_apply_dispatches_all_four_primitives():
+    from tools.pet_shape_algebra import normalize_shape, shape_apply
+
+    assert shape_apply(normalize_shape(((),)), "NEW") == normalize_shape(((), ()))
+    assert shape_apply(normalize_shape(((),)), "DROP") == normalize_shape(())
+    assert shape_apply(normalize_shape(((),)), "INC", (0,)) == normalize_shape((((),),))
+    assert shape_apply(normalize_shape((((),),)), "DEC", (0,)) == normalize_shape(((),))
+
+
+def test_shape_apply_rejects_bad_root_usage():
+    import pytest
+    from tools.pet_shape_algebra import normalize_shape, shape_apply
+
+    shape = normalize_shape(((),))
+
+    with pytest.raises(ValueError):
+        shape_apply(shape, "NEW", (0,))
+
+    with pytest.raises(ValueError):
+        shape_apply(shape, "DROP", (0,))
+
+    with pytest.raises(ValueError):
+        shape_apply(shape, "INC", ())
+
+    with pytest.raises(ValueError):
+        shape_apply(shape, "DEC", ())
+
+
+def test_shape_can_apply_reports_basic_cases():
+    from tools.pet_shape_algebra import normalize_shape, shape_can_apply
+
+    assert shape_can_apply(normalize_shape(((),)), "NEW")
+    assert shape_can_apply(normalize_shape(((),)), "DROP")
+    assert shape_can_apply(normalize_shape(((),)), "INC", (0,))
+    assert shape_can_apply(normalize_shape((((),),)), "DEC", (0,))
+
+    assert not shape_can_apply(normalize_shape(()), "DROP")
+    assert not shape_can_apply(normalize_shape(((),)), "INC", ())
+    assert not shape_can_apply(normalize_shape(((),)), "NOPE")
