@@ -327,3 +327,50 @@ def test_shape_pred_inverts_extended_successor_step():
 
     shape = (((),),)
     assert shape_pred(shape_succ(shape)) == shape
+
+
+def test_stable_path_roundtrip_on_duplicate_leaf_siblings():
+    from tools.pet_shape_algebra import (
+        index_path_to_stable_path,
+        normalize_shape,
+        stable_path_to_index_path,
+    )
+
+    shape = normalize_shape(((), (), ((),)))
+    path = (1,)
+
+    stable = index_path_to_stable_path(shape, path)
+
+    assert stable == (((), 1),)
+    assert stable_path_to_index_path(shape, stable) == path
+
+
+def test_stable_path_roundtrip_on_duplicate_recursive_siblings():
+    from tools.pet_shape_algebra import (
+        index_path_to_stable_path,
+        normalize_shape,
+        stable_path_to_index_path,
+    )
+
+    shape = normalize_shape((((),), ((),), ((), ())))
+    path = (1, 0)
+
+    stable = index_path_to_stable_path(shape, path)
+
+    assert stable == ((((),), 1), ((), 0))
+    assert stable_path_to_index_path(shape, stable) == path
+
+
+def test_shape_at_stable_reads_same_node_as_shape_at():
+    from tools.pet_shape_algebra import (
+        index_path_to_stable_path,
+        normalize_shape,
+        shape_at,
+        shape_at_stable,
+    )
+
+    shape = normalize_shape((((),), ((),), ((), ())))
+    path = (2, 1)
+    stable = index_path_to_stable_path(shape, path)
+
+    assert shape_at_stable(shape, stable) == shape_at(shape, path)

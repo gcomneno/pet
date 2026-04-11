@@ -5,6 +5,8 @@ from typing import TypeAlias
 
 Shape: TypeAlias = tuple["Shape", ...]
 PathT: TypeAlias = tuple[int, ...]
+StableStepT: TypeAlias = tuple["Shape", int]
+StablePathT: TypeAlias = tuple[StableStepT, ...]
 
 
 def _first_primes(n: int) -> list[int]:
@@ -405,3 +407,43 @@ def shape_shortest_path(start: Shape, target: Shape, max_depth: int = 8) -> tupl
 
 def shape_distance(start: Shape, target: Shape, max_depth: int = 8) -> int:
     return len(shape_shortest_path(start, target, max_depth=max_depth))
+
+
+def index_path_to_stable_path(shape: Shape, path: PathT) -> StablePathT:
+    cur = normalize_shape(shape)
+    out: list[StableStepT] = []
+
+    for idx in path:
+        if idx < 0 or idx >= len(cur):
+            raise IndexError(f"path index out of range: {idx}")
+
+        child = cur[idx]
+        ordinal = sum(1 for prev in cur[: idx + 1] if prev == child) - 1
+        out.append((child, ordinal))
+        cur = child
+
+    return tuple(out)
+
+
+def stable_path_to_index_path(shape: Shape, stable_path: StablePathT) -> PathT:
+    cur = normalize_shape(shape)
+    out: list[int] = []
+
+    for child_shape, ordinal in stable_path:
+        child_shape = normalize_shape(child_shape)
+        matches = [i for i, child in enumerate(cur) if child == child_shape]
+
+        if ordinal < 0 or ordinal >= len(matches):
+            raise IndexError(
+                f"stable path step not resolvable for child={child_shape!r}, ordinal={ordinal}"
+            )
+
+        idx = matches[ordinal]
+        out.append(idx)
+        cur = cur[idx]
+
+    return tuple(out)
+
+
+def shape_at_stable(shape: Shape, stable_path: StablePathT) -> Shape:
+    return shape_at(shape, stable_path_to_index_path(shape, stable_path))
