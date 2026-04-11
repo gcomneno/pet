@@ -95,3 +95,24 @@ def test_shape_to_pet_roundtrip_via_pet_to_shape():
         pet = shape_to_pet(shape)
         assert pet_to_shape(pet) == shape
         assert decode(pet) == shape_gamma(shape)
+
+
+def test_shape_gamma_matches_core_shape_generator_on_small_sample():
+    from pet.core import encode, shape_generator
+    from tools.pet_shape_algebra import pet_to_shape, shape_gamma
+
+    sample = [2, 3, 4, 6, 8, 12, 18, 24, 36, 72]
+
+    for n in sample:
+        assert shape_gamma(pet_to_shape(encode(n))) == shape_generator(n)
+
+
+def test_shape_to_pet_materializes_core_generator_on_small_sample():
+    from pet.core import decode, encode, shape_generator
+    from tools.pet_shape_algebra import pet_to_shape, shape_to_pet
+
+    sample = [2, 3, 4, 6, 8, 12, 18, 24, 36, 72]
+
+    for n in sample:
+        shape = pet_to_shape(encode(n))
+        assert decode(shape_to_pet(shape)) == shape_generator(n)
