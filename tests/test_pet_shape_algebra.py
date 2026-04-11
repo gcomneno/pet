@@ -534,3 +534,33 @@ def test_partial_shape_gamma_min_returns_minimal_compatible_witness():
     assert partial_shape_gamma_min(None) == 2
     assert partial_shape_gamma_min(((), None)) == 6
     assert partial_shape_gamma_min(((None,),)) == 4
+
+
+def test_partial_shape_completion_neighbors_of_root_hole():
+    from tools.pet_shape_algebra import partial_shape_completion_neighbors
+
+    assert partial_shape_completion_neighbors(None) == (((),),)
+
+
+def test_partial_shape_completion_neighbors_dedups_symmetric_holes():
+    from tools.pet_shape_algebra import partial_shape_completion_neighbors
+
+    assert partial_shape_completion_neighbors((None, None)) == ((None, ()),)
+
+
+def test_partial_shape_completion_neighbors_on_mixed_partial_shape():
+    from tools.pet_shape_algebra import partial_shape_completion_neighbors
+
+    got = set(partial_shape_completion_neighbors((None, (None,))))
+    expected = {
+        ((), (None,)),
+        (None, ((),)),
+    }
+
+    assert got == expected
+
+
+def test_partial_shape_completion_neighbors_of_exact_shape_is_empty():
+    from tools.pet_shape_algebra import partial_shape_completion_neighbors
+
+    assert partial_shape_completion_neighbors(((),)) == ()

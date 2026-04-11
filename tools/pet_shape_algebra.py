@@ -583,3 +583,55 @@ def partial_shape_fill_min(shape) -> Shape:
 
 def partial_shape_gamma_min(shape) -> int:
     return shape_gamma(partial_shape_fill_min(shape))
+
+
+def _partial_shape_fill_neighbors(shape, *, at_root: bool):
+    shape = normalize_partial_shape(shape)
+
+    if shape is None:
+        return (((),),) if at_root else ((),)
+
+    out = set()
+
+    for i, child in enumerate(shape):
+        child_neighbors = _partial_shape_fill_neighbors(child, at_root=False)
+
+        if child is None:
+            child_neighbors = ((),)
+        elif isinstance(child, tuple):
+            child_neighbors = _partial_shape_fill_neighbors(child, at_root=False)
+        else:
+            child_neighbors = ()
+
+        for new_child in child_neighbors:
+            children = list(shape)
+            children[i] = new_child
+            out.add(normalize_partial_shape(tuple(children)))
+
+    return tuple(sorted(out, key=_partial_shape_key))
+
+
+def partial_shape_completion_neighbors(shape):
+    shape = normalize_partial_shape(shape)
+
+    if partial_shape_is_exact(shape):
+        return ()
+
+    if shape is None:
+        return (((),),)
+
+    out = set()
+
+    for i, child in enumerate(shape):
+        if child is None:
+            children = list(shape)
+            children[i] = ()
+            out.add(normalize_partial_shape(tuple(children)))
+            continue
+
+        for new_child in partial_shape_completion_neighbors(child):
+            children = list(shape)
+            children[i] = new_child
+            out.add(normalize_partial_shape(tuple(children)))
+
+    return tuple(sorted(out, key=_partial_shape_key))
