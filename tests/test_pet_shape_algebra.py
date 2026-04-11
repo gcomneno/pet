@@ -314,3 +314,16 @@ def test_shape_distance_two_step_case():
     start = normalize_shape(())
     target = normalize_shape((((),),))
     assert shape_distance(start, target, max_depth=3) == 2
+
+
+def test_shape_succ_moves_past_old_hardcoded_prefix():
+    from tools.pet_shape_algebra import shape_succ
+
+    assert shape_succ((((),),)) == ((), (), ())
+
+
+def test_shape_pred_inverts_extended_successor_step():
+    from tools.pet_shape_algebra import shape_pred, shape_succ
+
+    shape = (((),),)
+    assert shape_pred(shape_succ(shape)) == shape

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TypeAlias
 
 Shape: TypeAlias = tuple["Shape", ...]
@@ -47,44 +48,70 @@ def shape_drop(shape: Shape) -> Shape:
     raise ValueError("shape_drop requires at least one leaf child at root")
 
 
-_V0_CHAIN: tuple[Shape, ...] = (
-    (),
-    ((),),
-    ((), ()),
-    (((),),),
-)
+def shape_mass(shape: Shape) -> int:
+    shape = normalize_shape(shape)
+    return sum(1 + shape_mass(child) for child in shape)
+
+
+@lru_cache(maxsize=None)
+def _shapes_of_mass(mass: int) -> tuple[Shape, ...]:
+    if mass < 0:
+        raise ValueError("mass must be >= 0")
+
+    if mass == 0:
+        return ((),)
+
+    out: set[Shape] = set()
+
+    def _build(remaining: int, min_key, acc: list[Shape]) -> None:
+        if remaining == 0:
+            out.add(tuple(acc))
+            return
+
+        for child_mass in range(remaining):
+            weight = 1 + child_mass
+            if weight > remaining:
+                break
+
+            for child in _shapes_of_mass(child_mass):
+                key = _shape_key(child)
+                if min_key is not None and key < min_key:
+                    continue
+                acc.append(child)
+                _build(remaining - weight, key, acc)
+                acc.pop()
+
+    _build(mass, None, [])
+    return tuple(sorted(out, key=_shape_key))
 
 
 def shape_succ(exp_shape: Shape) -> Shape:
     shape = normalize_shape(exp_shape)
-    try:
-        idx = _V0_CHAIN.index(shape)
-    except ValueError as exc:
-        raise NotImplementedError(
-            f"shape_succ v0 not defined yet for shape {shape!r}"
-        ) from exc
+    mass = shape_mass(shape)
+    level = _shapes_of_mass(mass)
+    idx = level.index(shape)
 
-    if idx + 1 >= len(_V0_CHAIN):
-        raise NotImplementedError(
-            f"shape_succ v0 not defined yet beyond shape {shape!r}"
-        )
+    if idx + 1 < len(level):
+        return level[idx + 1]
 
-    return _V0_CHAIN[idx + 1]
+    return _shapes_of_mass(mass + 1)[0]
 
 
 def shape_pred(exp_shape: Shape) -> Shape:
     shape = normalize_shape(exp_shape)
-    try:
-        idx = _V0_CHAIN.index(shape)
-    except ValueError as exc:
-        raise NotImplementedError(
-            f"shape_pred v0 not defined yet for shape {shape!r}"
-        ) from exc
+    mass = shape_mass(shape)
 
-    if idx == 0:
+    if mass == 0:
         raise ValueError("shape_pred is undefined at exponent-shape for 1")
 
-    return _V0_CHAIN[idx - 1]
+    level = _shapes_of_mass(mass)
+    idx = level.index(shape)
+
+    if idx > 0:
+        return level[idx - 1]
+
+    prev_level = _shapes_of_mass(mass - 1)
+    return prev_level[-1]
 
 
 def _replace_at(shape: Shape, path: PathT, op) -> Shape:
