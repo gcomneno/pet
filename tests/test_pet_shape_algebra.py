@@ -229,3 +229,66 @@ def test_shape_frontier_levels_depth_two_has_no_duplicates_across_levels():
 
     flat = [node for level in levels for node in level]
     assert len(flat) == len(set(flat))
+
+
+def test_shape_shortest_path_identity_is_empty():
+    from tools.pet_shape_algebra import normalize_shape, shape_shortest_path
+
+    shape = normalize_shape(((),))
+    assert shape_shortest_path(shape, shape) == ()
+
+
+def test_shape_shortest_path_single_step_inc():
+    from tools.pet_shape_algebra import (
+        apply_shape_move,
+        normalize_shape,
+        shape_shortest_path,
+    )
+
+    start = normalize_shape(((),))
+    target = normalize_shape((((),),))
+
+    path = shape_shortest_path(start, target, max_depth=2)
+
+    assert len(path) == 1
+    assert path[0]["op"] == "INC"
+    assert path[0]["path"] == (0,)
+    assert apply_shape_move(start, path[0]) == target
+
+
+def test_shape_shortest_path_single_step_drop():
+    from tools.pet_shape_algebra import (
+        apply_shape_move,
+        normalize_shape,
+        shape_shortest_path,
+    )
+
+    start = normalize_shape(((),))
+    target = normalize_shape(())
+
+    path = shape_shortest_path(start, target, max_depth=2)
+
+    assert len(path) == 1
+    assert path[0]["op"] == "DROP"
+    assert path[0]["path"] == ()
+    assert apply_shape_move(start, path[0]) == target
+
+
+def test_shape_shortest_path_two_steps_to_root_new_then_inc():
+    from tools.pet_shape_algebra import (
+        apply_shape_move,
+        normalize_shape,
+        shape_shortest_path,
+    )
+
+    start = normalize_shape(())
+    target = normalize_shape((((),),))
+
+    path = shape_shortest_path(start, target, max_depth=3)
+
+    cur = start
+    for step in path:
+        cur = apply_shape_move(cur, step)
+
+    assert cur == target
+    assert len(path) == 2

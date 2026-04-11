@@ -309,3 +309,68 @@ def shape_frontier_levels(shape: Shape, depth: int) -> tuple[tuple[Shape, ...], 
         frontier = set(level)
 
     return tuple(levels)
+
+
+def apply_shape_move(shape: Shape, move: dict) -> Shape:
+    root = normalize_shape(shape)
+    op = move["op"]
+    path = move["path"]
+
+    if op == "NEW":
+        return shape_new(root)
+    if op == "DROP":
+        return shape_drop(root)
+    if op == "INC":
+        return shape_inc(root, path)
+    if op == "DEC":
+        return shape_dec(root, path)
+
+    raise ValueError(f"unknown shape move op: {op}")
+
+
+def shape_shortest_path(start: Shape, target: Shape, max_depth: int = 8) -> tuple[dict, ...]:
+    if max_depth < 0:
+        raise ValueError("max_depth must be >= 0")
+
+    start_n = normalize_shape(start)
+    target_n = normalize_shape(target)
+
+    if start_n == target_n:
+        return ()
+
+    seen = {start_n}
+    parents: dict[Shape, tuple[Shape, dict] | None] = {start_n: None}
+    frontier = {start_n}
+
+    for _ in range(max_depth):
+        next_frontier = set()
+
+        for node in sorted(frontier, key=_shape_key):
+            for move in shape_neighbors(node):
+                result = move["result"]
+                if result in seen:
+                    continue
+
+                seen.add(result)
+                parents[result] = (node, move)
+
+                if result == target_n:
+                    path = []
+                    cur = result
+                    while parents[cur] is not None:
+                        prev, step = parents[cur]
+                        path.append(step)
+                        cur = prev
+                    path.reverse()
+                    return tuple(path)
+
+                next_frontier.add(result)
+
+        if not next_frontier:
+            break
+
+        frontier = next_frontier
+
+    raise ValueError(
+        f"target shape {target_n!r} not reached from {start_n!r} within max_depth={max_depth}"
+    )
