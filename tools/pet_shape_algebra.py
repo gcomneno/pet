@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TypeAlias
 
 Shape: TypeAlias = tuple["Shape", ...]
+PathT: TypeAlias = tuple[int, ...]
 
 
 def _shape_key(shape: Shape):
@@ -67,3 +68,28 @@ def shape_pred(exp_shape: Shape) -> Shape:
         raise ValueError("shape_pred is undefined at exponent-shape for 1")
 
     return _V0_CHAIN[idx - 1]
+
+
+def _replace_at(shape: Shape, path: PathT, op) -> Shape:
+    if not path:
+        return normalize_shape(op(shape))
+
+    idx = path[0]
+    if idx < 0 or idx >= len(shape):
+        raise IndexError(f"path index out of range: {idx}")
+
+    children = list(shape)
+    children[idx] = _replace_at(children[idx], path[1:], op)
+    return normalize_shape(tuple(children))
+
+
+def shape_inc(shape: Shape, path: PathT) -> Shape:
+    if not path:
+        raise ValueError("shape_inc requires a non-empty path")
+    return _replace_at(normalize_shape(shape), path, shape_succ)
+
+
+def shape_dec(shape: Shape, path: PathT) -> Shape:
+    if not path:
+        raise ValueError("shape_dec requires a non-empty path")
+    return _replace_at(normalize_shape(shape), path, shape_pred)
