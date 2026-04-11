@@ -676,6 +676,103 @@ def build_profiled_search_report(
     }
 
 
+def run_targeted_search(
+    seed: dict[str, Any],
+    target_n: int,
+    depth: int,
+    beam_width: int = 8,
+    strategy: str = "guided",
+    mode: str = "deep",
+) -> dict[str, Any]:
+    if not isinstance(target_n, int):
+        raise TypeError("target_n must be an int")
+    if target_n < 1:
+        raise ValueError("target_n must be >= 1")
+    if not isinstance(depth, int):
+        raise TypeError("depth must be an int")
+    if depth < 1:
+        raise ValueError("depth must be >= 1")
+    if not isinstance(beam_width, int):
+        raise TypeError("beam_width must be an int")
+    if beam_width < 1:
+        raise ValueError("beam_width must be >= 1")
+    if strategy not in {"by_n", "guided"}:
+        raise ValueError("strategy must be 'by_n' or 'guided'")
+
+    profile = recommended_search_profile(seed, mode=mode)
+    effective_cap = min(profile["max_target_n"], target_n)
+
+    def _keep_best(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        scored: list[tuple[Any, dict[str, Any], dict[str, Any]]] = []
+
+        for node in nodes:
+            current_n = require_field(node, "current_n")
+            if not isinstance(current_n, int):
+                raise TypeError("node.current_n must be an int")
+            if current_n > effective_cap:
+                continue
+
+            report = constraint_report_for_n(seed, current_n)
+
+            if strategy == "by_n":
+                key = (-current_n, node["path"])
+            else:
+                key = (
+                    -report["extra_children_over_known"],
+                    -report["current_root_generator"],
+                    -current_n,
+                    node["path"],
+                )
+
+            scored.append((key, node, report))
+
+        scored.sort(key=lambda item: item[0])
+        return [node for _key, node, _report in scored[:beam_width]]
+
+    rows = [row for row in expand_seed_once(seed) if row["target_n"] <= effective_cap]
+    frontier = [advance_seed(seed, row) for row in rows]
+
+    if profile["require_known_children_covered"]:
+        frontier = [
+            node for node in frontier
+            if constraint_report_for_n(seed, node["current_n"])["known_children_covered"]
+        ]
+
+    frontier = _keep_best(frontier)
+
+    if depth > 1:
+        for _ in range(2, depth + 1):
+            frontier = search_step_pruned(
+                seed,
+                frontier,
+                max_target_n=effective_cap,
+                max_new_in_path=profile["max_new_in_path"],
+                require_known_children_covered=profile["require_known_children_covered"],
+            )
+            frontier = _keep_best(frontier)
+
+    frontier_reports = [constraint_report_for_n(seed, node["current_n"]) for node in frontier]
+    best_node = frontier[0] if frontier else None
+    best_report = frontier_reports[0] if frontier_reports else None
+
+    return {
+        "schema": "pet-preimage-targeted-search-v0",
+        "source_n": seed["source_n"],
+        "target_n": target_n,
+        "mode": mode,
+        "depth": depth,
+        "beam_width": beam_width,
+        "strategy": strategy,
+        "profile": profile,
+        "effective_cap": effective_cap,
+        "frontier_count": len(frontier),
+        "frontier": frontier,
+        "frontier_constraint_reports": frontier_reports,
+        "best_node": best_node,
+        "best_constraint_report": best_report,
+    }
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")

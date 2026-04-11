@@ -815,3 +815,38 @@ def test_build_profiled_search_report_for_exact_case():
     assert deep["min_n"] == 26880
     assert deep["max_n"] == 12612600
     assert deep["sample_ns"][:8] == [26880, 40320, 60480, 90720, 100800, 147840, 151200, 221760]
+
+
+def test_run_targeted_search_guided_prefers_higher_generator_over_larger_n():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        run_targeted_search,
+    )
+
+    target = 84738299381764839281089489284357208475289576295628574257274875473876427964797045871648176574865826408576408521698576142805761095607954601854
+    data = build_partial_explain(target, [10])
+    seed = build_seed(data, rank=1)
+
+    by_n = run_targeted_search(
+        seed,
+        target_n=target,
+        depth=8,
+        beam_width=8,
+        strategy="by_n",
+    )
+    guided = run_targeted_search(
+        seed,
+        target_n=target,
+        depth=8,
+        beam_width=8,
+        strategy="guided",
+    )
+
+    assert by_n["best_node"]["current_n"] == 2910600
+    assert by_n["best_constraint_report"]["current_root_generator"] == 485100
+
+    assert guided["best_node"]["current_n"] == 1940400
+    assert guided["best_constraint_report"]["current_root_generator"] == 1940400
+
+    assert guided["best_constraint_report"]["extra_children_over_known"] == 4
+    assert by_n["best_constraint_report"]["extra_children_over_known"] == 4
