@@ -198,3 +198,34 @@ def test_shape_closure_normalizes_input_shape():
     expected = { ((), ((),)) }
 
     assert got == expected
+
+
+def test_shape_frontier_levels_depth_zero():
+    from tools.pet_shape_algebra import normalize_shape, shape_frontier_levels
+
+    shape = normalize_shape(((),))
+    assert shape_frontier_levels(shape, 0) == ((shape,),)
+
+
+def test_shape_frontier_levels_depth_one_from_single_leaf_child():
+    from tools.pet_shape_algebra import normalize_shape, shape_frontier_levels
+
+    shape = normalize_shape(((),))
+    levels = shape_frontier_levels(shape, 1)
+
+    assert levels[0] == (shape,)
+    assert set(levels[1]) == {
+        normalize_shape(()),
+        normalize_shape(((), ())),
+        normalize_shape((((),),)),
+    }
+
+
+def test_shape_frontier_levels_depth_two_has_no_duplicates_across_levels():
+    from tools.pet_shape_algebra import normalize_shape, shape_frontier_levels
+
+    shape = normalize_shape(((),))
+    levels = shape_frontier_levels(shape, 2)
+
+    flat = [node for level in levels for node in level]
+    assert len(flat) == len(set(flat))
