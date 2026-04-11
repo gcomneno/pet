@@ -733,3 +733,18 @@ def partial_shape_shortest_completion_gamma(shape, target=None) -> int:
 
 def partial_shape_shortest_completion_pet(shape, target=None):
     return shape_to_pet(partial_shape_shortest_completion_target(shape, target=target))
+
+
+def partial_shape_report(shape) -> dict:
+    partial = normalize_partial_shape(shape)
+    target = partial_shape_shortest_completion_target(partial)
+
+    return {
+        "partial": partial,
+        "is_exact": partial_shape_is_exact(partial),
+        "hole_count": partial_shape_hole_count(partial),
+        "fill_min": partial_shape_fill_min(partial),
+        "completion_distance": partial_shape_completion_distance(partial),
+        "target_shape": target,
+        "target_gamma": shape_gamma(target),
+    }

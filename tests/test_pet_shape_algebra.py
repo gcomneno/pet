@@ -658,3 +658,43 @@ def test_partial_shape_shortest_completion_pet_materializes_target():
         pet = partial_shape_shortest_completion_pet(partial)
         assert decode(pet) == partial_shape_shortest_completion_gamma(partial)
         assert pet_to_shape(pet) == partial_shape_shortest_completion_target(partial)
+
+
+def test_partial_shape_report_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_report
+
+    report = partial_shape_report(None)
+
+    assert report["partial"] is None
+    assert report["is_exact"] is False
+    assert report["hole_count"] == 1
+    assert report["fill_min"] == ((),)
+    assert report["completion_distance"] == 1
+    assert report["target_shape"] == ((),)
+    assert report["target_gamma"] == 2
+
+
+def test_partial_shape_report_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_report
+
+    report = partial_shape_report(((), None))
+
+    assert report["is_exact"] is False
+    assert report["hole_count"] == 1
+    assert report["fill_min"] == ((), ())
+    assert report["completion_distance"] == 1
+    assert report["target_shape"] == ((), ())
+    assert report["target_gamma"] == 6
+
+
+def test_partial_shape_report_for_exact_shape():
+    from tools.pet_shape_algebra import partial_shape_report
+
+    report = partial_shape_report(((),))
+
+    assert report["is_exact"] is True
+    assert report["hole_count"] == 0
+    assert report["fill_min"] == ((),)
+    assert report["completion_distance"] == 0
+    assert report["target_shape"] == ((),)
+    assert report["target_gamma"] == 2
