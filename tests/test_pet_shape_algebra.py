@@ -415,3 +415,27 @@ def test_shape_can_apply_reports_basic_cases():
     assert not shape_can_apply(normalize_shape(()), "DROP")
     assert not shape_can_apply(normalize_shape(((),)), "INC", ())
     assert not shape_can_apply(normalize_shape(((),)), "NOPE")
+
+
+def test_shape_neighbors_matches_dispatcher_results():
+    from tools.pet_shape_algebra import (
+        normalize_shape,
+        shape_apply,
+        shape_can_apply,
+        shape_neighbors,
+        shape_paths,
+    )
+
+    shape = normalize_shape((((),),))
+    got = {(row["op"], row["path"], row["result"]) for row in shape_neighbors(shape)}
+
+    expected = set()
+    candidates = [("NEW", ()), ("DROP", ())]
+    candidates.extend(("INC", path) for path in shape_paths(shape))
+    candidates.extend(("DEC", path) for path in shape_paths(shape))
+
+    for op, path in candidates:
+        if shape_can_apply(shape, op, path):
+            expected.add((op, path, shape_apply(shape, op, path)))
+
+    assert got == expected

@@ -229,49 +229,22 @@ def shape_neighbors(shape: Shape) -> tuple[dict, ...]:
     root = normalize_shape(shape)
     out: list[dict] = []
 
-    # root-level NEW / DROP
-    out.append({
-        "op": "NEW",
-        "path": (),
-        "result": shape_new(root),
-    })
+    candidates: list[tuple[str, PathT]] = [
+        ("NEW", ()),
+        ("DROP", ()),
+    ]
+    candidates.extend(("INC", path) for path in shape_paths(root))
+    candidates.extend(("DEC", path) for path in shape_paths(root))
 
-    try:
-        dropped = shape_drop(root)
-    except ValueError:
-        pass
-    else:
+    for op, path in candidates:
+        if not shape_can_apply(root, op, path):
+            continue
         out.append({
-            "op": "DROP",
-            "path": (),
-            "result": dropped,
+            "op": op,
+            "path": path,
+            "result": shape_apply(root, op, path),
         })
 
-    # local INC / DEC on every non-root node
-    for path in shape_paths(root):
-        try:
-            inc_result = shape_inc(root, path)
-        except (ValueError, NotImplementedError, IndexError):
-            pass
-        else:
-            out.append({
-                "op": "INC",
-                "path": path,
-                "result": inc_result,
-            })
-
-        try:
-            dec_result = shape_dec(root, path)
-        except (ValueError, NotImplementedError, IndexError):
-            pass
-        else:
-            out.append({
-                "op": "DEC",
-                "path": path,
-                "result": dec_result,
-            })
-
-    # canonical order, dedup by (op, path, result)
     seen = set()
     canon = []
     for row in out:
@@ -283,6 +256,8 @@ def shape_neighbors(shape: Shape) -> tuple[dict, ...]:
 
     canon.sort(key=lambda row: (row["op"], row["path"], _shape_key(row["result"])))
     return tuple(canon)
+
+
 
 
 def shape_closure(shape: Shape, depth: int) -> tuple[Shape, ...]:
