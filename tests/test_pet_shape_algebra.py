@@ -134,3 +134,36 @@ def test_shape_paths_lists_all_nodes():
     shape = normalize_shape(((), ((),)))
     assert shape_paths(shape) == ((0,), (1,), (1, 0))
     assert shape_paths(shape, include_root=True) == ((), (0,), (1,), (1, 0))
+
+
+def test_shape_neighbors_for_single_leaf_child():
+    from tools.pet_shape_algebra import normalize_shape, shape_neighbors
+
+    shape = normalize_shape(((),))
+    moves = shape_neighbors(shape)
+
+    got = {(row["op"], row["path"], row["result"]) for row in moves}
+    expected = {
+        ("NEW", (), normalize_shape(((), ()))),
+        ("DROP", (), normalize_shape(())),
+        ("INC", (0,), normalize_shape((((),),))),
+    }
+
+    assert got == expected
+
+
+def test_shape_neighbors_for_single_recursive_child():
+    from tools.pet_shape_algebra import normalize_shape, shape_neighbors
+
+    shape = normalize_shape((((),),))
+    moves = shape_neighbors(shape)
+
+    got = {(row["op"], row["path"], row["result"]) for row in moves}
+    expected = {
+        ("NEW", (), normalize_shape(((), ((),)))),
+        ("INC", (0,), normalize_shape((((), ()),))),
+        ("INC", (0, 0), normalize_shape(((((),),),))),
+        ("DEC", (0,), normalize_shape(((),))),
+    }
+
+    assert got == expected

@@ -194,3 +194,63 @@ def shape_paths(shape: Shape, *, include_root: bool = False) -> tuple[PathT, ...
     if include_root:
         return tuple(out)
     return tuple(path for path in out if path)
+
+
+def shape_neighbors(shape: Shape) -> tuple[dict, ...]:
+    root = normalize_shape(shape)
+    out: list[dict] = []
+
+    # root-level NEW / DROP
+    out.append({
+        "op": "NEW",
+        "path": (),
+        "result": shape_new(root),
+    })
+
+    try:
+        dropped = shape_drop(root)
+    except ValueError:
+        pass
+    else:
+        out.append({
+            "op": "DROP",
+            "path": (),
+            "result": dropped,
+        })
+
+    # local INC / DEC on every non-root node
+    for path in shape_paths(root):
+        try:
+            inc_result = shape_inc(root, path)
+        except (ValueError, NotImplementedError, IndexError):
+            pass
+        else:
+            out.append({
+                "op": "INC",
+                "path": path,
+                "result": inc_result,
+            })
+
+        try:
+            dec_result = shape_dec(root, path)
+        except (ValueError, NotImplementedError, IndexError):
+            pass
+        else:
+            out.append({
+                "op": "DEC",
+                "path": path,
+                "result": dec_result,
+            })
+
+    # canonical order, dedup by (op, path, result)
+    seen = set()
+    canon = []
+    for row in out:
+        key = (row["op"], row["path"], row["result"])
+        if key in seen:
+            continue
+        seen.add(key)
+        canon.append(row)
+
+    canon.sort(key=lambda row: (row["op"], row["path"], _shape_key(row["result"])))
+    return tuple(canon)
