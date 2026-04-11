@@ -697,8 +697,8 @@ def run_targeted_search(
         raise TypeError("beam_width must be an int")
     if beam_width < 1:
         raise ValueError("beam_width must be >= 1")
-    if strategy not in {"by_n", "guided"}:
-        raise ValueError("strategy must be 'by_n' or 'guided'")
+    if strategy not in {"by_n", "guided", "hybrid"}:
+        raise ValueError("strategy must be 'by_n', 'guided' or 'hybrid'")
     if max_target_n is not None:
         if not isinstance(max_target_n, int):
             raise TypeError("max_target_n must be an int or None")
@@ -720,13 +720,25 @@ def run_targeted_search(
                 continue
 
             report = constraint_report_for_n(seed, current_n)
+            factors = prime_factorization(current_n)
+            support_size = len(factors)
+            max_exp = max((exp for _prime, exp in factors), default=0)
 
             if strategy == "by_n":
                 key = (-current_n, node["path"])
+            elif strategy == "guided":
+                key = (
+                    -report["extra_children_over_known"],
+                    -report["current_root_generator"],
+                    -current_n,
+                    node["path"],
+                )
             else:
                 key = (
                     -report["extra_children_over_known"],
                     -report["current_root_generator"],
+                    -support_size,
+                    max_exp,
                     -current_n,
                     node["path"],
                 )

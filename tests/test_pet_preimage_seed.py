@@ -885,3 +885,39 @@ def test_run_targeted_search_can_override_profile_cap():
 
     assert baseline["best_node"]["current_n"] == 1940400
     assert widened["best_node"]["current_n"] >= baseline["best_node"]["current_n"]
+
+
+def test_run_targeted_search_hybrid_keeps_guided_generator_signal():
+    from tools.pet_preimage_seed import (
+        build_seed,
+        run_targeted_search,
+    )
+
+    target = 84738299381764839281089489284357208475289576295628574257274875473876427964797045871648176574865826408576408521698576142805761095607954601854
+    data = build_partial_explain(target, [10])
+    seed = build_seed(data, rank=1)
+
+    guided = run_targeted_search(
+        seed,
+        target_n=target,
+        depth=18,
+        beam_width=32,
+        strategy="guided",
+        mode="deep",
+        max_target_n=target,
+    )
+    hybrid = run_targeted_search(
+        seed,
+        target_n=target,
+        depth=18,
+        beam_width=32,
+        strategy="hybrid",
+        mode="deep",
+        max_target_n=target,
+    )
+
+    assert guided["best_constraint_report"]["current_root_generator"] == 770144760000
+
+    assert hybrid["best_constraint_report"]["extra_children_over_known"] == 4
+    assert hybrid["best_constraint_report"]["current_root_generator"] == guided["best_constraint_report"]["current_root_generator"]
+    assert hybrid["best_node"]["current_n"] == guided["best_node"]["current_n"]
