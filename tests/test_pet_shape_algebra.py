@@ -625,3 +625,36 @@ def test_partial_shape_shortest_completion_path_on_exact_shape_is_trivial():
     from tools.pet_shape_algebra import partial_shape_shortest_completion_path
 
     assert partial_shape_shortest_completion_path(((),)) == (((),),)
+
+
+def test_partial_shape_shortest_completion_gamma_matches_min_witness():
+    from tools.pet_shape_algebra import partial_shape_shortest_completion_gamma
+
+    assert partial_shape_shortest_completion_gamma(None) == 2
+    assert partial_shape_shortest_completion_gamma(((), None)) == 6
+    assert partial_shape_shortest_completion_gamma((None, (None,))) == 12
+
+
+def test_partial_shape_shortest_completion_target_is_exact():
+    from tools.pet_shape_algebra import partial_shape_shortest_completion_target
+
+    assert partial_shape_shortest_completion_target(None) == ((),)
+    assert partial_shape_shortest_completion_target(((), None)) == ((), ())
+    assert partial_shape_shortest_completion_target((None, (None,))) == ((), ((),))
+
+
+def test_partial_shape_shortest_completion_pet_materializes_target():
+    from pet.core import decode
+    from tools.pet_shape_algebra import (
+        partial_shape_shortest_completion_gamma,
+        partial_shape_shortest_completion_pet,
+        partial_shape_shortest_completion_target,
+        pet_to_shape,
+    )
+
+    samples = [None, ((), None), (None, (None,))]
+
+    for partial in samples:
+        pet = partial_shape_shortest_completion_pet(partial)
+        assert decode(pet) == partial_shape_shortest_completion_gamma(partial)
+        assert pet_to_shape(pet) == partial_shape_shortest_completion_target(partial)

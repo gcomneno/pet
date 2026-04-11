@@ -720,3 +720,16 @@ def partial_shape_shortest_completion_path(shape, target=None):
 
 def partial_shape_completion_distance(shape, target=None) -> int:
     return len(partial_shape_shortest_completion_path(shape, target=target)) - 1
+
+
+def partial_shape_shortest_completion_target(shape, target=None) -> Shape:
+    path = partial_shape_shortest_completion_path(shape, target=target)
+    return normalize_shape(path[-1])
+
+
+def partial_shape_shortest_completion_gamma(shape, target=None) -> int:
+    return shape_gamma(partial_shape_shortest_completion_target(shape, target=target))
+
+
+def partial_shape_shortest_completion_pet(shape, target=None):
+    return shape_to_pet(partial_shape_shortest_completion_target(shape, target=target))
