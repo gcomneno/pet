@@ -7,6 +7,7 @@ Shape: TypeAlias = tuple["Shape", ...]
 PathT: TypeAlias = tuple[int, ...]
 StableStepT: TypeAlias = tuple["Shape", int]
 StablePathT: TypeAlias = tuple[StableStepT, ...]
+PartialShape = "Shape | None | tuple[PartialShape, ...]"
 
 PRIMITIVE_ROOT_OPS: tuple[str, ...] = ("NEW", "DROP")
 PRIMITIVE_LOCAL_OPS: tuple[str, ...] = ("INC", "DEC")
@@ -505,3 +506,57 @@ __all__ = [
     "shape_shortest_path",
     "shape_distance",
 ]
+
+
+def _partial_shape_key(shape) -> tuple:
+    if shape is None:
+        return (0,)
+    return (1, tuple(_partial_shape_key(child) for child in shape))
+
+
+def normalize_partial_shape(shape):
+    if shape is None:
+        return None
+    normalized_children = tuple(normalize_partial_shape(child) for child in shape)
+    return tuple(sorted(normalized_children, key=_partial_shape_key))
+
+
+def partial_shape_hole_count(shape) -> int:
+    if shape is None:
+        return 1
+    return sum(partial_shape_hole_count(child) for child in shape)
+
+
+def shape_matches_partial(shape: Shape, partial) -> bool:
+    shape = normalize_shape(shape)
+    partial = normalize_partial_shape(partial)
+
+    if partial is None:
+        return True
+
+    if len(shape) != len(partial):
+        return False
+
+    partial_children = list(partial)
+    partial_children.sort(key=lambda child: 1 if child is None else 0)
+
+    used = [False] * len(shape)
+
+    def _match(i: int) -> bool:
+        if i == len(partial_children):
+            return True
+
+        pchild = partial_children[i]
+
+        for j, schild in enumerate(shape):
+            if used[j]:
+                continue
+            if shape_matches_partial(schild, pchild):
+                used[j] = True
+                if _match(i + 1):
+                    return True
+                used[j] = False
+
+        return False
+
+    return _match(0)

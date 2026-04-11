@@ -475,3 +475,36 @@ def test_shape_neighbors_emit_only_primitive_ops():
 
     shape = normalize_shape((((),),))
     assert {row["op"] for row in shape_neighbors(shape)} <= set(PRIMITIVE_SHAPE_OPS)
+
+
+def test_normalize_partial_shape_sorts_known_children_and_holes():
+    from tools.pet_shape_algebra import normalize_partial_shape
+
+    partial = (((),), None, ())
+    assert normalize_partial_shape(partial) == (None, (), ((),))
+
+
+def test_partial_shape_hole_count_counts_unknown_subtrees():
+    from tools.pet_shape_algebra import partial_shape_hole_count
+
+    assert partial_shape_hole_count(None) == 1
+    assert partial_shape_hole_count((None, (), (None,))) == 2
+
+
+def test_shape_matches_partial_for_exact_and_unknown_cases():
+    from tools.pet_shape_algebra import normalize_shape, shape_matches_partial
+
+    assert shape_matches_partial(normalize_shape(((),)), None)
+    assert shape_matches_partial(normalize_shape(((), ())), (None, ()))
+    assert shape_matches_partial(normalize_shape((((),),)), ((None,),))
+    assert not shape_matches_partial(normalize_shape(((),)), ((), ()))
+    assert not shape_matches_partial(normalize_shape(((), ())), (((),), ()))
+
+
+def test_shape_matches_partial_on_small_core_generators():
+    from pet.core import encode
+    from tools.pet_shape_algebra import pet_to_shape, shape_matches_partial
+
+    assert shape_matches_partial(pet_to_shape(encode(6)), ((), ()))
+    assert shape_matches_partial(pet_to_shape(encode(12)), ((), None))
+    assert not shape_matches_partial(pet_to_shape(encode(8)), ((), ()))
