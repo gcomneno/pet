@@ -93,3 +93,12 @@ def shape_dec(shape: Shape, path: PathT) -> Shape:
     if not path:
         raise ValueError("shape_dec requires a non-empty path")
     return _replace_at(normalize_shape(shape), path, shape_pred)
+
+
+def pet_to_shape(tree) -> Shape:
+    return normalize_shape(
+        tuple(
+            () if exp_repr is None else pet_to_shape(exp_repr)
+            for _prime, exp_repr in tree
+        )
+    )

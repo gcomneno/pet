@@ -58,3 +58,14 @@ def test_shape_inc_and_dec_roundtrip_on_deep_chain():
 
     assert grown == normalize_shape((((((),),),),))
     assert shape_dec(grown, (0, 0, 0)) == base
+
+
+def test_pet_to_shape_small_numbers():
+    from pet.core import encode
+    from tools.pet_shape_algebra import pet_to_shape
+
+    assert pet_to_shape(encode(2)) == ((),)
+    assert pet_to_shape(encode(3)) == ((),)
+    assert pet_to_shape(encode(4)) == (((),),)
+    assert pet_to_shape(encode(6)) == ((), ())
+    assert pet_to_shape(encode(8)) == (((),),)
