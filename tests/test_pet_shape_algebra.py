@@ -564,3 +564,37 @@ def test_partial_shape_completion_neighbors_of_exact_shape_is_empty():
     from tools.pet_shape_algebra import partial_shape_completion_neighbors
 
     assert partial_shape_completion_neighbors(((),)) == ()
+
+
+def test_partial_shape_exact_completions_of_exact_shape():
+    from tools.pet_shape_algebra import partial_shape_exact_completions
+
+    assert partial_shape_exact_completions(((),)) == (((),),)
+
+
+def test_partial_shape_exact_completions_of_root_hole():
+    from tools.pet_shape_algebra import partial_shape_exact_completions
+
+    assert partial_shape_exact_completions(None) == (((),),)
+
+
+def test_partial_shape_exact_completions_of_simple_partial():
+    from tools.pet_shape_algebra import partial_shape_exact_completions
+
+    assert partial_shape_exact_completions(((), None)) == (((), ()),)
+
+
+def test_partial_shape_exact_completions_of_nested_partial():
+    from tools.pet_shape_algebra import partial_shape_exact_completions
+
+    assert partial_shape_exact_completions((None, (None,))) == (
+        ((), ((),)),
+    )
+
+
+def test_partial_shape_gamma_exact_matches_exact_completions():
+    from tools.pet_shape_algebra import partial_shape_gamma_exact
+
+    assert partial_shape_gamma_exact(None) == (2,)
+    assert partial_shape_gamma_exact(((), None)) == (6,)
+    assert partial_shape_gamma_exact((None, (None,))) == (12,)

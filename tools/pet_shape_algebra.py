@@ -635,3 +635,34 @@ def partial_shape_completion_neighbors(shape):
             out.add(normalize_partial_shape(tuple(children)))
 
     return tuple(sorted(out, key=_partial_shape_key))
+
+
+def partial_shape_exact_completions(shape):
+    root = normalize_partial_shape(shape)
+
+    if partial_shape_is_exact(root):
+        return (normalize_shape(root),)
+
+    seen = {root}
+    frontier = {root}
+    exact = set()
+
+    while frontier:
+        next_frontier = set()
+
+        for node in frontier:
+            for nxt in partial_shape_completion_neighbors(node):
+                if partial_shape_is_exact(nxt):
+                    exact.add(normalize_shape(nxt))
+                    continue
+                if nxt not in seen:
+                    seen.add(nxt)
+                    next_frontier.add(nxt)
+
+        frontier = next_frontier
+
+    return tuple(sorted(exact, key=_shape_key))
+
+
+def partial_shape_gamma_exact(shape):
+    return tuple(shape_gamma(s) for s in partial_shape_exact_completions(shape))
