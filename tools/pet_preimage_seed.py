@@ -683,6 +683,7 @@ def run_targeted_search(
     beam_width: int = 8,
     strategy: str = "guided",
     mode: str = "deep",
+    max_target_n: int | None = None,
 ) -> dict[str, Any]:
     if not isinstance(target_n, int):
         raise TypeError("target_n must be an int")
@@ -698,9 +699,15 @@ def run_targeted_search(
         raise ValueError("beam_width must be >= 1")
     if strategy not in {"by_n", "guided"}:
         raise ValueError("strategy must be 'by_n' or 'guided'")
+    if max_target_n is not None:
+        if not isinstance(max_target_n, int):
+            raise TypeError("max_target_n must be an int or None")
+        if max_target_n < 1:
+            raise ValueError("max_target_n must be >= 1")
 
     profile = recommended_search_profile(seed, mode=mode)
-    effective_cap = min(profile["max_target_n"], target_n)
+    cap_from_profile = profile["max_target_n"] if max_target_n is None else max_target_n
+    effective_cap = min(cap_from_profile, target_n)
 
     def _keep_best(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
         scored: list[tuple[Any, dict[str, Any], dict[str, Any]]] = []
