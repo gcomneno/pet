@@ -8,6 +8,10 @@ PathT: TypeAlias = tuple[int, ...]
 StableStepT: TypeAlias = tuple["Shape", int]
 StablePathT: TypeAlias = tuple[StableStepT, ...]
 
+PRIMITIVE_ROOT_OPS: tuple[str, ...] = ("NEW", "DROP")
+PRIMITIVE_LOCAL_OPS: tuple[str, ...] = ("INC", "DEC")
+PRIMITIVE_SHAPE_OPS: tuple[str, ...] = PRIMITIVE_ROOT_OPS + PRIMITIVE_LOCAL_OPS
+
 
 def _first_primes(n: int) -> list[int]:
     primes: list[int] = []
@@ -457,3 +461,47 @@ def shape_can_apply(shape: Shape, op: str, path: PathT = ()) -> bool:
         return True
     except (ValueError, IndexError, NotImplementedError):
         return False
+
+
+def is_primitive_shape_op(op: str) -> bool:
+    return op.upper() in PRIMITIVE_SHAPE_OPS
+
+
+__all__ = [
+    # core shape representation
+    "Shape",
+    "PathT",
+    "normalize_shape",
+    # primitive rewrite vocabulary
+    "PRIMITIVE_ROOT_OPS",
+    "PRIMITIVE_LOCAL_OPS",
+    "PRIMITIVE_SHAPE_OPS",
+    "is_primitive_shape_op",
+    # four primitive operations
+    "shape_new",
+    "shape_drop",
+    "shape_inc",
+    "shape_dec",
+    "shape_apply",
+    "shape_can_apply",
+    # local successor / predecessor on exponent-shapes
+    "shape_succ",
+    "shape_pred",
+    "shape_mass",
+    # shape <-> PET / witness
+    "pet_to_shape",
+    "shape_to_pet",
+    "shape_gamma",
+    # path helpers
+    "shape_at",
+    "shape_paths",
+    "index_path_to_stable_path",
+    "stable_path_to_index_path",
+    "shape_at_stable",
+    # exploration helpers
+    "shape_neighbors",
+    "shape_closure",
+    "shape_frontier_levels",
+    "shape_shortest_path",
+    "shape_distance",
+]

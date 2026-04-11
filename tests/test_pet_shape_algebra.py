@@ -439,3 +439,39 @@ def test_shape_neighbors_matches_dispatcher_results():
             expected.add((op, path, shape_apply(shape, op, path)))
 
     assert got == expected
+
+
+def test_primitive_shape_op_sets_are_exactly_the_four_core_ops():
+    from tools.pet_shape_algebra import (
+        PRIMITIVE_LOCAL_OPS,
+        PRIMITIVE_ROOT_OPS,
+        PRIMITIVE_SHAPE_OPS,
+    )
+
+    assert PRIMITIVE_ROOT_OPS == ("NEW", "DROP")
+    assert PRIMITIVE_LOCAL_OPS == ("INC", "DEC")
+    assert PRIMITIVE_SHAPE_OPS == ("NEW", "DROP", "INC", "DEC")
+
+
+def test_is_primitive_shape_op_accepts_only_core_ops():
+    from tools.pet_shape_algebra import is_primitive_shape_op
+
+    assert is_primitive_shape_op("NEW")
+    assert is_primitive_shape_op("DROP")
+    assert is_primitive_shape_op("INC")
+    assert is_primitive_shape_op("DEC")
+    assert is_primitive_shape_op("new")
+    assert not is_primitive_shape_op("SUCC")
+    assert not is_primitive_shape_op("PRED")
+    assert not is_primitive_shape_op("NOPE")
+
+
+def test_shape_neighbors_emit_only_primitive_ops():
+    from tools.pet_shape_algebra import (
+        PRIMITIVE_SHAPE_OPS,
+        normalize_shape,
+        shape_neighbors,
+    )
+
+    shape = normalize_shape((((),),))
+    assert {row["op"] for row in shape_neighbors(shape)} <= set(PRIMITIVE_SHAPE_OPS)
