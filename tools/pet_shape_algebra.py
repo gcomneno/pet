@@ -254,3 +254,29 @@ def shape_neighbors(shape: Shape) -> tuple[dict, ...]:
 
     canon.sort(key=lambda row: (row["op"], row["path"], _shape_key(row["result"])))
     return tuple(canon)
+
+
+def shape_closure(shape: Shape, depth: int) -> tuple[Shape, ...]:
+    if depth < 0:
+        raise ValueError("depth must be >= 0")
+
+    root = normalize_shape(shape)
+    seen = {root}
+    frontier = {root}
+
+    for _ in range(depth):
+        next_frontier = set()
+
+        for node in frontier:
+            for row in shape_neighbors(node):
+                result = row["result"]
+                if result not in seen:
+                    seen.add(result)
+                    next_frontier.add(result)
+
+        if not next_frontier:
+            break
+
+        frontier = next_frontier
+
+    return tuple(sorted(seen, key=_shape_key))

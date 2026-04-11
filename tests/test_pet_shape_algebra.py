@@ -167,3 +167,34 @@ def test_shape_neighbors_for_single_recursive_child():
     }
 
     assert got == expected
+
+
+def test_shape_closure_depth_zero_returns_only_root():
+    from tools.pet_shape_algebra import normalize_shape, shape_closure
+
+    shape = normalize_shape(((),))
+    assert shape_closure(shape, 0) == (shape,)
+
+
+def test_shape_closure_depth_one_matches_immediate_reachable_shapes():
+    from tools.pet_shape_algebra import normalize_shape, shape_closure
+
+    shape = normalize_shape(((),))
+    got = set(shape_closure(shape, 1))
+    expected = {
+        normalize_shape(((),)),
+        normalize_shape(()),
+        normalize_shape(((), ())),
+        normalize_shape((((),),)),
+    }
+
+    assert got == expected
+
+
+def test_shape_closure_normalizes_input_shape():
+    from tools.pet_shape_algebra import shape_closure
+
+    got = set(shape_closure((((),), ()), 0))
+    expected = { ((), ((),)) }
+
+    assert got == expected
