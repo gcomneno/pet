@@ -6,6 +6,23 @@ Shape: TypeAlias = tuple["Shape", ...]
 PathT: TypeAlias = tuple[int, ...]
 
 
+def _first_primes(n: int) -> list[int]:
+    primes: list[int] = []
+    candidate = 2
+    while len(primes) < n:
+        is_prime = True
+        for p in primes:
+            if p * p > candidate:
+                break
+            if candidate % p == 0:
+                is_prime = False
+                break
+        if is_prime:
+            primes.append(candidate)
+        candidate += 1
+    return primes
+
+
 def _shape_key(shape: Shape):
     return tuple(_shape_key(child) for child in shape)
 
@@ -102,3 +119,54 @@ def pet_to_shape(tree) -> Shape:
             for _prime, exp_repr in tree
         )
     )
+
+
+def _exp_gamma(shape: Shape) -> int:
+    shape = normalize_shape(shape)
+    if shape == ():
+        return 1
+
+    child_values = sorted((_exp_gamma(child) for child in shape), reverse=True)
+    total = 1
+    for prime, exp in zip(_first_primes(len(child_values)), child_values):
+        total *= prime ** exp
+    return total
+
+
+def shape_gamma(shape: Shape) -> int:
+    shape = normalize_shape(shape)
+    if shape == ():
+        raise ValueError("shape_gamma is undefined for leaf shape ()")
+
+    child_values = sorted((_exp_gamma(child) for child in shape), reverse=True)
+    total = 1
+    for prime, exp in zip(_first_primes(len(child_values)), child_values):
+        total *= prime ** exp
+    return total
+
+
+def _shape_to_pet(shape: Shape):
+    shape = normalize_shape(shape)
+    if shape == ():
+        raise ValueError("cannot materialize leaf shape () as a root PET")
+
+    children = []
+    for child in shape:
+        if child == ():
+            child_pet = None
+            child_value = 1
+        else:
+            child_pet = _shape_to_pet(child)
+            child_value = _exp_gamma(child)
+        children.append((child_value, child_pet))
+
+    children.sort(key=lambda item: item[0], reverse=True)
+
+    result = []
+    for prime, (_value, exp_repr) in zip(_first_primes(len(children)), children):
+        result.append((prime, exp_repr))
+    return result
+
+
+def shape_to_pet(shape: Shape):
+    return _shape_to_pet(shape)

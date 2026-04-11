@@ -69,3 +69,29 @@ def test_pet_to_shape_small_numbers():
     assert pet_to_shape(encode(4)) == (((),),)
     assert pet_to_shape(encode(6)) == ((), ())
     assert pet_to_shape(encode(8)) == (((),),)
+
+
+def test_shape_gamma_small_shapes():
+    from tools.pet_shape_algebra import shape_gamma
+
+    assert shape_gamma(((),)) == 2
+    assert shape_gamma(((), ())) == 6
+    assert shape_gamma((((),),)) == 4
+    assert shape_gamma(((), ((),))) == 12
+
+
+def test_shape_to_pet_roundtrip_via_pet_to_shape():
+    from pet.core import decode
+    from tools.pet_shape_algebra import pet_to_shape, shape_gamma, shape_to_pet
+
+    shapes = [
+        ((),),
+        ((), ()),
+        (((),),),
+        ((), ((),)),
+    ]
+
+    for shape in shapes:
+        pet = shape_to_pet(shape)
+        assert pet_to_shape(pet) == shape
+        assert decode(pet) == shape_gamma(shape)
