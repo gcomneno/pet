@@ -560,3 +560,26 @@ def shape_matches_partial(shape: Shape, partial) -> bool:
         return False
 
     return _match(0)
+
+
+def partial_shape_is_exact(shape) -> bool:
+    if shape is None:
+        return False
+    return all(partial_shape_is_exact(child) for child in shape)
+
+
+def _partial_shape_fill_min(shape, *, at_root: bool) -> Shape:
+    if shape is None:
+        return ((),) if at_root else ()
+
+    return normalize_shape(
+        tuple(_partial_shape_fill_min(child, at_root=False) for child in shape)
+    )
+
+
+def partial_shape_fill_min(shape) -> Shape:
+    return _partial_shape_fill_min(normalize_partial_shape(shape), at_root=True)
+
+
+def partial_shape_gamma_min(shape) -> int:
+    return shape_gamma(partial_shape_fill_min(shape))

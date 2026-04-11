@@ -508,3 +508,29 @@ def test_shape_matches_partial_on_small_core_generators():
     assert shape_matches_partial(pet_to_shape(encode(6)), ((), ()))
     assert shape_matches_partial(pet_to_shape(encode(12)), ((), None))
     assert not shape_matches_partial(pet_to_shape(encode(8)), ((), ()))
+
+
+def test_partial_shape_fill_min_handles_root_hole_and_inner_holes():
+    from tools.pet_shape_algebra import partial_shape_fill_min
+
+    assert partial_shape_fill_min(None) == ((),)
+    assert partial_shape_fill_min((None,)) == ((),)
+    assert partial_shape_fill_min((None, (None,))) == ((), ((),))
+
+
+def test_partial_shape_is_exact_distinguishes_holes():
+    from tools.pet_shape_algebra import partial_shape_is_exact
+
+    assert partial_shape_is_exact(((),))
+    assert partial_shape_is_exact(((), ((),)))
+    assert not partial_shape_is_exact(None)
+    assert not partial_shape_is_exact(((), None))
+    assert not partial_shape_is_exact(((None,),))
+
+
+def test_partial_shape_gamma_min_returns_minimal_compatible_witness():
+    from tools.pet_shape_algebra import partial_shape_gamma_min
+
+    assert partial_shape_gamma_min(None) == 2
+    assert partial_shape_gamma_min(((), None)) == 6
+    assert partial_shape_gamma_min(((None,),)) == 4
