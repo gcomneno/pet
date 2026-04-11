@@ -170,3 +170,27 @@ def _shape_to_pet(shape: Shape):
 
 def shape_to_pet(shape: Shape):
     return _shape_to_pet(shape)
+
+
+def shape_at(shape: Shape, path: PathT) -> Shape:
+    node = normalize_shape(shape)
+    for idx in path:
+        if idx < 0 or idx >= len(node):
+            raise IndexError(f"path index out of range: {idx}")
+        node = node[idx]
+    return node
+
+
+def shape_paths(shape: Shape, *, include_root: bool = False) -> tuple[PathT, ...]:
+    node = normalize_shape(shape)
+    out: list[PathT] = []
+
+    def _walk(cur: Shape, path: PathT) -> None:
+        out.append(path)
+        for i, child in enumerate(cur):
+            _walk(child, path + (i,))
+
+    _walk(node, ())
+    if include_root:
+        return tuple(out)
+    return tuple(path for path in out if path)

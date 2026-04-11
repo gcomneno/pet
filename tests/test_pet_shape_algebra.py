@@ -116,3 +116,21 @@ def test_shape_to_pet_materializes_core_generator_on_small_sample():
     for n in sample:
         shape = pet_to_shape(encode(n))
         assert decode(shape_to_pet(shape)) == shape_generator(n)
+
+
+def test_shape_at_reads_deep_node():
+    from tools.pet_shape_algebra import normalize_shape, shape_at
+
+    shape = normalize_shape(((((),),),))
+    assert shape_at(shape, ()) == shape
+    assert shape_at(shape, (0,)) == (((),),)
+    assert shape_at(shape, (0, 0)) == ((),)
+    assert shape_at(shape, (0, 0, 0)) == ()
+
+
+def test_shape_paths_lists_all_nodes():
+    from tools.pet_shape_algebra import normalize_shape, shape_paths
+
+    shape = normalize_shape(((), ((),)))
+    assert shape_paths(shape) == ((0,), (1,), (1, 0))
+    assert shape_paths(shape, include_root=True) == ((), (0,), (1,), (1, 0))
