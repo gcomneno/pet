@@ -598,3 +598,30 @@ def test_partial_shape_gamma_exact_matches_exact_completions():
     assert partial_shape_gamma_exact(None) == (2,)
     assert partial_shape_gamma_exact(((), None)) == (6,)
     assert partial_shape_gamma_exact((None, (None,))) == (12,)
+
+
+def test_partial_shape_shortest_completion_path_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_shortest_completion_path
+
+    assert partial_shape_shortest_completion_path(None) == (None, ((),))
+
+
+def test_partial_shape_shortest_completion_path_for_simple_partial():
+    from tools.pet_shape_algebra import partial_shape_shortest_completion_path
+
+    assert partial_shape_shortest_completion_path(((), None)) == (
+        (None, ()),
+        ((), ()),
+    )
+
+
+def test_partial_shape_completion_distance_for_nested_partial():
+    from tools.pet_shape_algebra import partial_shape_completion_distance
+
+    assert partial_shape_completion_distance((None, (None,))) == 2
+
+
+def test_partial_shape_shortest_completion_path_on_exact_shape_is_trivial():
+    from tools.pet_shape_algebra import partial_shape_shortest_completion_path
+
+    assert partial_shape_shortest_completion_path(((),)) == (((),),)

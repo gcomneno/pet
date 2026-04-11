@@ -666,3 +666,57 @@ def partial_shape_exact_completions(shape):
 
 def partial_shape_gamma_exact(shape):
     return tuple(shape_gamma(s) for s in partial_shape_exact_completions(shape))
+
+
+def partial_shape_shortest_completion_path(shape, target=None):
+    start = normalize_partial_shape(shape)
+
+    if partial_shape_is_exact(start):
+        exact_start = normalize_shape(start)
+        if target is not None and exact_start != normalize_shape(target):
+            raise ValueError("exact start shape does not match requested target")
+        return (exact_start,)
+
+    if target is None:
+        target_set = set(partial_shape_exact_completions(start))
+    else:
+        target_shape = normalize_shape(target)
+        if target_shape not in set(partial_shape_exact_completions(start)):
+            raise ValueError("requested target is not an exact completion of the partial shape")
+        target_set = {target_shape}
+
+    _ROOT = object()
+
+    seen = {start}
+    parents = {start: _ROOT}
+    frontier = {start}
+
+    while frontier:
+        next_frontier = set()
+
+        for node in sorted(frontier, key=_partial_shape_key):
+            for nxt in partial_shape_completion_neighbors(node):
+                if nxt in seen:
+                    continue
+
+                seen.add(nxt)
+                parents[nxt] = node
+
+                if partial_shape_is_exact(nxt) and normalize_shape(nxt) in target_set:
+                    path = [normalize_shape(nxt)]
+                    cur = node
+                    while cur is not _ROOT:
+                        path.append(cur)
+                        cur = parents[cur]
+                    path.reverse()
+                    return tuple(path)
+
+                next_frontier.add(nxt)
+
+        frontier = next_frontier
+
+    raise ValueError("no exact completion path found")
+
+
+def partial_shape_completion_distance(shape, target=None) -> int:
+    return len(partial_shape_shortest_completion_path(shape, target=target)) - 1
