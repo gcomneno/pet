@@ -792,6 +792,90 @@ def run_targeted_search(
     }
 
 
+def run_multi_seed_targeted_search(
+    report: dict[str, Any],
+    target_n: int,
+    ranks: list[int],
+    depth: int,
+    beam_width: int = 8,
+    strategy: str = "guided",
+    mode: str = "deep",
+    max_target_n: int | None = None,
+) -> dict[str, Any]:
+    if not isinstance(target_n, int):
+        raise TypeError("target_n must be an int")
+    if target_n < 1:
+        raise ValueError("target_n must be >= 1")
+    if not isinstance(ranks, list):
+        raise TypeError("ranks must be a list")
+    if not ranks:
+        raise ValueError("ranks must not be empty")
+    if any(not isinstance(rank, int) for rank in ranks):
+        raise TypeError("ranks must contain ints")
+    if any(rank < 1 for rank in ranks):
+        raise ValueError("ranks must contain integers >= 1")
+
+    results: list[dict[str, Any]] = []
+
+    for rank in ranks:
+        seed = build_seed(report, rank=rank)
+        targeted = run_targeted_search(
+            seed,
+            target_n=target_n,
+            depth=depth,
+            beam_width=beam_width,
+            strategy=strategy,
+            mode=mode,
+            max_target_n=max_target_n,
+        )
+
+        best = targeted.get("best_node")
+        best_report = targeted.get("best_constraint_report")
+        candidate = seed["hypothesized_candidate"]
+        seed_state = seed["seed_state"]
+
+        row = {
+            "rank": rank,
+            "candidate_kind": candidate["candidate_kind"],
+            "seed_n": seed_state["seed_n"],
+            "best_n": None if best is None else best["current_n"],
+            "best_generator": None if best_report is None else best_report["current_root_generator"],
+            "best_extra": None if best_report is None else best_report["extra_children_over_known"],
+            "best_path": None if best is None else best["path"],
+        }
+        results.append(row)
+
+    def _gen_key(row: dict[str, Any]) -> tuple[int, int, int, int]:
+        extra = -1 if row["best_extra"] is None else row["best_extra"]
+        gen = -1 if row["best_generator"] is None else row["best_generator"]
+        n = -1 if row["best_n"] is None else row["best_n"]
+        return (extra, gen, n, -row["rank"])
+
+    def _n_key(row: dict[str, Any]) -> tuple[int, int, int, int]:
+        extra = -1 if row["best_extra"] is None else row["best_extra"]
+        n = -1 if row["best_n"] is None else row["best_n"]
+        gen = -1 if row["best_generator"] is None else row["best_generator"]
+        return (extra, n, gen, -row["rank"])
+
+    best_by_generator = max(results, key=_gen_key)
+    best_by_n = max(results, key=_n_key)
+
+    return {
+        "schema": "pet-preimage-multi-seed-targeted-search-v0",
+        "source_n": report["n"],
+        "target_n": target_n,
+        "ranks": list(ranks),
+        "depth": depth,
+        "beam_width": beam_width,
+        "strategy": strategy,
+        "mode": mode,
+        "max_target_n": max_target_n,
+        "results": results,
+        "best_by_generator": best_by_generator,
+        "best_by_n": best_by_n,
+    }
+
+
 def build_seed(report: dict[str, Any], rank: int = 1) -> dict[str, Any]:
     source_n = require_field(report, "n")
     source_schedule = require_field(report, "schedule")

@@ -921,3 +921,46 @@ def test_run_targeted_search_hybrid_keeps_guided_generator_signal():
     assert hybrid["best_constraint_report"]["extra_children_over_known"] == 4
     assert hybrid["best_constraint_report"]["current_root_generator"] == guided["best_constraint_report"]["current_root_generator"]
     assert hybrid["best_node"]["current_n"] == guided["best_node"]["current_n"]
+
+
+def test_run_multi_seed_targeted_search_separates_best_by_generator_and_best_by_n():
+    from tools.pet_preimage_seed import run_multi_seed_targeted_search
+
+    target = 84738299381764839281089489284357208475289576295628574257274875473876427964797045871648176574865826408576408521698576142805761095607954601854
+    data = build_partial_explain(target, [10])
+
+    out = run_multi_seed_targeted_search(
+        data,
+        target_n=target,
+        ranks=[1, 2],
+        depth=18,
+        beam_width=32,
+        strategy="guided",
+        mode="deep",
+        max_target_n=target,
+    )
+
+    assert out["schema"] == "pet-preimage-multi-seed-targeted-search-v0"
+    assert out["target_n"] == target
+    assert out["ranks"] == [1, 2]
+    assert len(out["results"]) == 2
+
+    rows = {row["rank"]: row for row in out["results"]}
+
+    assert rows[1]["candidate_kind"] == "minimal-leaf-completion"
+    assert rows[1]["seed_n"] == 30
+    assert rows[1]["best_n"] == 770144760000
+    assert rows[1]["best_generator"] == 770144760000
+    assert rows[1]["best_extra"] == 4
+
+    assert rows[2]["candidate_kind"] == "prime-power-style-completion"
+    assert rows[2]["seed_n"] == 240
+    assert rows[2]["best_n"] == 134775333000000
+    assert rows[2]["best_generator"] == 392931000000
+    assert rows[2]["best_extra"] == 4
+
+    assert out["best_by_generator"]["rank"] == 1
+    assert out["best_by_generator"]["best_generator"] == 770144760000
+
+    assert out["best_by_n"]["rank"] == 2
+    assert out["best_by_n"]["best_n"] == 134775333000000
