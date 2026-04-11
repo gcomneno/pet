@@ -748,3 +748,12 @@ def partial_shape_report(shape) -> dict:
         "target_shape": target,
         "target_gamma": shape_gamma(target),
     }
+
+
+def pet_matches_partial_shape(tree, partial) -> bool:
+    return shape_matches_partial(pet_to_shape(tree), partial)
+
+
+def n_matches_partial_shape(n: int, partial) -> bool:
+    from pet.core import encode
+    return pet_matches_partial_shape(encode(n), partial)

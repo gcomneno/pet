@@ -698,3 +698,31 @@ def test_partial_shape_report_for_exact_shape():
     assert report["completion_distance"] == 0
     assert report["target_shape"] == ((),)
     assert report["target_gamma"] == 2
+
+
+def test_pet_matches_partial_shape_small_cases():
+    from pet.core import encode
+    from tools.pet_shape_algebra import pet_matches_partial_shape
+
+    assert pet_matches_partial_shape(encode(6), ((), ()))
+    assert pet_matches_partial_shape(encode(12), ((), None))
+    assert pet_matches_partial_shape(encode(8), ((None,),))
+    assert not pet_matches_partial_shape(encode(8), ((), ()))
+
+
+def test_n_matches_partial_shape_small_cases():
+    from tools.pet_shape_algebra import n_matches_partial_shape
+
+    assert n_matches_partial_shape(6, ((), ()))
+    assert n_matches_partial_shape(12, ((), None))
+    assert n_matches_partial_shape(8, ((None,),))
+    assert not n_matches_partial_shape(8, ((), ()))
+
+
+def test_partial_shape_report_target_matches_partial():
+    from tools.pet_shape_algebra import partial_shape_report, shape_matches_partial
+
+    partial = (None, (None,))
+    report = partial_shape_report(partial)
+
+    assert shape_matches_partial(report["target_shape"], partial)
