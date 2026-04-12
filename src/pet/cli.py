@@ -499,6 +499,40 @@ def _factor_exp(n: int, prime: int) -> int:
     return 0
 
 
+def _pet_friendliness_report(n: int) -> dict:
+    if n < 2:
+        raise ValueError("pet-friendliness expects an integer >= 2")
+
+    factors = tuple(prime_factorization(n))
+    support = tuple(prime for prime, _exp in factors)
+    present = set(support)
+    max_prime = support[-1]
+
+    missing = []
+    candidate = 2
+    while candidate <= max_prime:
+        if is_prime(candidate) and candidate not in present:
+            missing.append(candidate)
+        candidate += 1
+
+    strict_pet_friendly = len(missing) == 0
+    canonical_build_cost = None
+    if strict_pet_friendly:
+        canonical_build_cost = (len(support) - 1) + sum(exp - 1 for _prime, exp in factors)
+
+    return {
+        "n": n,
+        "factors": factors,
+        "support": support,
+        "support_size": len(support),
+        "max_prime": max_prime,
+        "strict_pet_friendly": strict_pet_friendly,
+        "missing_prime_count": len(missing),
+        "missing_primes_before_max": tuple(missing),
+        "canonical_build_cost": canonical_build_cost,
+    }
+
+
 def _bytes_to_build_report(path_str: str, *, byteorder: str, signed: bool) -> dict:
     int_report = _read_int_from_bytes_file(path_str, byteorder=byteorder, signed=signed)
     build_report = _build_from_int_report(int_report["int"])
@@ -1204,6 +1238,15 @@ def main(argv: list[str] | None = None) -> int:
 
 
 
+
+    # pet-friendliness
+    p_pet_friendliness = subparsers.add_parser(
+        "pet-friendliness",
+        help="inspect whether N is PET-friendly under strict NEW-canonical support",
+    )
+    p_pet_friendliness.add_argument("n", type=int, metavar="N")
+    p_pet_friendliness.add_argument("--json", action="store_true")
+
     # bytes-to-build
     p_bytes_to_build = subparsers.add_parser(
         "bytes-to-build",
@@ -1645,6 +1688,26 @@ def main(argv: list[str] | None = None) -> int:
 
 
 
+
+
+        elif args.command == "pet-friendliness":
+            report = _pet_friendliness_report(args.n)
+
+            if args.json:
+                print(json.dumps(_jsonable_value(report), indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {report['n']}")
+                print(f"factors = {_format_factorization(report['factors'])}")
+                print(f"support = {report['support']}")
+                print(f"support_size = {report['support_size']}")
+                print(f"max_prime = {report['max_prime']}")
+                print(f"strict_pet_friendly = {'yes' if report['strict_pet_friendly'] else 'no'}")
+                print(f"missing_prime_count = {report['missing_prime_count']}")
+                print(f"missing_primes_before_max = {report['missing_primes_before_max']}")
+                print(
+                    "canonical_build_cost = "
+                    + ("none" if report["canonical_build_cost"] is None else str(report["canonical_build_cost"]))
+                )
 
         elif args.command == "bytes-to-build":
             report = _bytes_to_build_report(

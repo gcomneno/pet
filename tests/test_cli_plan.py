@@ -41,6 +41,24 @@ def test_cli_plan_json_smoke():
 
 
 
+
+
+def test_internal_planners_do_not_require_generators(monkeypatch):
+    import pet.cli as cli
+
+    def _boom(_n):
+        raise AssertionError("shape_signature_dict should not be called by planners")
+
+    monkeypatch.setattr(cli, "shape_signature_dict", _boom)
+
+    path1 = cli._plan_path(12, 75, max_depth=8)
+    assert path1 is not None
+    assert path1[-1]["target_n"] == 75
+
+    path2 = cli._plan_path_best_first(12, 245, max_depth=10, max_visited=50000)
+    assert path2 is not None
+    assert path2[-1]["target_n"] == 245
+
 def test_cli_plan_is_deterministic():
     args = ("plan", "12", "245", "--max-depth", "10")
     outs = [_run_cli(*args) for _ in range(4)]
