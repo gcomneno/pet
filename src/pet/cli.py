@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import heapq
 import pathlib
 import sys
 from collections import deque
@@ -98,7 +99,7 @@ def _next_new_prime(support: set[int]) -> int:
         candidate += 1
 
 
-def _explain_moves(n: int) -> dict:
+def _explain_moves(n: int, *, include_generators: bool = True) -> dict:
     factors = prime_factorization(n)
     support = {p for p, _ in factors}
 
@@ -108,12 +109,13 @@ def _explain_moves(n: int) -> dict:
 
     q = _next_new_prime(support)
     new_n = n * q
+    target_generator_for = (lambda value: shape_signature_dict(value)['generator']) if include_generators else (lambda value: None)
 
     moves = {
         "new": {
             "prime": q,
             "target_n": new_n,
-            "target_generator": shape_signature_dict(new_n)["generator"],
+            "target_generator": target_generator_for(new_n),
         },
         "drop": None,
         "inc": [],
@@ -132,7 +134,7 @@ def _explain_moves(n: int) -> dict:
                 "primes": primes,
                 "representative_prime": rep,
                 "target_n": inc_n,
-                "target_generator": shape_signature_dict(inc_n)["generator"],
+                "target_generator": target_generator_for(inc_n),
             }
         )
 
@@ -145,7 +147,7 @@ def _explain_moves(n: int) -> dict:
                     "primes": primes,
                     "representative_prime": rep,
                     "target_n": dec_n,
-                    "target_generator": shape_signature_dict(dec_n)["generator"],
+                    "target_generator": target_generator_for(dec_n),
                 }
             )
 
@@ -159,14 +161,14 @@ def _explain_moves(n: int) -> dict:
                 "primes": primes,
                 "representative_prime": rep,
                 "target_n": drop_n,
-                "target_generator": shape_signature_dict(drop_n)["generator"],
+                "target_generator": target_generator_for(drop_n),
             }
 
     return moves
 
 
 def _pathwise_edges_for_number(n: int) -> list[dict]:
-    moves = _explain_moves(n)
+    moves = _explain_moves(n, include_generators=False)
     edges: list[dict] = []
 
     new_move = moves["new"]
@@ -608,6 +610,75 @@ def _build_from_factors_report(factors: tuple[tuple[int, int], ...]) -> dict:
     }
 
 
+def _factor_exp_map(n: int) -> dict[int, int]:
+    return dict(prime_factorization(n))
+
+
+def _plan_target_score(n: int, target: int) -> tuple[int, int, int]:
+    cur = _factor_exp_map(n)
+    tgt = _factor_exp_map(target)
+
+    primes = sorted(set(cur) | set(tgt))
+    exp_l1 = sum(abs(cur.get(p, 0) - tgt.get(p, 0)) for p in primes)
+    support_symdiff = len(set(cur) ^ set(tgt))
+    largest_prime_gap = abs((max(cur) if cur else 1) - (max(tgt) if tgt else 1))
+
+    return (exp_l1 + support_symdiff, support_symdiff, largest_prime_gap)
+
+
+def _plan_path_best_first(start: int, target: int, max_depth: int, max_visited: int = 20000):
+    if start == target:
+        return []
+
+    heap = []
+    start_score = _plan_target_score(start, target)
+    heapq.heappush(heap, (start_score, 0, start))
+
+    best_depth = {start: 0}
+    parent = {start: None}
+    edge = {}
+    visited = 0
+
+    while heap:
+        _score, depth, cur = heapq.heappop(heap)
+        visited += 1
+        if visited > max_visited:
+            break
+
+        if cur == target:
+            path = []
+            node = cur
+            while parent[node] is not None:
+                path.append(edge[node])
+                node = parent[node]
+            path.reverse()
+            return path
+
+        if depth >= max_depth:
+            continue
+
+        for row in sorted(
+            _plan_neighbors(cur),
+            key=lambda row: (_plan_move_rank(row["label"]), row["target_n"], row["label"]),
+        ):
+            nxt = row["target_n"]
+            nd = depth + 1
+
+            prev_best = best_depth.get(nxt)
+            if prev_best is not None and prev_best <= nd:
+                continue
+
+            best_depth[nxt] = nd
+            parent[nxt] = cur
+            edge[nxt] = row
+            heapq.heappush(
+                heap,
+                (_plan_target_score(nxt, target), nd, nxt),
+            )
+
+    return None
+
+
 def _plan_move_rank(label: str) -> tuple[int, str]:
     if label.startswith("NEW("):
         return (0, label)
@@ -621,7 +692,7 @@ def _plan_move_rank(label: str) -> tuple[int, str]:
 
 
 def _plan_neighbors(n: int):
-    moves = _explain_moves(n)
+    moves = _explain_moves(n, include_generators=False)
 
     new = moves.get("new")
     if new is not None:
@@ -1188,6 +1259,28 @@ def main(argv: list[str] | None = None) -> int:
     p_build_from_factors.add_argument("file", metavar="FACTORS.json")
     p_build_from_factors.add_argument("--json", action="store_true")
 
+
+    # plan-best
+    p_plan_best = subparsers.add_parser(
+        "plan-best",
+        help="find a bounded deterministic PET path from A to B with best-first search",
+    )
+    p_plan_best.add_argument("start", type=int, metavar="A")
+    p_plan_best.add_argument("target", type=int, metavar="B")
+    p_plan_best.add_argument(
+        "--max-depth",
+        type=int,
+        default=12,
+        help="maximum search depth for bounded best-first PET planning (default: 12)",
+    )
+    p_plan_best.add_argument(
+        "--max-visited",
+        type=int,
+        default=20000,
+        help="maximum popped states before giving up (default: 20000)",
+    )
+    p_plan_best.add_argument("--json", action="store_true")
+
     # query / families
     register_query_subparser(subparsers)
     register_families_subparser(subparsers)
@@ -1620,6 +1713,45 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"steps = {report['steps']}")
                 for row in report["path"]:
                     print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
+
+
+        elif args.command == "plan-best":
+            if args.start < 2 or args.target < 2:
+                raise ValueError("plan-best expects integers >= 2")
+            if args.max_depth < 0:
+                raise ValueError("--max-depth must be >= 0")
+            if args.max_visited < 1:
+                raise ValueError("--max-visited must be >= 1")
+
+            path = _plan_path_best_first(
+                args.start,
+                args.target,
+                args.max_depth,
+                max_visited=args.max_visited,
+            )
+
+            if args.json:
+                print(json.dumps({
+                    "start": args.start,
+                    "target": args.target,
+                    "max_depth": args.max_depth,
+                    "max_visited": args.max_visited,
+                    "found": path is not None,
+                    "steps": None if path is None else len(path),
+                    "path": [] if path is None else _jsonable_value(path),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"A = {args.start}")
+                print(f"B = {args.target}")
+                print(f"max_depth = {args.max_depth}")
+                print(f"max_visited = {args.max_visited}")
+                print("---")
+                if path is None:
+                    print("NO PATH FOUND")
+                else:
+                    print(f"steps = {len(path)}")
+                    for row in path:
+                        print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
 
         elif args.command == "plan":
             if args.start < 2 or args.target < 2:
