@@ -5,6 +5,9 @@ from pathlib import Path
 
 Shape = tuple
 
+PETRAW_MAGIC = b"PTRW"
+PETRAW_VERSION = 0
+
 
 def normalize_shape(shape: Shape) -> Shape:
     if shape == ():
@@ -177,6 +180,81 @@ def decode_shape(shape: Shape) -> bytes:
     return decode_seq(shape)
 
 
+def _uvarint_encode(n: int) -> bytes:
+    if n < 0:
+        raise ValueError("uvarint requires n >= 0")
+    out = bytearray()
+    while True:
+        b = n & 0x7F
+        n >>= 7
+        if n:
+            out.append(b | 0x80)
+        else:
+            out.append(b)
+            return bytes(out)
+
+
+def _uvarint_decode(data: bytes, pos: int) -> tuple[int, int]:
+    shift = 0
+    value = 0
+
+    while True:
+        if pos >= len(data):
+            raise ValueError("truncated uvarint")
+        b = data[pos]
+        pos += 1
+        value |= (b & 0x7F) << shift
+        if not (b & 0x80):
+            return value, pos
+        shift += 7
+        if shift > 63:
+            raise ValueError("uvarint too large")
+
+
+def _shape_to_raw_payload(shape: Shape) -> bytes:
+    out = bytearray()
+
+    def emit(node: Shape) -> None:
+        out.extend(_uvarint_encode(len(node)))
+        for child in node:
+            emit(child)
+
+    emit(shape)
+    return bytes(out)
+
+
+def _shape_from_raw_payload(data: bytes) -> Shape:
+    def parse(pos: int) -> tuple[Shape, int]:
+        arity, pos = _uvarint_decode(data, pos)
+        children = []
+        for _ in range(arity):
+            child, pos = parse(pos)
+            children.append(child)
+        return tuple(children), pos
+
+    shape, pos = parse(0)
+    if pos != len(data):
+        raise ValueError("trailing bytes after raw PET shape")
+    return shape
+
+
+def shape_to_raw_bytes(shape: Shape) -> bytes:
+    payload = _shape_to_raw_payload(shape)
+    return PETRAW_MAGIC + bytes([PETRAW_VERSION]) + payload
+
+
+def shape_from_raw_bytes(data: bytes) -> Shape:
+    if len(data) < len(PETRAW_MAGIC) + 1:
+        raise ValueError("truncated petraw header")
+    if data[:4] != PETRAW_MAGIC:
+        raise ValueError("invalid petraw magic")
+    version = data[4]
+    if version != PETRAW_VERSION:
+        raise ValueError(f"unsupported petraw version: {version}")
+    payload = data[5:]
+    return _shape_from_raw_payload(payload)
+
+
 def is_prime(n: int) -> bool:
     if n < 2:
         return False
@@ -222,9 +300,24 @@ def to_jsonable(shape: Shape):
 
 
 def parse_shape_json(obj) -> Shape:
+    if isinstance(obj, dict):
+        if "shape" not in obj:
+            raise TypeError("shape JSON object must contain a 'shape' field")
+        obj = obj["shape"]
+
     if not isinstance(obj, list):
-        raise TypeError("shape JSON must be a nested list")
+        raise TypeError("shape JSON must be a nested list or an object with 'shape'")
     return normalize_shape(tuple(parse_shape_json(child) for child in obj))
+
+
+def _decode_report(shape_path: str, data: bytes) -> dict:
+    payload = {
+        "shape_json": shape_path,
+        "byte_count": len(data),
+    }
+    if len(data) <= 64:
+        payload["bytes_hex"] = data.hex()
+    return payload
 
 
 def cmd_encode(args: argparse.Namespace) -> int:
@@ -258,11 +351,47 @@ def cmd_decode(args: argparse.Namespace) -> int:
     if args.out:
         Path(args.out).write_bytes(data)
 
+    print(json.dumps(_decode_report(args.shape_json, data), indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_encode_raw(args: argparse.Namespace) -> int:
+    data = Path(args.file).read_bytes()
+    shape = encode_bytes(data)
+    raw = shape_to_raw_bytes(shape)
+    Path(args.out).write_bytes(raw)
+
     payload = {
-        "shape_json": args.shape_json,
+        "file": args.file,
+        "raw_out": args.out,
         "byte_count": len(data),
-        "bytes_hex": data.hex(),
+        "petraw_bytes": len(raw),
+        "shape_node_count": shape_node_count(shape),
+        "shape_height": shape_height(shape),
+        "petraw_magic": PETRAW_MAGIC.decode("ascii"),
+        "petraw_version": PETRAW_VERSION,
     }
+    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    return 0
+
+
+def cmd_decode_raw(args: argparse.Namespace) -> int:
+    raw = Path(args.raw_shape).read_bytes()
+    shape = shape_from_raw_bytes(raw)
+    data = decode_shape(shape)
+
+    if args.out:
+        Path(args.out).write_bytes(data)
+
+    payload = {
+        "raw_shape": args.raw_shape,
+        "petraw_bytes": len(raw),
+        "byte_count": len(data),
+        "petraw_magic": PETRAW_MAGIC.decode("ascii"),
+        "petraw_version": PETRAW_VERSION,
+    }
+    if len(data) <= 64:
+        payload["bytes_hex"] = data.hex()
     print(json.dumps(payload, indent=2, ensure_ascii=False))
     return 0
 
@@ -273,7 +402,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_encode = sub.add_parser("encode", help="encode a file into a PET-native shape")
+    p_encode = sub.add_parser("encode", help="encode a file into a PET-native shape JSON payload")
     p_encode.add_argument("file")
     p_encode.add_argument("--witness", action="store_true")
     p_encode.add_argument("--roundtrip-check", action="store_true")
@@ -283,6 +412,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_decode.add_argument("shape_json")
     p_decode.add_argument("--out")
     p_decode.set_defaults(func=cmd_decode)
+
+    p_encode_raw = sub.add_parser("encode-raw", help="encode a file into raw PET shape bytes (petraw-v0)")
+    p_encode_raw.add_argument("file")
+    p_encode_raw.add_argument("--out", required=True)
+    p_encode_raw.set_defaults(func=cmd_encode_raw)
+
+    p_decode_raw = sub.add_parser("decode-raw", help="decode raw PET shape bytes (petraw-v0)")
+    p_decode_raw.add_argument("raw_shape")
+    p_decode_raw.add_argument("--out")
+    p_decode_raw.set_defaults(func=cmd_decode_raw)
 
     return parser
 
