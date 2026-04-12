@@ -499,6 +499,27 @@ def _factor_exp(n: int, prime: int) -> int:
     return 0
 
 
+def _canonical_build_cost_from_factors(factors: tuple[tuple[int, int], ...]) -> int | None:
+    if not factors:
+        return None
+
+    support = tuple(prime for prime, _exp in factors)
+    present = set(support)
+    max_prime = support[-1]
+
+    candidate = 2
+    while candidate <= max_prime:
+        if is_prime(candidate) and candidate not in present:
+            return None
+        candidate += 1
+
+    return (len(support) - 1) + sum(exp - 1 for _prime, exp in factors)
+
+
+def _canonical_build_cost(n: int) -> int | None:
+    return _canonical_build_cost_from_factors(tuple(prime_factorization(n)))
+
+
 def _pet_friendliness_report(n: int) -> dict:
     if n < 2:
         raise ValueError("pet-friendliness expects an integer >= 2")
@@ -516,10 +537,8 @@ def _pet_friendliness_report(n: int) -> dict:
             missing.append(candidate)
         candidate += 1
 
-    strict_pet_friendly = len(missing) == 0
-    canonical_build_cost = None
-    if strict_pet_friendly:
-        canonical_build_cost = (len(support) - 1) + sum(exp - 1 for _prime, exp in factors)
+    canonical_build_cost = _canonical_build_cost_from_factors(factors)
+    strict_pet_friendly = canonical_build_cost is not None
 
     relaxed_hull_support = []
     candidate = 2

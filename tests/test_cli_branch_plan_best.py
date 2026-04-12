@@ -39,3 +39,44 @@ def test_branch_plan_best_is_deterministic_on_large_canonical_target():
     assert "steps = 24" in outs[0]
     assert "12 --NEW(p=5)--> 60" in outs[0]
     assert "15842977920000 --INC(p=11,e=1)--> 174272757120000" in outs[0]
+
+
+def test_internal_canonical_build_cost_helper_matches_known_examples():
+    import pet.cli as cli
+
+    assert cli._canonical_build_cost(12) == 2
+    assert cli._canonical_build_cost(360) == 5
+    assert cli._canonical_build_cost(28) is None
+
+
+def test_branch_plan_best_matches_exact_canonical_cost_gap_on_medium_canonical_target():
+    import pet.cli as cli
+
+    start = 12
+    target = 907200
+    path = cli._plan_path_best_first(start, target, max_depth=14, max_visited=50000)
+
+    assert path is not None
+    start_cost = cli._canonical_build_cost(start)
+    target_cost = cli._canonical_build_cost(target)
+
+    assert start_cost == 2
+    assert target_cost == 12
+    assert len(path) == target_cost - start_cost == 10
+
+
+def test_branch_plan_best_matches_exact_canonical_cost_gap_on_large_canonical_target():
+    import pet.cli as cli
+
+    start = 12
+    target = 174272757120000
+    path = cli._plan_path_best_first(start, target, max_depth=24, max_visited=50000)
+
+    assert path is not None
+    start_cost = cli._canonical_build_cost(start)
+    target_cost = cli._canonical_build_cost(target)
+
+    assert start_cost == 2
+    assert target_cost == 26
+    assert len(path) == target_cost - start_cost == 24
+
