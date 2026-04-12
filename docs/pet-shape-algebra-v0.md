@@ -240,6 +240,20 @@ Helper disponibili:
 - `partial_shape_completion_gamma_profile(partial, max_mass)`
 - `partial_shape_completion_report(partial, max_mass, preview=...)`
 
+### Guardrail di reporting introdotti dopo gli stress test
+
+I report shape/partial espongono ora due segnali operativi importanti:
+
+- `reported_in_canonical_coordinates = yes`
+- `warning = weak-stabilization`
+
+Interpretazione pratica:
+
+- i core e i path residui sono riportati in coordinate canoniche
+- se `stable_window < 2`, il report va letto con prudenza
+- un caso con `stable_window = 1` può cambiare ancora a `N+1`
+- un caso con `stable_window = 0` non va trattato come conclusione strutturale robusta
+
 ### Significato di `max_mass`
 
 `max_mass` limita la ricerca alle shape esatte con massa strutturale bounded.

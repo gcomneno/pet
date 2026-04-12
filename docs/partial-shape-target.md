@@ -44,6 +44,17 @@ Classifica il tipo di core osservato:
 
 Sono i path in cui resta libertà strutturale residua.
 
+Nota importante:
+questi path vanno letti in **coordinate canoniche** della partial/shape normalizzata,
+non come coordinate “geometriche originali” del ramo scritto in input.
+
+Quando la CLI stampa:
+
+- `reported_in_canonical_coordinates = yes`
+
+significa esattamente questo:
+`observed_core` e `residual_free_paths` descrivono un rappresentante canonico della classe osservata.
+
 ### `residual_local_profiles`
 
 Per ogni free path descrive:
@@ -64,6 +75,18 @@ Raccoglie il contesto osservativo:
 - `forced_hole_count`
 - `fast_preview`
 
+Lettura pratica di `stable_window`:
+
+- `stable_window >= 2` → risultato abbastanza leggibile operativamente
+- `stable_window = 1` → risultato provvisorio; a `N+1` può ancora cambiare faccia
+- `stable_window = 0` → risultato non affidabile come lettura strutturale
+
+Quando la CLI stampa:
+
+- `warning = weak-stabilization`
+
+significa che il caso è ancora in questa zona debole e non va letto troppo forte.
+
 ---
 
 ## Cosa garantiamo
@@ -82,6 +105,10 @@ entro un bound strutturale finito.
 Non garantiamo ancora che `observed_core` coincida sempre con una:
 
 **massima struttura compatibile dimostrata in assoluto**
+
+Inoltre, nei casi simmetrici, `observed_core` può essere esposto tramite
+un rappresentante canonico della classe osservata: per questo la direzione
+apparente dei rami non va sempre interpretata come informazione intrinseca.
 
 Questa resta una frontiera aperta del progetto.
 
