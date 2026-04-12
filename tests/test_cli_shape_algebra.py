@@ -251,3 +251,14 @@ def test_cli_shape_of_prime_power_towers_wraps_recursively():
         assert actual == predicted, (
             f"shape({p}^({q}^{m})) mismatch: predicted={predicted!r} actual={actual!r}"
         )
+
+
+def test_cli_partial_shape_target_warns_on_weak_stabilization():
+    out = _run_cli("partial-shape-target", "(None, ((None,),))", "--max-mass", "7")
+    assert "stable_window = 1" in out
+    assert "warning = weak-stabilization" in out
+
+
+def test_cli_partial_shape_target_no_warning_when_stable():
+    out = _run_cli("partial-shape-target", "(None, (None, None))", "--max-mass", "7")
+    assert "warning = weak-stabilization" not in out

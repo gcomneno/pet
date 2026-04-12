@@ -1449,6 +1449,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"is_exact = {report['is_exact']}")
                 print(f"change_masses = {change_masses}")
                 print(f"stable_window = {stable_window}")
+                if stable_window < 2:
+                    print("warning = weak-stabilization")
                 print(f"fixed_window = {args.window}")
                 print(f"meets_window = {'yes' if meets_window else 'no'}")
                 if auto_window is not None:
@@ -1525,6 +1527,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"fast_preview = {'yes' if report['fast_preview'] else 'no'}")
                 print(f"stable_window = {report['stable_window']}")
                 print(f"stabilization_mass = {report['stabilization_mass']}")
+                if report["stable_window"] < 2:
+                    print("warning = weak-stabilization")
                 if auto_window is not None:
                     print(f"auto_window = {auto_window}")
                     print(f"max_mass_cap = {args.max_mass_cap}")
@@ -1652,6 +1656,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"fast_preview = {'yes' if report['fast_preview'] else 'no'}")
                 print(f"stable_window = {report['stable_window']}")
                 print(f"stabilization_mass = {report['stabilization_mass']}")
+                if report["stable_window"] < 2:
+                    print("warning = weak-stabilization")
                 if auto_window is not None:
                     print(f"auto_window = {auto_window}")
                     print(f"max_mass_cap = {args.max_mass_cap}")
@@ -1722,6 +1728,8 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  max_mass = {report['evidence']['max_mass']}")
                 print(f"  stable_window = {report['evidence']['stable_window']}")
                 print(f"  stabilization_mass = {report['evidence']['stabilization_mass']}")
+                if report["evidence"]["stable_window"] < 2:
+                    print("  warning = weak-stabilization")
                 print(f"  forced_hole_count = {report['evidence']['forced_hole_count']}")
                 print(f"  fast_preview = {'yes' if report['evidence']['fast_preview'] else 'no'}")
                 if auto_window is not None:
