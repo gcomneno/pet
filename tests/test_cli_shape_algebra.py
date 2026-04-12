@@ -87,7 +87,7 @@ def test_cli_partial_shape_forced_core_window_smoke():
     out = _run_cli("partial-shape-forced-core", "((), None)", "--max-mass", "4", "--window", "2")
 
     assert "stable_window = 2" in out
-    assert "requested_window = 2" in out
+    assert "fixed_window = 2" in out
     assert "meets_window = yes" in out
 
 
@@ -197,3 +197,57 @@ def test_cli_partial_shape_target_smoke():
     assert "residual_free_paths = ((0,),)" in out
     assert "residual_local_profiles:" in out
     assert "  path = (0,)" in out
+
+
+def test_cli_shape_of_prime_power_wraps_exponent_shape():
+    import ast
+    import re
+
+    cache = {}
+
+    def shape_of(n: int):
+        if n in cache:
+            return cache[n]
+        out = _run_cli("shape-of", str(n))
+        m = re.search(r"^shape = (.+)$", out, re.M)
+        assert m is not None, f"shape line non trovata per n={n}\n{out}"
+        value = ast.literal_eval(m.group(1))
+        cache[n] = value
+        return value
+
+    for p in (2, 3, 5, 7):
+        for k in range(1, 21):
+            if k == 1:
+                predicted = ((),)
+            else:
+                predicted = (shape_of(k),)
+            actual = shape_of(p ** k)
+            assert actual == predicted, (
+                f"shape({p}^{k}) mismatch: predicted={predicted!r} actual={actual!r}"
+            )
+
+
+def test_cli_shape_of_prime_power_towers_wraps_recursively():
+    import ast
+    import re
+
+    def shape_of(n: int):
+        out = _run_cli("shape-of", str(n))
+        m = re.search(r"^shape = (.+)$", out, re.M)
+        assert m is not None, f"shape line non trovata per n={n}\n{out}"
+        return ast.literal_eval(m.group(1))
+
+    cases = [
+        (2, 3, 2),   # 2^(3^2)
+        (3, 2, 3),   # 3^(2^3)
+        (5, 2, 4),   # 5^(2^4)
+        (2, 5, 2),   # 2^(5^2)
+    ]
+
+    for p, q, m in cases:
+        k = q ** m
+        actual = shape_of(p ** k)
+        predicted = (shape_of(k),)
+        assert actual == predicted, (
+            f"shape({p}^({q}^{m})) mismatch: predicted={predicted!r} actual={actual!r}"
+        )

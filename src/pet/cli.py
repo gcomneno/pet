@@ -1429,7 +1429,7 @@ def main(argv: list[str] | None = None) -> int:
                 payload["change_masses"] = change_masses
                 payload["stabilization_mass"] = stabilization_mass
                 payload["stable_window"] = stable_window
-                payload["requested_window"] = args.window
+                payload["fixed_window"] = args.window
                 payload["meets_window"] = meets_window
                 payload["effective_max_mass"] = effective_max_mass
                 payload["auto_window"] = auto_window
@@ -1448,7 +1448,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"is_exact = {report['is_exact']}")
                 print(f"change_masses = {change_masses}")
                 print(f"stable_window = {stable_window}")
-                print(f"requested_window = {args.window}")
+                print(f"fixed_window = {args.window}")
                 print(f"meets_window = {'yes' if meets_window else 'no'}")
                 if auto_window is not None:
                     print(f"auto_window = {auto_window}")
