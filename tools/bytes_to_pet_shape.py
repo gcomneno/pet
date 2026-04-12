@@ -20,28 +20,11 @@ def atom(k: int) -> Shape:
     return tuple(() for _ in range(k))
 
 
-TAG_HEAD = atom(2)
-TAG_TAIL = atom(3)
-SEQ_NIL = atom(4)
-
-TAG_BYTE = atom(5)
-TAG_HI = atom(6)
-TAG_LO = atom(7)
-
-POS0 = atom(8)
-POS1 = atom(9)
-POS2 = atom(10)
-POS3 = atom(11)
-
-BIT0 = atom(12)
-BIT1 = atom(13)
-
 TAG_SEQ_LEAF = atom(14)
 TAG_SEQ_PAIR = atom(15)
 TAG_LEFT = atom(16)
 TAG_RIGHT = atom(17)
-
-POS_TAGS = (POS0, POS1, POS2, POS3)
+SEQ_NIL = atom(18)
 
 
 def wrap(tag: Shape, payload: Shape) -> Shape:
@@ -59,101 +42,70 @@ def unwrap_tagged(shape: Shape, tag: Shape) -> Shape | None:
     return None
 
 
-def bit_shape(bit: int) -> Shape:
-    if bit not in (0, 1):
-        raise ValueError("bit must be 0 or 1")
-    return BIT1 if bit else BIT0
+def shape_node_count(shape: Shape) -> int:
+    return 1 + sum(shape_node_count(child) for child in shape)
 
 
-def encode_nibble(n: int) -> Shape:
-    if not (0 <= n <= 15):
-        raise ValueError("nibble must be in 0..15")
-    return canonical(
-        tuple(
-            wrap(POS_TAGS[i], bit_shape((n >> (3 - i)) & 1))
-            for i in range(4)
-        )
-    )
+def shape_height(shape: Shape) -> int:
+    if shape == ():
+        return 0
+    return 1 + max(shape_height(child) for child in shape)
 
 
-def decode_nibble(shape: Shape) -> int:
-    if len(shape) != 4:
-        raise ValueError("invalid nibble shape: expected arity 4")
+def _shape_key(shape: Shape):
+    return (shape_node_count(shape), shape)
 
-    bits: dict[int, int] = {}
-    for child in shape:
-        matched = False
-        for i, pos_tag in enumerate(POS_TAGS):
-            payload = unwrap_tagged(child, pos_tag)
-            if payload is None:
-                continue
-            if i in bits:
-                raise ValueError("duplicate nibble position")
-            if payload == BIT0:
-                bits[i] = 0
-            elif payload == BIT1:
-                bits[i] = 1
-            else:
-                raise ValueError("invalid bit payload")
-            matched = True
-            break
-        if not matched:
-            raise ValueError("invalid nibble child")
 
-    if set(bits) != {0, 1, 2, 3}:
-        raise ValueError("missing nibble position")
+def _byte_shape_mutations(shape: Shape) -> tuple[Shape, ...]:
+    out = set()
 
-    out = 0
-    for i in range(4):
-        out = (out << 1) | bits[i]
-    return out
+    out.add(canonical((shape,)))
+    out.add(canonical(shape + ((),)))
+
+    for i, child in enumerate(shape):
+        out.add(canonical(shape[:i] + (canonical((child,)),) + shape[i + 1 :]))
+        out.add(canonical(shape[:i] + (canonical(child + ((),)),) + shape[i + 1 :]))
+
+    return tuple(sorted(out, key=_shape_key))
+
+
+def _compact_shape_table(count: int) -> tuple[Shape, ...]:
+    ordered: list[Shape] = [()]
+    seen: set[Shape] = {()}
+    idx = 0
+
+    while len(ordered) < count:
+        if idx >= len(ordered):
+            raise RuntimeError(f"could not generate {count} distinct compact shapes")
+
+        cur = ordered[idx]
+        idx += 1
+
+        for nxt in _byte_shape_mutations(cur):
+            if nxt not in seen:
+                seen.add(nxt)
+                ordered.append(nxt)
+
+        ordered.sort(key=_shape_key)
+
+    return tuple(ordered[:count])
+
+
+BYTE_TABLE = _compact_shape_table(256)
+BYTE_DECODE = {shape: i for i, shape in enumerate(BYTE_TABLE)}
 
 
 def byte_shape(b: int) -> Shape:
     if not (0 <= b <= 255):
         raise ValueError("byte must be in 0..255")
-    hi = (b >> 4) & 0xF
-    lo = b & 0xF
-    return canonical((
-        TAG_BYTE,
-        wrap(TAG_HI, encode_nibble(hi)),
-        wrap(TAG_LO, encode_nibble(lo)),
-    ))
+    return BYTE_TABLE[b]
 
 
 def decode_byte(shape: Shape) -> int:
-    if len(shape) != 3:
-        raise ValueError("invalid byte shape: expected arity 3")
-
-    saw_tag = False
-    hi = None
-    lo = None
-
-    for child in shape:
-        if child == TAG_BYTE:
-            saw_tag = True
-            continue
-
-        payload = unwrap_tagged(child, TAG_HI)
-        if payload is not None:
-            if hi is not None:
-                raise ValueError("duplicate HI nibble")
-            hi = decode_nibble(payload)
-            continue
-
-        payload = unwrap_tagged(child, TAG_LO)
-        if payload is not None:
-            if lo is not None:
-                raise ValueError("duplicate LO nibble")
-            lo = decode_nibble(payload)
-            continue
-
-        raise ValueError("invalid byte child")
-
-    if not saw_tag or hi is None or lo is None:
-        raise ValueError("invalid byte shape: missing tag or nibble")
-
-    return (hi << 4) | lo
+    try:
+        return BYTE_DECODE[shape]
+    except KeyError as exc:
+        raise ValueError("invalid byte shape") from exc
 
 
 def seq_leaf(b: int) -> Shape:
@@ -263,16 +215,6 @@ def shape_witness(shape: Shape) -> int:
     for prime, (exp, _child) in zip(first_primes(len(child_values)), child_values):
         n *= prime ** exp
     return n
-
-
-def shape_node_count(shape: Shape) -> int:
-    return 1 + sum(shape_node_count(child) for child in shape)
-
-
-def shape_height(shape: Shape) -> int:
-    if shape == ():
-        return 0
-    return 1 + max(shape_height(child) for child in shape)
 
 
 def to_jsonable(shape: Shape):
