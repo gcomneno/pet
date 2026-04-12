@@ -4,6 +4,7 @@ import argparse
 import ast
 import json
 import sys
+from collections import deque
 
 from .atlas import atlas, draw_shape, extract_shape, print_atlas
 from .algebra import distance, structural_distance
@@ -434,6 +435,95 @@ def _dismantle_data(n: int) -> dict:
 
 
 
+
+
+def _plan_move_rank(label: str) -> tuple[int, str]:
+    if label.startswith("NEW("):
+        return (0, label)
+    if label.startswith("DROP("):
+        return (1, label)
+    if label.startswith("INC("):
+        return (2, label)
+    if label.startswith("DEC("):
+        return (3, label)
+    return (99, label)
+
+
+def _plan_neighbors(n: int):
+    moves = _explain_moves(n)
+
+    new = moves.get("new")
+    if new is not None:
+        yield {
+            "source_n": n,
+            "label": f"NEW(p={new['prime']})",
+            "target_n": new["target_n"],
+        }
+
+    drop = moves.get("drop")
+    if drop is not None:
+        yield {
+            "source_n": n,
+            "label": f"DROP(p={drop['representative_prime']})",
+            "target_n": drop["target_n"],
+        }
+
+    for row in moves.get("inc", []):
+        yield {
+            "source_n": n,
+            "label": f"INC(p={row['representative_prime']},e={row['exponent']})",
+            "target_n": row["target_n"],
+        }
+
+    for row in moves.get("dec", []):
+        yield {
+            "source_n": n,
+            "label": f"DEC(p={row['representative_prime']},e={row['exponent']})",
+            "target_n": row["target_n"],
+        }
+
+
+def _plan_path(start: int, target: int, max_depth: int):
+    if start == target:
+        return []
+
+    queue = deque([start])
+    seen = {start}
+    depth = {start: 0}
+    parent = {start: None}
+    edge = {}
+
+    while queue:
+        cur = queue.popleft()
+        if depth[cur] >= max_depth:
+            continue
+
+        for row in sorted(
+            _plan_neighbors(cur),
+            key=lambda row: (_plan_move_rank(row["label"]), row["target_n"], row["label"]),
+        ):
+            nxt = row["target_n"]
+            if nxt in seen:
+                continue
+
+            seen.add(nxt)
+            depth[nxt] = depth[cur] + 1
+            parent[nxt] = cur
+            edge[nxt] = row
+
+            if nxt == target:
+                path = []
+                node = nxt
+                while parent[node] is not None:
+                    path.append(edge[node])
+                    node = parent[node]
+                path.reverse()
+                return path
+
+            queue.append(nxt)
+
+    return None
+
 def main(argv: list[str] | None = None) -> int:
     if argv is None:
         argv = sys.argv
@@ -853,6 +943,22 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_partial_shape_target.add_argument("--json", action="store_true")
 
+
+    # plan
+    p_plan = subparsers.add_parser(
+        "plan",
+        help="find a bounded PET move path from A to B",
+    )
+    p_plan.add_argument("start", type=int, metavar="A")
+    p_plan.add_argument("target", type=int, metavar="B")
+    p_plan.add_argument(
+        "--max-depth",
+        type=int,
+        default=8,
+        help="maximum BFS depth for bounded PET planning (default: 8)",
+    )
+    p_plan.add_argument("--json", action="store_true")
+
     # query / families
     register_query_subparser(subparsers)
     register_families_subparser(subparsers)
@@ -1212,6 +1318,36 @@ def main(argv: list[str] | None = None) -> int:
             print("generator sequence G(k):")
             print(generators)
 
+
+
+        elif args.command == "plan":
+            if args.start < 2 or args.target < 2:
+                raise ValueError("plan expects integers >= 2")
+            if args.max_depth < 0:
+                raise ValueError("--max-depth must be >= 0")
+
+            path = _plan_path(args.start, args.target, args.max_depth)
+
+            if args.json:
+                print(json.dumps({
+                    "start": args.start,
+                    "target": args.target,
+                    "max_depth": args.max_depth,
+                    "found": path is not None,
+                    "steps": None if path is None else len(path),
+                    "path": [] if path is None else _jsonable_value(path),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"A = {args.start}")
+                print(f"B = {args.target}")
+                print(f"max_depth = {args.max_depth}")
+                print("---")
+                if path is None:
+                    print("NO PATH FOUND")
+                else:
+                    print(f"steps = {len(path)}")
+                    for row in path:
+                        print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
 
         elif args.command == "shape-of":
             from pathlib import Path
