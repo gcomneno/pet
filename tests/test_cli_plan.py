@@ -69,3 +69,36 @@ def test_cli_plan_no_path_with_tight_depth():
     assert "A = 12" in out
     assert "B = 245" in out
     assert "NO PATH FOUND" in out
+
+def test_internal_plan_neighbor_order_is_canonical():
+    import pet.cli as cli
+
+    rows = sorted(
+        cli._plan_neighbors(12),
+        key=lambda row: (cli._plan_move_rank(row["label"]), row["target_n"], row["label"]),
+    )
+
+    assert [(row["label"], row["target_n"]) for row in rows] == [
+        ("NEW(p=5)", 60),
+        ("DROP(p=3)", 4),
+        ("INC(p=2,e=2)", 24),
+        ("INC(p=3,e=1)", 36),
+        ("DEC(p=2,e=2)", 6),
+    ]
+
+
+def test_internal_plan_path_is_stable_across_repeated_calls():
+    import pet.cli as cli
+
+    paths = [cli._plan_path(12, 245, max_depth=10) for _ in range(4)]
+    assert paths[0] is not None
+    assert all(path == paths[0] for path in paths[1:])
+
+
+def test_cli_plan_json_path_is_stable():
+    args = ("plan", "12", "245", "--max-depth", "10", "--json")
+    payloads = [json.loads(_run_cli(*args)) for _ in range(4)]
+
+    assert payloads[0]["found"] is True
+    assert payloads[0]["path"]
+    assert all(payload["path"] == payloads[0]["path"] for payload in payloads[1:])

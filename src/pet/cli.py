@@ -722,10 +722,7 @@ def _plan_path_best_first(start: int, target: int, max_depth: int, max_visited: 
         if depth >= max_depth:
             continue
 
-        for row in sorted(
-            _plan_neighbors(cur),
-            key=lambda row: (_plan_move_rank(row["label"]), row["target_n"], row["label"]),
-        ):
+        for row in _sorted_plan_neighbors(cur):
             nxt = row["target_n"]
             nd = depth + 1
 
@@ -754,6 +751,13 @@ def _plan_move_rank(label: str) -> tuple[int, str]:
     if label.startswith("DEC("):
         return (3, label)
     return (99, label)
+
+
+def _sorted_plan_neighbors(n: int) -> list[dict]:
+    return sorted(
+        _plan_neighbors(n),
+        key=lambda row: (_plan_move_rank(row["label"]), row["target_n"], row["label"]),
+    )
 
 
 def _plan_neighbors(n: int):
@@ -805,10 +809,7 @@ def _plan_path(start: int, target: int, max_depth: int):
         if depth[cur] >= max_depth:
             continue
 
-        for row in sorted(
-            _plan_neighbors(cur),
-            key=lambda row: (_plan_move_rank(row["label"]), row["target_n"], row["label"]),
-        ):
+        for row in _sorted_plan_neighbors(cur):
             nxt = row["target_n"]
             if nxt in seen:
                 continue
@@ -1254,6 +1255,7 @@ def main(argv: list[str] | None = None) -> int:
     # plan
     p_plan = subparsers.add_parser(
         "plan",
+        aliases=["branch-plan"],
         help="find a bounded PET move path from A to B",
     )
     p_plan.add_argument("start", type=int, metavar="A")
@@ -1337,6 +1339,7 @@ def main(argv: list[str] | None = None) -> int:
     # plan-best
     p_plan_best = subparsers.add_parser(
         "plan-best",
+        aliases=["branch-plan-best"],
         help="find a bounded deterministic PET path from A to B with best-first search",
     )
     p_plan_best.add_argument("start", type=int, metavar="A")
@@ -1354,6 +1357,14 @@ def main(argv: list[str] | None = None) -> int:
         help="maximum popped states before giving up (default: 20000)",
     )
     p_plan_best.add_argument("--json", action="store_true")
+
+    # branch-neighbors
+    p_branch_neighbors = subparsers.add_parser(
+        "branch-neighbors",
+        help="show canonical deterministic PET branch moves from N",
+    )
+    p_branch_neighbors.add_argument("n", type=int, metavar="N")
+    p_branch_neighbors.add_argument("--json", action="store_true")
 
     # query / families
     register_query_subparser(subparsers)
@@ -1821,7 +1832,26 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
 
 
-        elif args.command == "plan-best":
+        elif args.command == "branch-neighbors":
+            if args.n < 2:
+                raise ValueError("branch-neighbors expects integers >= 2")
+
+            rows = _sorted_plan_neighbors(args.n)
+
+            if args.json:
+                print(json.dumps({
+                    "n": args.n,
+                    "count": len(rows),
+                    "path": _jsonable_value(rows),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                print(f"count = {len(rows)}")
+                print("---")
+                for row in rows:
+                    print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
+
+        elif args.command in {"plan-best", "branch-plan-best"}:
             if args.start < 2 or args.target < 2:
                 raise ValueError("plan-best expects integers >= 2")
             if args.max_depth < 0:
@@ -1859,7 +1889,7 @@ def main(argv: list[str] | None = None) -> int:
                     for row in path:
                         print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
 
-        elif args.command == "plan":
+        elif args.command in {"plan", "branch-plan"}:
             if args.start < 2 or args.target < 2:
                 raise ValueError("plan expects integers >= 2")
             if args.max_depth < 0:

@@ -70,3 +70,22 @@ def test_cli_plan_best_is_deterministic():
     args = ("plan-best", "12", "245", "--max-depth", "10")
     outs = [_run_cli(*args) for _ in range(4)]
     assert all(out == outs[0] for out in outs[1:])
+
+def test_internal_plan_best_path_is_stable_across_repeated_calls():
+    import pet.cli as cli
+
+    paths = [
+        cli._plan_path_best_first(12, 245, max_depth=10, max_visited=50000)
+        for _ in range(4)
+    ]
+    assert paths[0] is not None
+    assert all(path == paths[0] for path in paths[1:])
+
+
+def test_cli_plan_best_json_path_is_stable():
+    args = ("plan-best", "12", "245", "--max-depth", "10", "--json")
+    payloads = [json.loads(_run_cli(*args)) for _ in range(4)]
+
+    assert payloads[0]["found"] is True
+    assert payloads[0]["path"]
+    assert all(payload["path"] == payloads[0]["path"] for payload in payloads[1:])
