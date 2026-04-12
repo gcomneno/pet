@@ -57,11 +57,11 @@ def test_decode_from_saved_shape_json(tmp_path):
     assert out_path.read_bytes() == b"ciao"
 
 
-def test_roundtrip_256_bytes_smoke(tmp_path):
-    src = tmp_path / "seq256.bin"
-    src.write_bytes(bytes(range(256)))
+def test_roundtrip_1024_bytes_smoke(tmp_path):
+    src = tmp_path / "seq1024.bin"
+    src.write_bytes(bytes([i % 256 for i in range(1024)]))
 
     payload = json.loads(_run("encode", str(src), "--roundtrip-check"))
-    assert payload["byte_count"] == 256
+    assert payload["byte_count"] == 1024
     assert payload["roundtrip_ok"] is True
-    assert payload["shape_height"] < 100
+    assert payload["shape_height"] < 64
