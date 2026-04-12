@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import sys
 
@@ -29,6 +30,49 @@ from .metrics import (
     leaf_ratio,
     profile_shape,
 )
+
+
+
+
+def _hide_subparser(subparsers, name: str) -> None:
+    subparsers._choices_actions = [
+        action for action in subparsers._choices_actions
+        if getattr(action, "dest", None) != name
+    ]
+
+
+def _shape_to_jsonable(shape):
+    if shape is None:
+        return None
+    return [_shape_to_jsonable(child) for child in shape]
+
+
+def _jsonable_value(value):
+    if isinstance(value, tuple):
+        return [_jsonable_value(child) for child in value]
+    if isinstance(value, list):
+        return [_jsonable_value(child) for child in value]
+    if isinstance(value, dict):
+        return {key: _jsonable_value(val) for key, val in value.items()}
+    return value
+
+
+def _parse_partial_shape_arg(raw: str):
+    try:
+        value = ast.literal_eval(raw)
+    except (SyntaxError, ValueError) as exc:
+        raise ValueError(f"invalid partial shape literal: {raw}") from exc
+
+    def _convert(obj):
+        if obj is None:
+            return None
+        if isinstance(obj, tuple):
+            return tuple(_convert(child) for child in obj)
+        if isinstance(obj, list):
+            return tuple(_convert(child) for child in obj)
+        raise ValueError("partial shape must use only tuple/list nesting and None")
+
+    return _convert(value)
 
 
 def _format_factorization(factors):
@@ -561,6 +605,254 @@ def main(argv: list[str] | None = None) -> int:
     p_generators.add_argument("file", metavar="DATASET.jsonl")
     p_generators.add_argument("--metrics", action="store_true")
 
+
+    # shape-of
+    p_shape_of = subparsers.add_parser(
+        "shape-of",
+        help="print the canonical PET shape of N",
+    )
+    p_shape_of.add_argument("n", type=int, metavar="N")
+    p_shape_of.add_argument("--json", action="store_true")
+
+    # partial-shape-report
+    p_partial_shape_report = subparsers.add_parser(
+        "partial-shape-report",
+        help=argparse.SUPPRESS,
+    )
+    p_partial_shape_report.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_report.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded completion frontier (default: 3)",
+    )
+    p_partial_shape_report.add_argument(
+        "--preview",
+        type=int,
+        default=5,
+        help="how many exact completions to preview (default: 5)",
+    )
+    p_partial_shape_report.add_argument("--json", action="store_true")
+    _hide_subparser(subparsers, "partial-shape-report")
+
+
+    # partial-shape-match
+    p_partial_shape_match = subparsers.add_parser(
+        "partial-shape-match",
+        help="check whether N matches a given partial PET shape",
+    )
+    p_partial_shape_match.add_argument("n", type=int, metavar="N")
+    p_partial_shape_match.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_match.add_argument("--json", action="store_true")
+
+
+    # partial-shape-witness
+    p_partial_shape_witness = subparsers.add_parser(
+        "partial-shape-witness",
+        help=argparse.SUPPRESS,
+    )
+    p_partial_shape_witness.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_witness.add_argument("--json", action="store_true")
+    _hide_subparser(subparsers, "partial-shape-witness")
+
+
+    # partial-shape-completions
+    p_partial_shape_completions = subparsers.add_parser(
+        "partial-shape-completions",
+        help=argparse.SUPPRESS,
+    )
+    p_partial_shape_completions.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_completions.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded completion frontier (default: 3)",
+    )
+    p_partial_shape_completions.add_argument(
+        "--preview",
+        type=int,
+        default=20,
+        help="how many completions to print (default: 20)",
+    )
+    p_partial_shape_completions.add_argument("--json", action="store_true")
+    _hide_subparser(subparsers, "partial-shape-completions")
+
+
+    # partial-shape-forced-core
+    p_partial_shape_forced_core = subparsers.add_parser(
+        "partial-shape-forced-core",
+        help="compute the bounded forced core shared by exact completions of a partial PET shape",
+    )
+    p_partial_shape_forced_core.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_forced_core.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded completion frontier (default: 3)",
+    )
+    p_partial_shape_forced_core.add_argument(
+        "--trace",
+        action="store_true",
+        help="show the cumulative forced-core trace for each bound up to --max-mass",
+    )
+    p_partial_shape_forced_core.add_argument(
+        "--window",
+        type=int,
+        default=1,
+        help="require an observed stabilization window of at least this many masses (default: 1)",
+    )
+    p_partial_shape_forced_core.add_argument(
+        "--auto-window",
+        type=int,
+        default=None,
+        help="auto-increase the inspected bound until the observed stable window reaches this size",
+    )
+    p_partial_shape_forced_core.add_argument(
+        "--max-mass-cap",
+        type=int,
+        default=12,
+        help="upper cap used together with --auto-window (default: 12)",
+    )
+    p_partial_shape_forced_core.add_argument("--json", action="store_true")
+
+
+    # partial-shape-residual
+    p_partial_shape_residual = subparsers.add_parser(
+        "partial-shape-residual",
+        help=argparse.SUPPRESS,
+    )
+    p_partial_shape_residual.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_residual.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded forced-core analysis (default: 3)",
+    )
+    p_partial_shape_residual.add_argument(
+        "--auto-window",
+        type=int,
+        default=None,
+        help="auto-increase the inspected bound until the observed stable window reaches this size",
+    )
+    p_partial_shape_residual.add_argument(
+        "--max-mass-cap",
+        type=int,
+        default=12,
+        help="upper cap used together with --auto-window (default: 12)",
+    )
+    p_partial_shape_residual.add_argument("--json", action="store_true")
+    _hide_subparser(subparsers, "partial-shape-residual")
+
+
+    # partial-shape-residual-profile
+    p_partial_shape_residual_profile = subparsers.add_parser(
+        "partial-shape-residual-profile",
+        help=argparse.SUPPRESS,
+    )
+    p_partial_shape_residual_profile.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_residual_profile.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded residual profiling (default: 3)",
+    )
+    p_partial_shape_residual_profile.add_argument(
+        "--preview",
+        type=int,
+        default=5,
+        help="how many local shapes/gammas to preview per free path (default: 5)",
+    )
+    p_partial_shape_residual_profile.add_argument(
+        "--auto-window",
+        type=int,
+        default=None,
+        help="auto-increase the inspected bound until the observed stable window reaches this size",
+    )
+    p_partial_shape_residual_profile.add_argument(
+        "--max-mass-cap",
+        type=int,
+        default=12,
+        help="upper cap used together with --auto-window (default: 12)",
+    )
+    p_partial_shape_residual_profile.add_argument("--json", action="store_true")
+    _hide_subparser(subparsers, "partial-shape-residual-profile")
+
+
+    # partial-shape-residual-summary
+    p_partial_shape_residual_summary = subparsers.add_parser(
+        "partial-shape-residual-summary",
+        help="print a compact canonical summary of forced core vs residual freedom",
+    )
+    p_partial_shape_residual_summary.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_residual_summary.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded residual summary (default: 3)",
+    )
+    p_partial_shape_residual_summary.add_argument(
+        "--preview",
+        type=int,
+        default=5,
+        help="how many local shapes/gammas to preview per free path (default: 5)",
+    )
+    p_partial_shape_residual_summary.add_argument(
+        "--fast-preview",
+        action="store_true",
+        help="skip expensive exact local-forced-core computation and only show preview shapes/gammas",
+    )
+    p_partial_shape_residual_summary.add_argument(
+        "--auto-window",
+        type=int,
+        default=None,
+        help="auto-increase the inspected bound until the observed stable window reaches this size",
+    )
+    p_partial_shape_residual_summary.add_argument(
+        "--max-mass-cap",
+        type=int,
+        default=12,
+        help="upper cap used together with --auto-window (default: 12)",
+    )
+    p_partial_shape_residual_summary.add_argument("--json", action="store_true")
+
+
+    # partial-shape-target
+    p_partial_shape_target = subparsers.add_parser(
+        "partial-shape-target",
+        help="print the observed compatible decomposition: core + residual freedom",
+    )
+    p_partial_shape_target.add_argument("partial", metavar="PARTIAL_SHAPE")
+    p_partial_shape_target.add_argument(
+        "--max-mass",
+        type=int,
+        default=3,
+        help="maximum structural mass for bounded observed decomposition (default: 3)",
+    )
+    p_partial_shape_target.add_argument(
+        "--preview",
+        type=int,
+        default=5,
+        help="how many local shapes/gammas to preview per free path (default: 5)",
+    )
+    p_partial_shape_target.add_argument(
+        "--auto-window",
+        type=int,
+        default=None,
+        help="auto-increase the inspected bound until the observed stable window reaches this size",
+    )
+    p_partial_shape_target.add_argument(
+        "--max-mass-cap",
+        type=int,
+        default=12,
+        help="upper cap used together with --auto-window (default: 12)",
+    )
+    p_partial_shape_target.add_argument(
+        "--fast-preview",
+        action="store_true",
+        help="skip expensive exact local-forced-core computation and only show preview shapes/gammas",
+    )
+    p_partial_shape_target.add_argument("--json", action="store_true")
+
     # query / families
     register_query_subparser(subparsers)
     register_families_subparser(subparsers)
@@ -919,6 +1211,526 @@ def main(argv: list[str] | None = None) -> int:
             print()
             print("generator sequence G(k):")
             print(generators)
+
+
+        elif args.command == "shape-of":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import pet_to_shape
+
+            shape = pet_to_shape(encode(args.n))
+
+            if args.json:
+                print(json.dumps({
+                    "n": args.n,
+                    "shape": _shape_to_jsonable(shape),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                print(f"shape = {shape}")
+                print("shape tree:")
+                lines = draw_shape(shape, lines=[])
+                for line in lines:
+                    print(line)
+
+        elif args.command == "partial-shape-report":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_completion_report,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+            report = partial_shape_completion_report(
+                partial,
+                max_mass=args.max_mass,
+                preview=args.preview,
+            )
+
+            if args.json:
+                print(json.dumps(_jsonable_value(report), indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {report['partial']}")
+                print(f"is_exact = {report['is_exact']}")
+                print(f"hole_count = {report['hole_count']}")
+                print(f"fill_min = {report['fill_min']}")
+                print(f"min_target_shape = {report['min_target_shape']}")
+                print(f"min_target_gamma = {report['min_target_gamma']}")
+                print(f"completion_count = {report['completion_count']}")
+                print(f"per_mass_count = {report['per_mass_count']}")
+                print(f"cumulative_count = {report['cumulative_count']}")
+                print(f"per_mass_min_gamma = {report['per_mass_min_gamma']}")
+                print(f"preview_exact_shapes = {report['preview_exact_shapes']}")
+                print(f"preview_exact_gammas = {report['preview_exact_gammas']}")
+
+
+        elif args.command == "partial-shape-match":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                n_matches_partial_shape,
+                normalize_partial_shape,
+                pet_to_shape,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+            shape = pet_to_shape(encode(args.n))
+            match = n_matches_partial_shape(args.n, partial)
+
+            if args.json:
+                print(json.dumps({
+                    "n": args.n,
+                    "partial": _jsonable_value(partial),
+                    "shape": _shape_to_jsonable(shape),
+                    "match": match,
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"N = {args.n}")
+                print(f"partial = {partial}")
+                print(f"shape = {shape}")
+                print(f"match = {'yes' if match else 'no'}")
+
+
+        elif args.command == "partial-shape-witness":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_shortest_completion_gamma,
+                partial_shape_shortest_completion_pet,
+                partial_shape_shortest_completion_target,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+            target_shape = partial_shape_shortest_completion_target(partial)
+            target_gamma = partial_shape_shortest_completion_gamma(partial)
+            target_pet = partial_shape_shortest_completion_pet(partial)
+
+            if args.json:
+                print(json.dumps({
+                    "partial": _jsonable_value(partial),
+                    "target_shape": _jsonable_value(target_shape),
+                    "target_gamma": target_gamma,
+                    "target_pet": _jsonable_value(to_jsonable(target_pet)),
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {partial}")
+                print(f"target_shape = {target_shape}")
+                print(f"target_gamma = {target_gamma}")
+                print("target_pet:")
+                print(to_json(target_pet))
+
+
+        elif args.command == "partial-shape-completions":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_completion_frontier,
+                partial_shape_completion_gamma_frontier,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+            shapes = partial_shape_completion_frontier(partial, args.max_mass)
+            gammas = partial_shape_completion_gamma_frontier(partial, args.max_mass)
+
+            if args.json:
+                print(json.dumps({
+                    "partial": _jsonable_value(partial),
+                    "max_mass": args.max_mass,
+                    "count": len(shapes),
+                    "exact_shapes": _jsonable_value(shapes[:args.preview]),
+                    "exact_gammas": gammas[:args.preview],
+                }, indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {partial}")
+                print(f"max_mass = {args.max_mass}")
+                print(f"count = {len(shapes)}")
+                print(f"exact_shapes (preview={args.preview}):")
+                for shape in shapes[:args.preview]:
+                    print(f"  {shape}")
+                print(f"exact_gammas (preview={args.preview}) = {gammas[:args.preview]}")
+
+
+
+        elif args.command == "partial-shape-forced-core":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_forced_core_change_masses,
+                partial_shape_forced_core_meets_window,
+                partial_shape_forced_core_report,
+                partial_shape_forced_core_stabilization_mass,
+                partial_shape_forced_core_stable_window,
+                partial_shape_forced_core_trace,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+
+            if args.window < 1:
+                raise ValueError("--window must be >= 1")
+            if args.auto_window is not None and args.auto_window < 1:
+                raise ValueError("--auto-window must be >= 1")
+            if args.max_mass_cap < 1:
+                raise ValueError("--max-mass-cap must be >= 1")
+
+            effective_max_mass = args.max_mass
+            auto_window = args.auto_window
+
+            if auto_window is not None:
+                chosen = None
+                for bound in range(1, args.max_mass_cap + 1):
+                    if partial_shape_forced_core_meets_window(partial, bound, auto_window):
+                        chosen = bound
+                        break
+                effective_max_mass = args.max_mass_cap if chosen is None else chosen
+
+            report = partial_shape_forced_core_report(partial, effective_max_mass)
+            trace = partial_shape_forced_core_trace(partial, effective_max_mass) if args.trace else ()
+            change_masses = partial_shape_forced_core_change_masses(partial, effective_max_mass)
+            stabilization_mass = partial_shape_forced_core_stabilization_mass(partial, effective_max_mass)
+            stable_window = partial_shape_forced_core_stable_window(partial, effective_max_mass)
+            meets_window = partial_shape_forced_core_meets_window(partial, effective_max_mass, args.window)
+            auto_window_met = (
+                partial_shape_forced_core_meets_window(partial, effective_max_mass, auto_window)
+                if auto_window is not None else None
+            )
+
+            if args.json:
+                payload = dict(report)
+                if args.trace:
+                    payload["trace"] = trace
+                payload["change_masses"] = change_masses
+                payload["stabilization_mass"] = stabilization_mass
+                payload["stable_window"] = stable_window
+                payload["requested_window"] = args.window
+                payload["meets_window"] = meets_window
+                payload["effective_max_mass"] = effective_max_mass
+                payload["auto_window"] = auto_window
+                payload["max_mass_cap"] = args.max_mass_cap
+                payload["auto_window_met"] = auto_window_met
+                print(json.dumps(_jsonable_value(payload), indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {report['partial']}")
+                print(f"max_mass = {report['max_mass']}")
+                print(f"effective_max_mass = {effective_max_mass}")
+                print(f"completion_count = {report['completion_count']}")
+                print(f"forced_core = {report['forced_core']}")
+                print(f"forced_core_kind = {report['forced_core_kind']}")
+                print(f"forced_hole_count = {report['forced_hole_count']}")
+                print(f"fast_preview = {'yes' if report['fast_preview'] else 'no'}")
+                print(f"is_exact = {report['is_exact']}")
+                print(f"change_masses = {change_masses}")
+                print(f"stable_window = {stable_window}")
+                print(f"requested_window = {args.window}")
+                print(f"meets_window = {'yes' if meets_window else 'no'}")
+                if auto_window is not None:
+                    print(f"auto_window = {auto_window}")
+                    print(f"max_mass_cap = {args.max_mass_cap}")
+                    print(f"auto_window_met = {'yes' if auto_window_met else 'no'}")
+                if args.trace:
+                    print("trace:")
+                    for row in trace:
+                        delta = "Δ" if row["changed"] else "="
+                        print(
+                            "  ",
+                            f"{delta}[{row['change_kind']}]",
+                            f"max_mass={row['max_mass']}",
+                            f"completion_count={row['completion_count']}",
+                            f"prev={row['prev_forced_core']}",
+                            f"forced_core={row['forced_core']}",
+                        )
+                    if stabilization_mass is None:
+                        print("stabilization_mass (inspected suffix) = none")
+                    else:
+                        print(f"stabilization_mass (inspected suffix) = {stabilization_mass}")
+
+
+        elif args.command == "partial-shape-residual":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_forced_core_meets_window,
+                partial_shape_residual,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+
+            if args.auto_window is not None and args.auto_window < 1:
+                raise ValueError("--auto-window must be >= 1")
+            if args.max_mass_cap < 1:
+                raise ValueError("--max-mass-cap must be >= 1")
+
+            effective_max_mass = args.max_mass
+            auto_window = args.auto_window
+
+            if auto_window is not None:
+                chosen = None
+                for bound in range(1, args.max_mass_cap + 1):
+                    if partial_shape_forced_core_meets_window(partial, bound, auto_window):
+                        chosen = bound
+                        break
+                effective_max_mass = args.max_mass_cap if chosen is None else chosen
+
+            report = partial_shape_residual(partial, effective_max_mass)
+
+            if args.json:
+                payload = dict(report)
+                payload["effective_max_mass"] = effective_max_mass
+                payload["auto_window"] = auto_window
+                payload["max_mass_cap"] = args.max_mass_cap
+                print(json.dumps(_jsonable_value(payload), indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {report['partial']}")
+                print(f"max_mass = {report['max_mass']}")
+                print(f"effective_max_mass = {effective_max_mass}")
+                print(f"forced_core = {report['forced_core']}")
+                print(f"forced_core_kind = {report['forced_core_kind']}")
+                print(f"free_paths = {report['free_paths']}")
+                print(f"free_path_count = {report['free_path_count']}")
+                print(f"forced_hole_count = {report['forced_hole_count']}")
+                print(f"fast_preview = {'yes' if report['fast_preview'] else 'no'}")
+                print(f"stable_window = {report['stable_window']}")
+                print(f"stabilization_mass = {report['stabilization_mass']}")
+                if auto_window is not None:
+                    print(f"auto_window = {auto_window}")
+                    print(f"max_mass_cap = {args.max_mass_cap}")
+
+
+        elif args.command == "partial-shape-residual-profile":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_forced_core_meets_window,
+                partial_shape_residual_profile,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+
+            if args.preview < 0:
+                raise ValueError("--preview must be >= 0")
+            if args.auto_window is not None and args.auto_window < 1:
+                raise ValueError("--auto-window must be >= 1")
+            if args.max_mass_cap < 1:
+                raise ValueError("--max-mass-cap must be >= 1")
+
+            effective_max_mass = args.max_mass
+            auto_window = args.auto_window
+
+            if auto_window is not None:
+                chosen = None
+                for bound in range(1, args.max_mass_cap + 1):
+                    if partial_shape_forced_core_meets_window(partial, bound, auto_window):
+                        chosen = bound
+                        break
+                effective_max_mass = args.max_mass_cap if chosen is None else chosen
+
+            report = partial_shape_residual_profile(partial, effective_max_mass, preview=args.preview)
+
+            if args.json:
+                payload = dict(report)
+                payload["effective_max_mass"] = effective_max_mass
+                payload["auto_window"] = auto_window
+                payload["max_mass_cap"] = args.max_mass_cap
+                print(json.dumps(_jsonable_value(payload), indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {report['partial']}")
+                print(f"max_mass = {report['max_mass']}")
+                print(f"effective_max_mass = {effective_max_mass}")
+                print(f"forced_core = {report['forced_core']}")
+                print(f"forced_core_kind = {report['forced_core_kind']}")
+                print(f"free_paths = {report['free_paths']}")
+                print(f"free_path_count = {report['free_path_count']}")
+                if auto_window is not None:
+                    print(f"auto_window = {auto_window}")
+                    print(f"max_mass_cap = {args.max_mass_cap}")
+                print("per_path:")
+                for path, row in report["per_path"].items():
+                    print(f"  path = {path}")
+                    print(f"    count = {row['count']}")
+                    print(f"    local_forced_core = {row['local_forced_core']}")
+                    print(f"    local_forced_core_kind = {row['local_forced_core_kind']}")
+                    print(f"    preview_shapes = {row['preview_shapes']}")
+                    print(f"    preview_local_gammas = {row['preview_local_gammas']}")
+
+
+        elif args.command == "partial-shape-residual-summary":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_forced_core_meets_window,
+                partial_shape_residual_summary,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+
+            if args.preview < 0:
+                raise ValueError("--preview must be >= 0")
+            if args.auto_window is not None and args.auto_window < 1:
+                raise ValueError("--auto-window must be >= 1")
+            if args.max_mass_cap < 1:
+                raise ValueError("--max-mass-cap must be >= 1")
+
+            effective_max_mass = args.max_mass
+            auto_window = args.auto_window
+
+            if auto_window is not None:
+                chosen = None
+                for bound in range(1, args.max_mass_cap + 1):
+                    if partial_shape_forced_core_meets_window(partial, bound, auto_window):
+                        chosen = bound
+                        break
+                effective_max_mass = args.max_mass_cap if chosen is None else chosen
+
+            report = partial_shape_residual_summary(
+                partial,
+                effective_max_mass,
+                preview=args.preview,
+                fast_preview=args.fast_preview,
+            )
+
+            if args.json:
+                payload = dict(report)
+                payload["effective_max_mass"] = effective_max_mass
+                payload["auto_window"] = auto_window
+                payload["max_mass_cap"] = args.max_mass_cap
+                print(json.dumps(_jsonable_value(payload), indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {report['partial']}")
+                print(f"max_mass = {report['max_mass']}")
+                print(f"effective_max_mass = {effective_max_mass}")
+                print(f"forced_core = {report['forced_core']}")
+                print(f"forced_core_kind = {report['forced_core_kind']}")
+                print(f"free_paths = {report['free_paths']}")
+                print(f"free_path_count = {report['free_path_count']}")
+                print(f"forced_hole_count = {report['forced_hole_count']}")
+                print(f"fast_preview = {'yes' if report['fast_preview'] else 'no'}")
+                print(f"stable_window = {report['stable_window']}")
+                print(f"stabilization_mass = {report['stabilization_mass']}")
+                if auto_window is not None:
+                    print(f"auto_window = {auto_window}")
+                    print(f"max_mass_cap = {args.max_mass_cap}")
+                print("per_path_summary:")
+                for path, row in report["per_path_summary"].items():
+                    print(f"  path = {path}")
+                    print(f"    local_forced_core = {row['local_forced_core']}")
+                    print(f"    local_forced_core_kind = {row['local_forced_core_kind']}")
+                    print(f"    observed_local_count = {row['observed_local_count']}")
+                    print(f"    observed_local_shapes = {row['observed_local_shapes']}")
+                    print(f"    observed_local_gammas = {row['observed_local_gammas']}")
+
+
+        elif args.command == "partial-shape-target":
+            from pathlib import Path
+
+            repo_root = Path(__file__).resolve().parents[2]
+            if str(repo_root) not in sys.path:
+                sys.path.insert(0, str(repo_root))
+
+            from tools.pet_shape_algebra import (
+                normalize_partial_shape,
+                partial_shape_forced_core_meets_window,
+                partial_shape_observed_decomposition,
+            )
+
+            partial = normalize_partial_shape(_parse_partial_shape_arg(args.partial))
+
+            if args.preview < 0:
+                raise ValueError("--preview must be >= 0")
+            if args.auto_window is not None and args.auto_window < 1:
+                raise ValueError("--auto-window must be >= 1")
+            if args.max_mass_cap < 1:
+                raise ValueError("--max-mass-cap must be >= 1")
+
+            effective_max_mass = args.max_mass
+            auto_window = args.auto_window
+
+            if auto_window is not None:
+                chosen = None
+                for bound in range(1, args.max_mass_cap + 1):
+                    if partial_shape_forced_core_meets_window(partial, bound, auto_window):
+                        chosen = bound
+                        break
+                effective_max_mass = args.max_mass_cap if chosen is None else chosen
+
+            report = partial_shape_observed_decomposition(
+                partial,
+                max_mass=effective_max_mass,
+                preview=args.preview,
+                fast_preview=args.fast_preview,
+            )
+
+            if args.json:
+                payload = dict(report)
+                payload["effective_max_mass"] = effective_max_mass
+                payload["auto_window"] = auto_window
+                payload["max_mass_cap"] = args.max_mass_cap
+                print(json.dumps(_jsonable_value(payload), indent=2, ensure_ascii=False))
+            else:
+                print(f"partial = {report['partial']}")
+                print(f"observed_core = {report['observed_core']}")
+                print(f"observed_core_kind = {report['observed_core_kind']}")
+                print(f"residual_free_paths = {report['residual_free_paths']}")
+                print(f"residual_free_path_count = {report['residual_free_path_count']}")
+                print("evidence:")
+                print(f"  max_mass = {report['evidence']['max_mass']}")
+                print(f"  stable_window = {report['evidence']['stable_window']}")
+                print(f"  stabilization_mass = {report['evidence']['stabilization_mass']}")
+                print(f"  forced_hole_count = {report['evidence']['forced_hole_count']}")
+                print(f"  fast_preview = {'yes' if report['evidence']['fast_preview'] else 'no'}")
+                if auto_window is not None:
+                    print(f"  auto_window = {auto_window}")
+                    print(f"  max_mass_cap = {args.max_mass_cap}")
+                    print(f"  effective_max_mass = {effective_max_mass}")
+                print("residual_local_profiles:")
+                for path, row in report["residual_local_profiles"].items():
+                    print(f"  path = {path}")
+                    print(f"    local_forced_core = {row['local_forced_core']}")
+                    print(f"    local_forced_core_kind = {row['local_forced_core_kind']}")
+                    print(f"    observed_local_count = {row['observed_local_count']}")
+                    print(f"    observed_local_shapes = {row['observed_local_shapes']}")
+                    print(f"    observed_local_gammas = {row['observed_local_gammas']}")
 
         elif args.command == "query":
             return run_query(args)

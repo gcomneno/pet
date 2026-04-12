@@ -726,3 +726,552 @@ def test_partial_shape_report_target_matches_partial():
     report = partial_shape_report(partial)
 
     assert shape_matches_partial(report["target_shape"], partial)
+
+
+def test_partial_shape_min_exact_names_are_the_semantic_ones():
+    from tools.pet_shape_algebra import (
+        partial_shape_gamma_min_exact,
+        partial_shape_min_exact_completions,
+    )
+
+    assert partial_shape_min_exact_completions(None) == (((),),)
+    assert partial_shape_gamma_min_exact(None) == (2,)
+
+
+def test_partial_shape_completion_frontier_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_completion_frontier
+
+    assert partial_shape_completion_frontier(None, 1) == (((),),)
+
+    got = set(partial_shape_completion_frontier(None, 2))
+    expected = {
+        ((),),
+        ((), ()),
+        (((),),),
+    }
+    assert got == expected
+
+
+def test_partial_shape_completion_frontier_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_completion_frontier
+
+    got = set(partial_shape_completion_frontier(((), None), 3))
+    expected = {
+        ((), ()),
+        ((), ((),)),
+    }
+    assert got == expected
+
+
+def test_partial_shape_completion_gamma_frontier_small_cases():
+    from tools.pet_shape_algebra import partial_shape_completion_gamma_frontier
+
+    assert partial_shape_completion_gamma_frontier(None, 2) == (2, 4, 6)
+    assert partial_shape_completion_gamma_frontier(((), None), 3) == (6, 12)
+
+
+def test_partial_shape_completion_count_small_cases():
+    from tools.pet_shape_algebra import partial_shape_completion_count
+
+    assert partial_shape_completion_count(None, 0) == 0
+    assert partial_shape_completion_count(None, 1) == 1
+    assert partial_shape_completion_count(None, 2) == 3
+    assert partial_shape_completion_count(((), None), 3) == 2
+
+
+def test_partial_shape_completion_levels_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_completion_levels
+
+    levels = partial_shape_completion_levels(None, 3)
+
+    assert levels[0] == (((),),)
+    assert set(levels[1]) == {
+        ((), ()),
+        (((),),),
+    }
+    assert set(levels[2]) == {
+        ((), (), ()),
+        ((), ((),)),
+        (((), ()),),
+        ((((),),),),
+    }
+
+
+def test_partial_shape_completion_levels_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_completion_levels
+
+    levels = partial_shape_completion_levels(((), None), 3)
+
+    assert levels[0] == ()
+    assert levels[1] == (((), ()),)
+    assert levels[2] == (((), ((),)),)
+
+
+def test_partial_shape_completion_gamma_levels_small_cases():
+    from tools.pet_shape_algebra import partial_shape_completion_gamma_levels
+
+    assert partial_shape_completion_gamma_levels(None, 2) == (
+        (2,),
+        (4, 6),
+    )
+    assert partial_shape_completion_gamma_levels(((), None), 3) == (
+        (),
+        (6,),
+        (12,),
+    )
+
+
+def test_partial_shape_completion_profile_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_completion_profile
+
+    profile = partial_shape_completion_profile(None, 3)
+
+    assert profile["partial"] is None
+    assert profile["max_mass"] == 3
+    assert profile["per_mass"] == {1: 1, 2: 2, 3: 4}
+    assert profile["cumulative"] == {1: 1, 2: 3, 3: 7}
+    assert profile["total"] == 7
+
+
+def test_partial_shape_completion_profile_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_completion_profile
+
+    profile = partial_shape_completion_profile(((), None), 3)
+
+    assert profile["per_mass"] == {1: 0, 2: 1, 3: 1}
+    assert profile["cumulative"] == {1: 0, 2: 1, 3: 2}
+    assert profile["total"] == 2
+
+
+def test_partial_shape_completion_profile_for_exact_shape():
+    from tools.pet_shape_algebra import partial_shape_completion_profile
+
+    profile = partial_shape_completion_profile(((),), 3)
+
+    assert profile["per_mass"] == {1: 1, 2: 0, 3: 0}
+    assert profile["cumulative"] == {1: 1, 2: 1, 3: 1}
+    assert profile["total"] == 1
+
+
+def test_partial_shape_completion_gamma_profile_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_completion_gamma_profile
+
+    profile = partial_shape_completion_gamma_profile(None, 3)
+
+    assert profile["per_mass_count"] == {1: 1, 2: 2, 3: 4}
+    assert profile["per_mass_min_gamma"] == {1: 2, 2: 4, 3: 12}
+    assert profile["per_mass_gammas"] == {
+        1: (2,),
+        2: (4, 6),
+        3: (12, 16, 30, 64),
+    }
+
+
+def test_partial_shape_completion_gamma_profile_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_completion_gamma_profile
+
+    profile = partial_shape_completion_gamma_profile(((), None), 3)
+
+    assert profile["per_mass_count"] == {1: 0, 2: 1, 3: 1}
+    assert profile["per_mass_min_gamma"] == {1: None, 2: 6, 3: 12}
+    assert profile["per_mass_gammas"] == {
+        1: (),
+        2: (6,),
+        3: (12,),
+    }
+
+
+def test_partial_shape_completion_gamma_profile_for_exact_shape():
+    from tools.pet_shape_algebra import partial_shape_completion_gamma_profile
+
+    profile = partial_shape_completion_gamma_profile(((),), 3)
+
+    assert profile["per_mass_count"] == {1: 1, 2: 0, 3: 0}
+    assert profile["per_mass_min_gamma"] == {1: 2, 2: None, 3: None}
+    assert profile["per_mass_gammas"] == {
+        1: (2,),
+        2: (),
+        3: (),
+    }
+
+
+def test_partial_shape_completion_report_for_root_hole():
+    from tools.pet_shape_algebra import partial_shape_completion_report
+
+    report = partial_shape_completion_report(None, 3, preview=3)
+
+    assert report["partial"] is None
+    assert report["max_mass"] == 3
+    assert report["preview"] == 3
+    assert report["is_exact"] is False
+    assert report["hole_count"] == 1
+    assert report["fill_min"] == ((),)
+    assert report["min_target_shape"] == ((),)
+    assert report["min_target_gamma"] == 2
+    assert report["completion_count"] == 7
+    assert report["per_mass_count"] == {1: 1, 2: 2, 3: 4}
+    assert report["cumulative_count"] == {1: 1, 2: 3, 3: 7}
+    assert report["per_mass_min_gamma"] == {1: 2, 2: 4, 3: 12}
+    assert report["preview_exact_shapes"] == (
+        ((),),
+        ((), ()),
+        (((),),),
+    )
+    assert report["preview_exact_gammas"] == (2, 4, 6)
+
+
+def test_partial_shape_completion_report_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_completion_report
+
+    report = partial_shape_completion_report(((), None), 3, preview=5)
+
+    assert report["is_exact"] is False
+    assert report["hole_count"] == 1
+    assert report["fill_min"] == ((), ())
+    assert report["min_target_shape"] == ((), ())
+    assert report["min_target_gamma"] == 6
+    assert report["completion_count"] == 2
+    assert report["per_mass_count"] == {1: 0, 2: 1, 3: 1}
+    assert report["cumulative_count"] == {1: 0, 2: 1, 3: 2}
+    assert report["per_mass_min_gamma"] == {1: None, 2: 6, 3: 12}
+    assert report["preview_exact_shapes"] == (
+        ((), ()),
+        ((), ((),)),
+    )
+    assert report["preview_exact_gammas"] == (6, 12)
+
+
+def test_partial_shape_completion_report_for_exact_shape():
+    from tools.pet_shape_algebra import partial_shape_completion_report
+
+    report = partial_shape_completion_report(((),), 3, preview=5)
+
+    assert report["is_exact"] is True
+    assert report["hole_count"] == 0
+    assert report["fill_min"] == ((),)
+    assert report["min_target_shape"] == ((),)
+    assert report["min_target_gamma"] == 2
+    assert report["completion_count"] == 1
+    assert report["per_mass_count"] == {1: 1, 2: 0, 3: 0}
+    assert report["cumulative_count"] == {1: 1, 2: 1, 3: 1}
+    assert report["per_mass_min_gamma"] == {1: 2, 2: None, 3: None}
+    assert report["preview_exact_shapes"] == (((),),)
+    assert report["preview_exact_gammas"] == (2,)
+
+
+def test_end_to_end_number_partial_completion_flow():
+    from pet.core import encode
+    from tools.pet_shape_algebra import (
+        n_matches_partial_shape,
+        partial_shape_completion_report,
+        partial_shape_shortest_completion_gamma,
+        partial_shape_shortest_completion_target,
+        pet_to_shape,
+        shape_matches_partial,
+    )
+
+    n = 12
+    partial = ((), None)
+
+    shape = pet_to_shape(encode(n))
+    report = partial_shape_completion_report(partial, max_mass=3, preview=5)
+    target = partial_shape_shortest_completion_target(partial)
+    gamma = partial_shape_shortest_completion_gamma(partial)
+
+    assert shape == ((), ((),))
+    assert shape_matches_partial(shape, partial)
+    assert n_matches_partial_shape(n, partial)
+
+    assert report["partial"] == (None, ())
+    assert report["hole_count"] == 1
+    assert report["is_exact"] is False
+    assert report["min_target_shape"] == ((), ())
+    assert report["min_target_gamma"] == 6
+
+    assert target == ((), ())
+    assert gamma == 6
+
+
+def test_end_to_end_exact_number_flow_is_stable():
+    from pet.core import encode
+    from tools.pet_shape_algebra import (
+        partial_shape_completion_report,
+        partial_shape_shortest_completion_gamma,
+        partial_shape_shortest_completion_target,
+        pet_to_shape,
+    )
+
+    n = 6
+    partial = pet_to_shape(encode(n))
+    report = partial_shape_completion_report(partial, max_mass=3, preview=5)
+
+    assert partial == ((), ())
+    assert report["is_exact"] is True
+    assert report["hole_count"] == 0
+    assert report["min_target_shape"] == ((), ())
+    assert report["min_target_gamma"] == 6
+    assert partial_shape_shortest_completion_target(partial) == ((), ())
+    assert partial_shape_shortest_completion_gamma(partial) == 6
+
+
+def test_partial_shape_forced_core_for_root_hole_is_none():
+    from tools.pet_shape_algebra import partial_shape_forced_core
+
+    assert partial_shape_forced_core(None, 3) is None
+
+
+def test_partial_shape_forced_core_for_mixed_partial_recovers_known_leaf():
+    from tools.pet_shape_algebra import partial_shape_forced_core
+
+    assert partial_shape_forced_core(((), None), 3) == (None, ())
+
+
+def test_partial_shape_forced_core_for_exact_shape_is_exact():
+    from tools.pet_shape_algebra import partial_shape_forced_core
+
+    assert partial_shape_forced_core(((), ()), 3) == ((), ())
+
+
+def test_partial_shape_forced_core_for_singleton_bounded_family_is_exact():
+    from tools.pet_shape_algebra import partial_shape_forced_core
+
+    assert partial_shape_forced_core((None, (None,)), 3) == ((), ((),))
+
+
+def test_partial_shape_forced_core_report_small_cases():
+    from tools.pet_shape_algebra import partial_shape_forced_core_report
+
+    report = partial_shape_forced_core_report(((), None), 3)
+
+    assert report["partial"] == (None, ())
+    assert report["max_mass"] == 3
+    assert report["completion_count"] == 2
+    assert report["forced_core"] == (None, ())
+    assert report["forced_core_kind"] == "partially-structured"
+    assert report["forced_hole_count"] == 1
+    assert report["is_exact"] is False
+    assert report["change_masses"] == (1, 2, 3)
+
+
+def test_partial_shape_forced_core_trace_for_mixed_partial():
+    from tools.pet_shape_algebra import partial_shape_forced_core_trace
+
+    trace = partial_shape_forced_core_trace(((), None), 4)
+
+    assert trace[0] == {
+        "max_mass": 1,
+        "completion_count": 0,
+        "forced_core": None,
+        "prev_forced_core": None,
+        "changed": True,
+        "change_kind": "start",
+    }
+    assert trace[1] == {
+        "max_mass": 2,
+        "completion_count": 1,
+        "forced_core": ((), ()),
+        "prev_forced_core": None,
+        "changed": True,
+        "change_kind": "strengthen",
+    }
+    assert trace[2] == {
+        "max_mass": 3,
+        "completion_count": 2,
+        "forced_core": (None, ()),
+        "prev_forced_core": ((), ()),
+        "changed": True,
+        "change_kind": "relax",
+    }
+    assert trace[3]["max_mass"] == 4
+    assert trace[3]["completion_count"] > trace[2]["completion_count"]
+    assert trace[3]["forced_core"] == (None, ())
+    assert trace[3]["prev_forced_core"] == (None, ())
+    assert trace[3]["changed"] is False
+    assert trace[3]["change_kind"] == "same"
+
+
+def test_partial_shape_forced_core_change_masses_small_cases():
+    from tools.pet_shape_algebra import partial_shape_forced_core_change_masses
+
+    assert partial_shape_forced_core_change_masses(None, 3) == (1, 2)
+    assert partial_shape_forced_core_change_masses(((), None), 4) == (1, 2, 3)
+
+
+def test_partial_shape_forced_core_stabilization_mass_small_cases():
+    from tools.pet_shape_algebra import partial_shape_forced_core_stabilization_mass
+
+    assert partial_shape_forced_core_stabilization_mass(None, 3) == 2
+    assert partial_shape_forced_core_stabilization_mass(((), None), 4) == 3
+
+
+def test_classify_forced_core_delta_small_cases():
+    from tools.pet_shape_algebra import classify_forced_core_delta
+
+    assert classify_forced_core_delta(None, None) == "same"
+    assert classify_forced_core_delta(None, ((), ())) == "strengthen"
+    assert classify_forced_core_delta(((), ()), (None, ())) == "relax"
+    assert classify_forced_core_delta((None, ()), (None, ())) == "same"
+
+
+def test_partial_shape_forced_core_window_helpers_small_cases():
+    from tools.pet_shape_algebra import (
+        partial_shape_forced_core_meets_window,
+        partial_shape_forced_core_stable_window,
+    )
+
+    assert partial_shape_forced_core_stable_window(None, 6) == 5
+    assert partial_shape_forced_core_meets_window(None, 6, 5)
+    assert not partial_shape_forced_core_meets_window(None, 6, 6)
+
+    assert partial_shape_forced_core_stable_window(((), None), 4) == 2
+    assert partial_shape_forced_core_meets_window(((), None), 4, 2)
+    assert not partial_shape_forced_core_meets_window(((), None), 4, 3)
+
+
+def test_classify_forced_core_pattern_small_cases():
+    from tools.pet_shape_algebra import classify_forced_core_pattern
+
+    assert classify_forced_core_pattern(None) == "empty"
+    assert classify_forced_core_pattern((None, None)) == "root-arity-only"
+    assert classify_forced_core_pattern(((None,), (None,))) == "partially-structured"
+    assert classify_forced_core_pattern(((), ())) == "exact"
+
+
+def test_partial_shape_free_paths_small_cases():
+    from tools.pet_shape_algebra import partial_shape_free_paths
+
+    assert partial_shape_free_paths(None, 3) == ((),)
+    assert partial_shape_free_paths((None, (None,)), 8) == ((0,), (1,))
+    assert partial_shape_free_paths(((None,), (None,)), 9) == ((0, 0), (1, 0))
+
+
+def test_partial_shape_residual_small_cases():
+    from tools.pet_shape_algebra import partial_shape_residual
+
+    r1 = partial_shape_residual(None, 3)
+    assert r1["forced_core"] is None
+    assert r1["forced_core_kind"] == "empty"
+    assert r1["free_paths"] == ((),)
+    assert r1["free_path_count"] == 1
+
+    r2 = partial_shape_residual((None, (None,)), 8)
+    assert r2["forced_core"] in ((None, (None,)), (None, None))
+    assert r2["forced_core_kind"] == "root-arity-only"
+    assert len(r2["free_paths"]) >= 1
+    assert r2["free_path_count"] == 2
+
+    r3 = partial_shape_residual(((None,), (None,)), 9)
+    assert r3["forced_core"] is not None
+    assert r3["forced_core_kind"] == "partially-structured"
+    assert len(r3["free_paths"]) >= 1
+    assert r3["free_path_count"] == 2
+
+
+def test_shape_local_gamma_small_cases():
+    from tools.pet_shape_algebra import shape_local_gamma
+
+    assert shape_local_gamma(()) == 1
+    assert shape_local_gamma(((),)) == 2
+    assert shape_local_gamma(((), ())) == 6
+    assert shape_local_gamma((((),),)) == 4
+
+
+def test_partial_shape_residual_profile_small_cases():
+    from tools.pet_shape_algebra import partial_shape_residual_profile
+
+    r1 = partial_shape_residual_profile(((), None), 5, preview=5)
+    assert r1["forced_core"] == (None, ())
+    assert r1["free_paths"] == ((0,),)
+    assert r1["per_path"][(0,)]["local_forced_core"] is None
+    assert r1["per_path"][(0,)]["local_forced_core_kind"] == "empty"
+    assert r1["per_path"][(0,)]["preview_shapes"] == ((), ((),), ((), ()), ((), (), ()), ((), ((),)))
+    assert r1["per_path"][(0,)]["preview_local_gammas"] == (1, 2, 6, 12, 30)
+
+    r2 = partial_shape_residual_profile((None, (None,)), 5, preview=5)
+    assert r2["forced_core"] in ((None, (None,)), (None, None))
+    assert len(r2["free_paths"]) >= 1
+    assert all(row["count"] >= 1 for row in r2["per_path"].values())
+    
+
+    r3 = partial_shape_residual_profile(((None,), (None,)), 6, preview=5)
+    assert r3["forced_core"] is not None
+    assert len(r3["free_paths"]) >= 1
+    assert all(row["preview_local_gammas"][0] == 1 for row in r3["per_path"].values())
+    assert all(row["local_forced_core_kind"] in {"empty", "root-arity-only", "partially-structured", "exact"} for row in r3["per_path"].values())
+    
+
+
+def test_partial_shape_residual_summary_small_cases():
+    from tools.pet_shape_algebra import partial_shape_residual_summary
+
+    r1 = partial_shape_residual_summary(((), None), 5, preview=5)
+    assert r1["forced_core"] == (None, ())
+    assert r1["forced_core_kind"] == "partially-structured"
+    assert r1["free_paths"] == ((0,),)
+    assert r1["per_path_summary"][(0,)]["local_forced_core"] is None
+    assert r1["per_path_summary"][(0,)]["local_forced_core_kind"] == "empty"
+    assert r1["per_path_summary"][(0,)]["observed_local_gammas"] == (1, 2, 6, 12, 30)
+
+    r2 = partial_shape_residual_summary(((None,), (None,)), 6, preview=5)
+    assert r2["forced_core"] == ((None,), (None,))
+    assert r2["forced_core_kind"] == "partially-structured"
+    assert r2["free_paths"] == ((0, 0), (1, 0))
+    assert r2["per_path_summary"][(0, 0)]["local_forced_core"] is None
+    assert r2["per_path_summary"][(1, 0)]["local_forced_core"] is None
+
+
+def test_partial_shape_forced_core_window_ignores_empty_prefix():
+    from tools.pet_shape_algebra import (
+        partial_shape_forced_core_meets_window,
+        partial_shape_forced_core_stabilization_mass,
+        partial_shape_forced_core_stable_window,
+    )
+
+    assert partial_shape_forced_core_stabilization_mass(((None,), (None,)), 3) is None
+    assert partial_shape_forced_core_stable_window(((None,), (None,)), 3) == 0
+    assert not partial_shape_forced_core_meets_window(((None,), (None,)), 3, 1)
+
+    assert partial_shape_forced_core_stabilization_mass(((None,), (None,)), 8) == 6
+    assert partial_shape_forced_core_stable_window(((None,), (None,)), 8) == 3
+    assert partial_shape_forced_core_meets_window(((None,), (None,)), 8, 3)
+
+
+def test_exact_shape_local_profile_fast_path_for_symmetric_partial():
+    from tools.pet_shape_algebra import exact_shape_local_profile, normalize_shape
+
+    exact = normalize_shape(((((),),), (((), ()),)))
+    partial = ((None,), (None,))
+    free_paths = ((0, 0), (1, 0))
+
+    local = exact_shape_local_profile(exact, partial, free_paths)
+
+    expected = (((),), ((), ()))
+    assert local[(0, 0)] == expected
+    assert local[(1, 0)] == expected
+
+
+def test_partial_shape_residual_profile_root_symmetric_fast_path():
+    from tools.pet_shape_algebra import partial_shape_residual_profile
+
+    r = partial_shape_residual_profile((None, (None,)), 6, preview=5)
+
+    assert r["forced_core"] == (None, None)
+    assert r["free_paths"] == ((0,), (1,))
+    assert r["per_path"][(0,)]["preview_local_gammas"] == (1, 2, 6, 12, 30)
+    assert r["per_path"][(1,)]["preview_local_gammas"] == (1, 2, 6, 12, 30)
+
+
+def test_partial_shape_observed_decomposition_small_cases():
+    from tools.pet_shape_algebra import partial_shape_observed_decomposition
+
+    r1 = partial_shape_observed_decomposition(((), None), 5, preview=5)
+    assert r1["observed_core"] == (None, ())
+    assert r1["observed_core_kind"] == "partially-structured"
+    assert r1["residual_free_paths"] == ((0,),)
+    assert r1["residual_local_profiles"][(0,)]["local_forced_core"] is None
+    assert r1["evidence"]["max_mass"] == 5
+
+    r2 = partial_shape_observed_decomposition((None, (None,)), 6, preview=5)
+    assert r2["observed_core"] == (None, None)
+    assert r2["observed_core_kind"] == "root-arity-only"
+    assert r2["residual_free_paths"] == ((0,), (1,))
