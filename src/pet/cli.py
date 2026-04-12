@@ -504,6 +504,7 @@ def _pet_friendliness_report(n: int) -> dict:
         raise ValueError("pet-friendliness expects an integer >= 2")
 
     factors = tuple(prime_factorization(n))
+    factor_map = dict(factors)
     support = tuple(prime for prime, _exp in factors)
     present = set(support)
     max_prime = support[-1]
@@ -520,6 +521,30 @@ def _pet_friendliness_report(n: int) -> dict:
     if strict_pet_friendly:
         canonical_build_cost = (len(support) - 1) + sum(exp - 1 for _prime, exp in factors)
 
+    relaxed_hull_support = []
+    candidate = 2
+    while candidate <= max_prime:
+        if is_prime(candidate):
+            relaxed_hull_support.append(candidate)
+        candidate += 1
+
+    relaxed_hull_factors = tuple(
+        (prime, factor_map.get(prime, 1))
+        for prime in relaxed_hull_support
+    )
+
+    relaxed_hull_n = 1
+    for prime, exp in relaxed_hull_factors:
+        relaxed_hull_n *= prime ** exp
+
+    relaxed_hull_build_cost = (len(relaxed_hull_support) - 1) + sum(
+        exp - 1 for _prime, exp in relaxed_hull_factors
+    )
+    relaxed_exact_extra_drop_lower_bound = len(missing)
+    relaxed_exact_cost_lower_bound = (
+        relaxed_hull_build_cost + relaxed_exact_extra_drop_lower_bound
+    )
+
     return {
         "n": n,
         "factors": factors,
@@ -530,6 +555,12 @@ def _pet_friendliness_report(n: int) -> dict:
         "missing_prime_count": len(missing),
         "missing_primes_before_max": tuple(missing),
         "canonical_build_cost": canonical_build_cost,
+        "relaxed_hull_n": relaxed_hull_n,
+        "relaxed_hull_factors": relaxed_hull_factors,
+        "relaxed_hull_support": tuple(relaxed_hull_support),
+        "relaxed_hull_build_cost": relaxed_hull_build_cost,
+        "relaxed_exact_extra_drop_lower_bound": relaxed_exact_extra_drop_lower_bound,
+        "relaxed_exact_cost_lower_bound": relaxed_exact_cost_lower_bound,
     }
 
 
@@ -1707,6 +1738,18 @@ def main(argv: list[str] | None = None) -> int:
                 print(
                     "canonical_build_cost = "
                     + ("none" if report["canonical_build_cost"] is None else str(report["canonical_build_cost"]))
+                )
+                print(f"relaxed_hull_support = {report['relaxed_hull_support']}")
+                print(f"relaxed_hull_factors = {_format_factorization(report['relaxed_hull_factors'])}")
+                print(f"relaxed_hull_n = {report['relaxed_hull_n']}")
+                print(f"relaxed_hull_build_cost = {report['relaxed_hull_build_cost']}")
+                print(
+                    "relaxed_exact_extra_drop_lower_bound = "
+                    f"{report['relaxed_exact_extra_drop_lower_bound']}"
+                )
+                print(
+                    "relaxed_exact_cost_lower_bound = "
+                    f"{report['relaxed_exact_cost_lower_bound']}"
                 )
 
         elif args.command == "bytes-to-build":
