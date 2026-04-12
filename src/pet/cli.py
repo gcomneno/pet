@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import pathlib
 import sys
 from collections import deque
 
@@ -435,6 +436,176 @@ def _dismantle_data(n: int) -> dict:
 
 
 
+
+
+def _parse_factor_spec_file(path_str: str) -> tuple[tuple[int, int], ...]:
+    payload = json.loads(pathlib.Path(path_str).read_text(encoding="utf-8"))
+
+    if isinstance(payload, dict):
+        if "factors" not in payload:
+            raise ValueError("factor spec dict must contain a 'factors' key")
+        payload = payload["factors"]
+
+    if not isinstance(payload, list):
+        raise ValueError("factor spec must be a JSON list or an object with a 'factors' list")
+
+    factors = []
+    seen = set()
+
+    for row in payload:
+        if not isinstance(row, (list, tuple)) or len(row) != 2:
+            raise ValueError("each factor row must be a pair [prime, exponent]")
+
+        prime, exp = row
+        if not isinstance(prime, int) or not isinstance(exp, int):
+            raise ValueError("prime and exponent must be integers")
+        if prime < 2:
+            raise ValueError("prime must be >= 2")
+        if exp < 1:
+            raise ValueError("exponent must be >= 1")
+        if not is_prime(prime):
+            raise ValueError(f"{prime} is not prime")
+        if prime in seen:
+            raise ValueError(f"duplicate prime in factor spec: {prime}")
+
+        seen.add(prime)
+        factors.append((prime, exp))
+
+    factors.sort()
+
+    if not factors:
+        raise ValueError("factor spec cannot be empty")
+    if factors[0][0] != 2:
+        raise ValueError("canonical build-from-factors requires support to start at prime 2")
+
+    support = set()
+    for prime, _exp in factors:
+        expected = _next_new_prime(support)
+        if prime != expected:
+            raise ValueError(
+                f"factor support is not NEW-canonical: expected next prime {expected}, got {prime}"
+            )
+        support.add(prime)
+
+    return tuple(factors)
+
+
+def _factor_exp(n: int, prime: int) -> int:
+    for p, exp in prime_factorization(n):
+        if p == prime:
+            return exp
+    return 0
+
+
+def _bytes_to_build_report(path_str: str, *, byteorder: str, signed: bool) -> dict:
+    int_report = _read_int_from_bytes_file(path_str, byteorder=byteorder, signed=signed)
+    build_report = _build_from_int_report(int_report["int"])
+
+    report = dict(build_report)
+    report["file"] = int_report["file"]
+    report["byteorder"] = int_report["byteorder"]
+    report["signed"] = int_report["signed"]
+    report["byte_count"] = int_report["byte_count"]
+    report["hex"] = int_report["hex"]
+    report["input_n"] = int_report["int"]
+    return report
+
+
+def _read_int_from_bytes_file(path_str: str, *, byteorder: str, signed: bool) -> dict:
+    data = pathlib.Path(path_str).read_bytes()
+    value = int.from_bytes(data, byteorder=byteorder, signed=signed)
+    return {
+        "file": path_str,
+        "byteorder": byteorder,
+        "signed": signed,
+        "byte_count": len(data),
+        "hex": data.hex(),
+        "int": value,
+    }
+
+
+def _build_from_int_report(n: int) -> dict:
+    if n < 2:
+        raise ValueError("build-from-int expects an integer >= 2")
+
+    factors = tuple(prime_factorization(n))
+    canonical = _parse_factor_spec_file  # silence lint-style reuse marker
+
+    support = set()
+    if factors[0][0] != 2:
+        raise ValueError("build-from-int requires NEW-canonical support starting at prime 2")
+
+    for prime, _exp in factors:
+        expected = _next_new_prime(support)
+        if prime != expected:
+            raise ValueError(
+                f"integer factor support is not NEW-canonical: expected next prime {expected}, got {prime}"
+            )
+        support.add(prime)
+
+    report = _build_from_factors_report(factors)
+    report["input_n"] = n
+    return report
+
+
+def _build_from_factors_report(factors: tuple[tuple[int, int], ...]) -> dict:
+    if not factors:
+        raise ValueError("factor spec cannot be empty")
+    if factors[0][0] != 2:
+        raise ValueError("canonical build-from-factors requires support to start at prime 2")
+
+    target_n = 1
+    for prime, exp in factors:
+        target_n *= prime ** exp
+
+    n = 2
+    path = []
+
+    for i, (prime, target_exp) in enumerate(factors):
+        if i > 0:
+            new = _explain_moves(n)["new"]
+            if new is None or new["prime"] != prime:
+                raise RuntimeError(f"cannot introduce prime {prime} from n={n}")
+
+            move = {
+                "source_n": n,
+                "label": f"NEW(p={new['prime']})",
+                "target_n": new["target_n"],
+                "target_generator": new["target_generator"],
+            }
+            path.append(move)
+            n = move["target_n"]
+
+        while _factor_exp(n, prime) < target_exp:
+            rows = [
+                row
+                for row in _explain_moves(n)["inc"]
+                if row["representative_prime"] == prime or prime in row.get("primes", [])
+            ]
+            if not rows:
+                raise RuntimeError(f"cannot increase exponent of prime {prime} from n={n}")
+
+            row = max(rows, key=lambda r: (r["exponent"], r["target_n"]))
+            move = {
+                "source_n": n,
+                "label": f"INC(p={row['representative_prime']},e={row['exponent']})",
+                "target_n": row["target_n"],
+                "target_generator": row["target_generator"],
+            }
+            path.append(move)
+            n = move["target_n"]
+
+    if n != target_n:
+        raise RuntimeError(f"builder ended at {n}, expected {target_n}")
+
+    return {
+        "start_n": 2,
+        "factors": factors,
+        "target_n": target_n,
+        "target_generator": shape_signature_dict(target_n)["generator"],
+        "steps": len(path),
+        "path": path,
+    }
 
 
 def _plan_move_rank(label: str) -> tuple[int, str]:
@@ -959,6 +1130,64 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_plan.add_argument("--json", action="store_true")
 
+
+
+
+    # bytes-to-build
+    p_bytes_to_build = subparsers.add_parser(
+        "bytes-to-build",
+        help="decode a byte stream as an integer and build it when support is NEW-canonical",
+    )
+    p_bytes_to_build.add_argument("file", metavar="BYTES.bin")
+    p_bytes_to_build.add_argument(
+        "--byteorder",
+        choices=("big", "little"),
+        default="big",
+        help="byte order used to decode the integer (default: big)",
+    )
+    p_bytes_to_build.add_argument(
+        "--signed",
+        action="store_true",
+        help="interpret the byte stream as a signed integer",
+    )
+    p_bytes_to_build.add_argument("--json", action="store_true")
+
+    # int-from-bytes
+    p_int_from_bytes = subparsers.add_parser(
+        "int-from-bytes",
+        help="read a byte stream file and interpret it as an integer",
+    )
+    p_int_from_bytes.add_argument("file", metavar="BYTES.bin")
+    p_int_from_bytes.add_argument(
+        "--byteorder",
+        choices=("big", "little"),
+        default="big",
+        help="byte order used to decode the integer (default: big)",
+    )
+    p_int_from_bytes.add_argument(
+        "--signed",
+        action="store_true",
+        help="interpret the byte stream as a signed integer",
+    )
+    p_int_from_bytes.add_argument("--json", action="store_true")
+
+
+    # build-from-int
+    p_build_from_int = subparsers.add_parser(
+        "build-from-int",
+        help="factor an integer and build it from ground generator 2 when support is NEW-canonical",
+    )
+    p_build_from_int.add_argument("n", type=int, metavar="N")
+    p_build_from_int.add_argument("--json", action="store_true")
+
+    # build-from-factors
+    p_build_from_factors = subparsers.add_parser(
+        "build-from-factors",
+        help="build a NEW-canonical factorization from ground generator 2",
+    )
+    p_build_from_factors.add_argument("file", metavar="FACTORS.json")
+    p_build_from_factors.add_argument("--json", action="store_true")
+
     # query / families
     register_query_subparser(subparsers)
     register_families_subparser(subparsers)
@@ -1319,6 +1548,78 @@ def main(argv: list[str] | None = None) -> int:
             print(generators)
 
 
+
+
+
+
+
+        elif args.command == "bytes-to-build":
+            report = _bytes_to_build_report(
+                args.file,
+                byteorder=args.byteorder,
+                signed=args.signed,
+            )
+
+            if args.json:
+                print(json.dumps(_jsonable_value(report), indent=2, ensure_ascii=False))
+            else:
+                print(f"file = {report['file']}")
+                print(f"byteorder = {report['byteorder']}")
+                print(f"signed = {'yes' if report['signed'] else 'no'}")
+                print(f"byte_count = {report['byte_count']}")
+                print(f"hex = {report['hex']}")
+                print(f"input_n = {report['input_n']}")
+                print(f"factors = {_format_factorization(report['factors'])}")
+                print(f"target_n = {report['target_n']}")
+                print(f"target_generator = {report['target_generator']}")
+                print(f"steps = {report['steps']}")
+                for row in report["path"]:
+                    print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
+
+        elif args.command == "build-from-int":
+            report = _build_from_int_report(args.n)
+
+            if args.json:
+                print(json.dumps(_jsonable_value(report), indent=2, ensure_ascii=False))
+            else:
+                print(f"input_n = {report['input_n']}")
+                print(f"factors = {_format_factorization(report['factors'])}")
+                print(f"target_n = {report['target_n']}")
+                print(f"target_generator = {report['target_generator']}")
+                print(f"steps = {report['steps']}")
+                for row in report["path"]:
+                    print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
+
+        elif args.command == "int-from-bytes":
+            report = _read_int_from_bytes_file(
+                args.file,
+                byteorder=args.byteorder,
+                signed=args.signed,
+            )
+
+            if args.json:
+                print(json.dumps(report, indent=2, ensure_ascii=False))
+            else:
+                print(f"file = {report['file']}")
+                print(f"byteorder = {report['byteorder']}")
+                print(f"signed = {'yes' if report['signed'] else 'no'}")
+                print(f"byte_count = {report['byte_count']}")
+                print(f"hex = {report['hex']}")
+                print(f"int = {report['int']}")
+
+        elif args.command == "build-from-factors":
+            factors = _parse_factor_spec_file(args.file)
+            report = _build_from_factors_report(factors)
+
+            if args.json:
+                print(json.dumps(_jsonable_value(report), indent=2, ensure_ascii=False))
+            else:
+                print(f"factors = {_format_factorization(report['factors'])}")
+                print(f"target_n = {report['target_n']}")
+                print(f"target_generator = {report['target_generator']}")
+                print(f"steps = {report['steps']}")
+                for row in report["path"]:
+                    print(f"{row['source_n']} --{row['label']}--> {row['target_n']}")
 
         elif args.command == "plan":
             if args.start < 2 or args.target < 2:
